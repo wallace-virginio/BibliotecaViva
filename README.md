@@ -42,6 +42,11 @@ npm run dev            # http://localhost:3000
 npm run build          # build SSR (dist/client + dist/server)
 npm run start          # preview do build no runtime da Cloudflare (workerd)
 npm run deploy         # publica na Cloudflare (grátis) — veja docs/DEPLOY.md
+```
+
+Deploy automático: cada push na branch `main` do GitHub publica uma nova versão (Cloudflare Workers Builds).
+
+```bash
 npm run build:mobile   # bundle SPA estático em dist/mobile
 npm run cap:android    # build mobile + sync + abre o Android Studio
 npm run cap:ios        # (macOS) depois de `npx cap add ios`
