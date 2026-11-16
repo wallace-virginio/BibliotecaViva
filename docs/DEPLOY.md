@@ -36,9 +36,7 @@ Para atualizar o site depois, basta rodar `npm run deploy` de novo.
 3. Configuração do build:
    - **Build command:** `npm run build`
    - **Deploy command:** `npx wrangler deploy`
-4. Em **Settings → Build → Variables and secrets**, adicione as variáveis de build (são lidas no momento do build, pois o Vite as embute no app):
-   - `VITE_SUPABASE_URL` = `https://iwacrxrgfxnvmjopzqwb.supabase.co`
-   - `VITE_SUPABASE_PUBLISHABLE_KEY` = a publishable key (`sb_publishable_...`)
+4. Não é preciso cadastrar variáveis: a URL e a publishable key do Supabase (públicas por natureza) estão em `.env.production`, versionado no repositório.
 5. Salve e rode o primeiro deploy. Cada push na branch principal publica de novo; outras branches geram URLs de prévia.
 
 > Nunca cadastre a **secret key** do Supabase na Cloudflare nem em lugar nenhum do app.
