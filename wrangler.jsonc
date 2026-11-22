@@ -4,6 +4,7 @@
   "name": "biblioteca-viva",
   "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry",
+  // entrada própria: handler do TanStack Start + cabeçalhos de segurança (src/lib/server/security.ts)
+  "main": "./src/server.ts",
   "observability": { "enabled": true }
 }
