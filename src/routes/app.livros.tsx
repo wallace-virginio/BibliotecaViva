@@ -1,26 +1,32 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookOpen, BookOpenText, Plus, Ticket } from "lucide-react";
-import { BookCover } from "@/components/common";
+import { Bookmark, BookOpen, BookOpenText, Plus, Ticket } from "lucide-react";
+import { useState } from "react";
+import { useFlip } from "@/lib/motion";
+import { ProgressRing } from "@/components/motion";
+import { BookCard, BookCover } from "@/components/common";
 import { DashHeader, FreeClassics, SavedBookRow } from "@/components/dashboard";
 import { buttonClass, Card, EmptyState, Tabs } from "@/components/ui";
-import { useStore } from "@/lib/store";
+import { SHELF_LABEL, useStore, type ShelfStatus } from "@/lib/store";
 
-type Aba = "lendo" | "reservados" | "historico" | "listas";
+type Aba = "estante" | "lendo" | "reservados" | "historico" | "listas";
 
 export const Route = createFileRoute("/app/livros")({
   validateSearch: (s: Record<string, unknown>): { aba?: Aba } => ({
-    aba: s.aba === "reservados" || s.aba === "historico" || s.aba === "listas" ? s.aba : undefined,
+    aba: s.aba === "estante" || s.aba === "reservados" || s.aba === "historico" || s.aba === "listas" ? s.aba : undefined,
   }),
   head: () => ({ meta: [{ title: "Minha biblioteca — Biblioteca Viva" }, { name: "description", content: "Livros que você está lendo, reservados, histórico e listas." }] }),
   component: MeusLivros,
 });
 
 function MeusLivros() {
-  const { aba = "lendo" } = Route.useSearch();
+  const { aba = "estante" } = Route.useSearch();
   const navigate = Route.useNavigate();
   const reading = useStore((s) => Object.values(s.reading).sort((a, b) => b.updatedAt - a.updatedAt));
   const reserved = useStore((s) => s.reservations.filter((r) => r.kind === "livro"));
   const history = useStore((s) => s.history);
+  const shelf = useStore((s) => Object.values(s.shelf).sort((a, b) => b.addedAt - a.addedAt));
+  const [shelfFilter, setShelfFilter] = useState<ShelfStatus | "todos">("todos");
+  const flip = useFlip<HTMLDivElement>([shelfFilter, shelf.length]);
   const favorites = useStore((s) => s.favorites);
 
   return (
@@ -28,8 +34,9 @@ function MeusLivros() {
       <DashHeader title="Minha biblioteca" description={`${reading.length} em leitura · ${reserved.length} reservados`} />
       <Tabs
         value={aba}
-        onChange={(v) => navigate({ search: { aba: v === "lendo" ? undefined : v }, replace: true })}
+        onChange={(v) => navigate({ search: { aba: v === "estante" ? undefined : v }, replace: true })}
         options={[
+          { value: "estante", label: `Minha estante${shelf.length ? ` · ${shelf.length}` : ""}` },
           { value: "lendo", label: "Lendo" },
           { value: "reservados", label: `Reservados${reserved.length ? ` · ${reserved.length}` : ""}` },
           { value: "historico", label: "Histórico" },
@@ -37,6 +44,43 @@ function MeusLivros() {
         ]}
       />
       <div className="mt-6">
+        {aba === "estante" &&
+          (shelf.length ? (
+            <>
+              <div className="mb-5 flex flex-wrap gap-2">
+                {(["todos", "quero-ler", "lendo", "lido"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setShelfFilter(f)}
+                    aria-pressed={shelfFilter === f}
+                    className={`h-9 rounded-full border px-3.5 text-sm ${shelfFilter === f ? "border-primary bg-primary text-primary-foreground" : "bg-surface"}`}
+                  >
+                    {f === "todos" ? "Todos" : SHELF_LABEL[f]} ({f === "todos" ? shelf.length : shelf.filter((x) => x.status === f).length})
+                  </button>
+                ))}
+              </div>
+              <div ref={flip} className="grid grid-cols-3 gap-x-3.5 gap-y-6 sm:grid-cols-4 lg:grid-cols-6">
+                {shelf
+                  .filter((x) => shelfFilter === "todos" || x.status === shelfFilter)
+                  .map((x) => (
+                    <div key={x.id} data-flip={x.id}>
+                    <BookCard
+                                            book={{ id: x.id, title: x.title, authors: x.author ? [x.author] : [], coverId: x.coverId, subjects: [] }}
+                      badge={<span className="rounded-full bg-surface/90 px-2 py-0.5 text-[10px] font-semibold shadow-soft">{SHELF_LABEL[x.status]}</span>}
+                    />
+                    </div>
+                  ))}
+              </div>
+            </>
+          ) : (
+            <EmptyState
+              icon={<Bookmark className="size-6" />}
+              title="Sua estante está vazia"
+              description="Toque no marcador sobre a capa de qualquer livro para guardar o que você quer ler, está lendo ou já leu."
+              action={<Link to="/ranking" className={buttonClass("primary", "sm")}>Ver o ranking</Link>}
+            />
+          ))}
+
         {aba === "lendo" &&
           (reading.length ? (
             <div className="grid gap-4 md:grid-cols-2">
@@ -47,9 +91,9 @@ function MeusLivros() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold">{b.title}</p>
                       <p className="truncate text-sm text-muted-foreground">{b.author}</p>
-                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-3"><div className="h-full rounded-full bg-gradient-primary" style={{ width: `${Math.max(2, b.percent)}%` }} /></div>
-                      <p className="mt-1.5 text-xs text-muted-foreground">{b.percent}% · continuar leitura</p>
+                      <p className="mt-1.5 text-xs text-muted-foreground">Continuar leitura</p>
                     </div>
+                    <ProgressRing value={b.percent} size={52} />
                   </Card>
                 </Link>
               ))}

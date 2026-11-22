@@ -9,6 +9,7 @@ import type { Library } from "@/data/libraries";
 import { FEATURED_LIBRARIES } from "@/data/libraries";
 import type { PlatformEvent } from "@/data/content";
 import { Badge, buttonClass, Card } from "./ui";
+import { ShelfQuickToggle } from "./ShelfButton";
 
 /* ---------- Reveal on scroll ---------- */
 export function Reveal({ children, className, delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
@@ -68,17 +69,21 @@ export function BookCover({
   );
 }
 
-export function BookCard({ book, className }: { book: Book; className?: string }) {
+export function BookCard({ book, className, badge }: { book: Book; className?: string; badge?: ReactNode }) {
   return (
-    <Link to="/livro/$id" params={{ id: book.id }} className={cn("group flex flex-col gap-3", className)}>
-      <BookCover
-        coverId={book.coverId}
-        title={book.title}
-        author={book.authors[0]}
-        className="transition duration-300 group-hover:-translate-y-1 group-hover:shadow-elevated"
-      />
+    <Link to="/livro/$id" params={{ id: book.id }} className={cn("group flex min-w-0 flex-col gap-2.5", className)}>
+      <div className="relative">
+        <BookCover
+          coverId={book.coverId}
+          title={book.title}
+          author={book.authors[0]}
+          className="transition duration-300 group-hover:-translate-y-1 group-hover:shadow-elevated"
+        />
+        <ShelfQuickToggle book={{ id: book.id, title: book.title, author: book.authors[0], coverId: book.coverId }} className="absolute top-1.5 right-1.5" />
+        {badge && <div className="absolute bottom-1.5 left-1.5">{badge}</div>}
+      </div>
       <div className="min-w-0">
-        <p className="line-clamp-2 text-sm leading-snug font-medium group-hover:text-primary">{book.title}</p>
+        <p className="line-clamp-2 text-[13px] leading-snug font-medium group-hover:text-primary">{book.title}</p>
         <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
           {book.authors[0] ?? "Autor desconhecido"}
           {book.year ? ` · ${book.year}` : ""}
@@ -171,8 +176,8 @@ export function LibraryCard({ lib, distance }: { lib: Library; distance?: string
 }
 
 /* ---------- Event card ---------- */
-export function EventCard({ event, onJoin, joined }: { event: PlatformEvent; onJoin?: () => void; joined?: boolean }) {
-  const lib = FEATURED_LIBRARIES.find((l) => l.slug === event.librarySlug)!;
+export function EventCard({ event, onJoin, joined, library, distance }: { event: PlatformEvent; onJoin?: () => void; joined?: boolean; library?: Library; distance?: string }) {
+  const lib = library ?? FEATURED_LIBRARIES.find((l) => l.slug === event.librarySlug)!;
   const date = event.date;
   const full = event.spotsLeft === 0;
   return (
@@ -194,7 +199,7 @@ export function EventCard({ event, onJoin, joined }: { event: PlatformEvent; onJ
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div>
           <h3 className="line-clamp-2 font-semibold">{event.title}</h3>
-          <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{lib.name} · {lib.city}</p>
+          <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{lib.name}{distance ? ` · ${distance}` : lib.city ? ` · ${lib.city}` : ""}</p>
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1"><CalendarDays className="size-3.5" />{date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</span>

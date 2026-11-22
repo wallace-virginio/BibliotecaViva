@@ -29,6 +29,11 @@ export type ReadingProgress = {
   offset?: number;
   updatedAt: number;
 };
+/** "Minha estante" — como a watchlist do Letterboxd. */
+export type ShelfStatus = "quero-ler" | "lendo" | "lido";
+export type ShelfItem = { id: string; title: string; author?: string; coverId?: number; status: ShelfStatus; addedAt: number };
+export const SHELF_LABEL: Record<ShelfStatus, string> = { "quero-ler": "Quero ler", lendo: "Lendo", lido: "Lido" };
+
 export type ReaderPrefs = { fontSize: number; theme: "claro" | "sepia" | "escuro"; font: "serif" | "sans" };
 
 export type State = {
@@ -37,6 +42,7 @@ export type State = {
   reservations: Reservation[];
   followedLibraries: string[];
   reading: Record<string, ReadingProgress>;
+  shelf: Record<string, ShelfItem>;
   readerPrefs: ReaderPrefs;
   /** Ativado pelo próprio usuário em Configurações → Desenvolvedor. */
   developerMode: boolean;
@@ -49,6 +55,7 @@ export const emptyState: State = {
   reservations: [],
   followedLibraries: [],
   reading: {},
+  shelf: {},
   readerPrefs: { fontSize: 19, theme: "claro", font: "serif" },
   developerMode: false,
 };
@@ -152,6 +159,15 @@ export const actions = {
   },
   saveProgress(p: Omit<ReadingProgress, "updatedAt">) {
     set((s) => ({ ...s, reading: { ...s.reading, [p.id]: { ...s.reading[p.id], ...p, updatedAt: Date.now() } } }));
+  },
+  /** status null = tirar da estante */
+  setShelf(book: Omit<ShelfItem, "status" | "addedAt">, status: ShelfStatus | null) {
+    set((s) => {
+      const shelf = { ...s.shelf };
+      if (status) shelf[book.id] = { ...book, status, addedAt: s.shelf[book.id]?.addedAt ?? Date.now() };
+      else delete shelf[book.id];
+      return { ...s, shelf };
+    });
   },
   setReaderPrefs(p: Partial<ReaderPrefs>) {
     set((s) => ({ ...s, readerPrefs: { ...s.readerPrefs, ...p } }));
