@@ -7,6 +7,8 @@ export function getRouter() {
     routeTree,
     scrollRestoration: true,
     defaultPreload: "intent",
+    // j30 · transição entre telas (o navegador fotografa antes/depois e faz a passagem)
+    defaultViewTransition: true,
     defaultNotFoundComponent: NotFound,
   });
 }

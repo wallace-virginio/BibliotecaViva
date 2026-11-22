@@ -37,11 +37,28 @@ export function BadgeGrid({ compact = false, badges = BADGES }: { compact?: bool
   return (
     <div className={cn("grid gap-3", compact ? "grid-cols-3 sm:grid-cols-5 lg:grid-cols-9" : "grid-cols-2 sm:grid-cols-3")}>
       {badges.map((b) => (
-        <Card key={b.key} className={cn("flex flex-col items-center p-4 text-center transition", !b.earned && "opacity-45 grayscale")}>
-          <span className={cn("grid place-items-center rounded-2xl text-2xl", compact ? "size-12" : "size-14", b.earned ? "bg-primary-soft" : "bg-surface-2")}>{b.emoji}</span>
-          <p className="mt-2 text-xs font-semibold leading-tight">{b.title}</p>
-          {!compact && <p className="mt-1 text-[11px] text-muted-foreground">{b.description}</p>}
-        </Card>
+        <button
+          key={b.key}
+          type="button"
+          className="flip-card text-left"
+          onClick={(e) => {
+            const el = e.currentTarget;
+            el.dataset.flipped = el.dataset.flipped === "true" ? "false" : "true";
+          }}
+          aria-label={`${b.title}: ${b.description}. ${b.earned ? "Conquistada" : "Ainda não conquistada"}`}
+        >
+          <div className="flip-inner h-full">
+            <Card className={cn("flip-face flex h-full flex-col items-center p-4 text-center", !b.earned && "opacity-45 grayscale")}>
+              <span className={cn("grid place-items-center rounded-2xl text-2xl", compact ? "size-12" : "size-14", b.earned ? "bg-primary-soft" : "bg-surface-2")}>{b.emoji}</span>
+              <p className="mt-2 text-xs leading-tight font-semibold">{b.title}</p>
+              {!compact && <p className="mt-1 text-[11px] text-muted-foreground">{b.description}</p>}
+            </Card>
+            <Card className="flip-face flip-back flex flex-col items-center justify-center bg-primary-soft p-3 text-center">
+              <p className="text-[11px] leading-snug font-medium text-primary-soft-foreground">{b.description}</p>
+              <p className="mt-1.5 text-[10px] font-semibold tracking-wide text-primary uppercase">{b.earned ? "Conquistada" : "Em aberto"}</p>
+            </Card>
+          </div>
+        </button>
       ))}
     </div>
   );

@@ -7,6 +7,7 @@ import { getBook, type BookDetail } from "@/lib/api/openlibrary";
 import { findReadableSource, loadChapter, loadWorkIndex, type Chapter, type ReadableSource } from "@/lib/api/reader";
 import { useAsync } from "@/lib/hooks";
 import { actions, useStore, type ReaderPrefs } from "@/lib/store";
+import { confetti } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/ler/$id")({
@@ -94,6 +95,16 @@ function TextReader({ book, source, prefs }: { book: BookDetail; source: Extract
 
   const total = Math.max(chapters.length, 1);
   const percent = Math.min(100, Math.round(((Math.min(chapter, total - 1) + offset) / total) * 100));
+
+  // terminou o livro: comemora uma vez (j29 · confete)
+  const celebrated = useRef((saved?.percent ?? 0) >= 99);
+  useEffect(() => {
+    if (percent >= 99 && !celebrated.current && html.data) {
+      celebrated.current = true;
+      confetti();
+      actions.setShelf({ id: book.id, title: book.title, author: book.authors[0], coverId: book.coverId }, "lido");
+    }
+  }, [percent, html.data, book]);
 
   const persist = useCallback(
     (off: number) =>

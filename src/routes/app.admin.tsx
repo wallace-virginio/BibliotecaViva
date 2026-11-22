@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BookOpen, CalendarDays, DoorOpen, GraduationCap, Plus, TrendingUp, Users, UsersRound } from "lucide-react";
 import { useState } from "react";
 import { DashHeader } from "@/components/dashboard";
+import { BarChart } from "@/components/motion";
 import { Badge, Button, Card, Tabs } from "@/components/ui";
 import { EVENTS } from "@/data/content";
 import { FEATURED_LIBRARIES } from "@/data/libraries";
@@ -19,7 +20,6 @@ function Admin() {
   const lib = FEATURED_LIBRARIES[1];
   const [tab, setTab] = useState<Tab>("indicadores");
   const visits = [62, 71, 58, 80, 94, 88, 102, 97, 110, 121, 116, 134];
-  const max = Math.max(...visits);
 
   return (
     <>
@@ -47,14 +47,7 @@ function Admin() {
           </div>
           <Card className="mt-6 p-5">
             <p className="font-semibold">Visitas por mês (mil)</p>
-            <div className="mt-6 flex h-48 items-end gap-2">
-              {visits.map((v, i) => (
-                <div key={i} className="flex flex-1 flex-col items-center gap-2">
-                  <div className="w-full rounded-t-lg bg-gradient-primary transition hover:opacity-80" style={{ height: `${(v / max) * 100}%` }} title={`${v} mil`} />
-                  <span className="text-[10px] text-muted-foreground">{["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"][i]}</span>
-                </div>
-              ))}
-            </div>
+            <BarChart className="mt-6" values={visits} labels={["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]} unit=" mil" />
           </Card>
         </>
       )}

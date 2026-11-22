@@ -15,7 +15,7 @@ export function MobileTabBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-[1000] border-t glass pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="vt-static-tabbar fixed inset-x-0 bottom-0 z-[1000] border-t glass pb-[env(safe-area-inset-bottom)] lg:hidden"
       aria-label="Navegação principal"
     >
       <ul className="mx-auto grid h-16 max-w-lg grid-cols-5">
