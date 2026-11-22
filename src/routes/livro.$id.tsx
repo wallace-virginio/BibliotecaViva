@@ -6,6 +6,10 @@ import { Badge, Button, buttonClass, Card, Container, EmptyState } from "@/compo
 import { findReadableSource } from "@/lib/api/reader";
 import { booksBySubject, getBook } from "@/lib/api/openlibrary";
 import { holdingsFor } from "@/lib/catalog";
+import { ShelfMenuButton } from "@/components/ShelfButton";
+import { confetti } from "@/lib/motion";
+import { useAskLocationOnce, useLocation, useNearbyLibraries } from "@/lib/location";
+import { formatDistance } from "@/lib/utils";
 import { useAsync } from "@/lib/hooks";
 import { actions, useStore } from "@/lib/store";
 import { cn, slugify } from "@/lib/utils";
@@ -26,7 +30,10 @@ function BookPage() {
   const fav = useStore((s) => s.favorites.some((b) => b.id === id));
   const reserved = useStore((s) => s.reservations.some((r) => r.id === `livro-${id}`));
   const [toast, setToast] = useState<string>();
-  const holdings = holdingsFor(id);
+  useAskLocationOnce();
+  const nearby = useNearbyLibraries();
+  const { ask } = useLocation();
+  const holdings = holdingsFor(id, nearby.data);
   const subject = book?.subjects.find((s) => s.length < 30);
   const readable = useAsync((s) => (book ? findReadableSource(book, s) : Promise.resolve(null)), [book?.id]);
   const progress = useStore((s) => s.reading[book?.id ?? id]);
@@ -108,11 +115,13 @@ function BookPage() {
                   }
                   actions.reserve({ id: `livro-${id}`, kind: "livro", title: book.title, subtitle: best?.library.name, when: "Retirar em até 3 dias", bookId: book.id, author: book.authors[0], coverId: book.coverId });
                   setToast(`Reservado em ${best?.library.name}. Veja em Minhas reservas.`);
+                  confetti();
                 }}
               >
                 {reserved ? <BookmarkCheck className="size-4" /> : <BookmarkPlus className="size-4" />}
                 {reserved ? "Reservado" : best ? "Reservar" : "Indisponível"}
               </Button>
+              <ShelfMenuButton book={{ id: book.id, title: book.title, author: book.authors[0], coverId: book.coverId }} />
               <Button variant="outline" onClick={() => actions.toggleFavorite(saved)}>
                 <Heart className={cn("size-4", fav && "fill-danger text-danger")} /> {fav ? "Favoritado" : "Favoritar"}
               </Button>
@@ -147,15 +156,29 @@ function BookPage() {
               </div>
 
               <Card className="h-fit p-5">
-                <h2 className="flex items-center gap-2 font-semibold"><MapPin className="size-4 text-primary" /> Onde encontrar</h2>
+                <h2 className="flex items-center gap-2 font-sans text-base font-semibold"><MapPin className="size-4 text-primary" /> Onde retirar</h2>
+                {nearby.location ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Mais perto de <strong className="text-foreground">{nearby.location.label}</strong> ·{" "}
+                    <button onClick={ask} className="text-primary underline-offset-2 hover:underline">trocar</button>
+                  </p>
+                ) : (
+                  <button onClick={ask} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary-soft px-3 py-2.5 text-sm font-medium text-primary-soft-foreground">
+                    <Navigation className="size-4" /> Ver a biblioteca mais perto de mim
+                  </button>
+                )}
+                {nearby.loading && nearby.location && <div className="skeleton mt-4 h-24 rounded-2xl" />}
                 <ul className="mt-4 space-y-3">
-                  {holdings.map((h) => (
-                    <li key={h.library.slug} className="rounded-2xl border p-3.5">
+                  {holdings.map((h, i) => (
+                    <li key={h.library.slug} className={cn("rounded-2xl border p-3.5", i === 0 && h.km !== undefined && "border-primary/40 bg-primary-soft/40")}>
                       <div className="flex items-start justify-between gap-2">
                         <Link to="/biblioteca/$slug" params={{ slug: h.library.slug }} className="text-sm font-medium hover:text-primary">{h.library.name}</Link>
                         <Badge tone={h.available ? "success" : "warning"}>{h.available ? `${h.available}/${h.copies} livres` : "Emprestado"}</Badge>
                       </div>
-                      <p className="mt-1 text-xs text-muted-foreground">{h.library.city}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {h.km !== undefined ? <strong className="text-foreground">{formatDistance(h.km)}</strong> : h.library.city}
+                        {i === 0 && h.km !== undefined && <span className="ml-1.5 font-medium text-primary">· Mais perto</span>}
+                      </p>
                       <div className="mt-2.5 flex flex-wrap gap-1.5 text-[11px]">
                         <span className="rounded-md bg-surface-2 px-2 py-1 font-medium">{h.floor}</span>
                         <span className="rounded-md bg-surface-2 px-2 py-1 font-medium">{h.shelf}</span>

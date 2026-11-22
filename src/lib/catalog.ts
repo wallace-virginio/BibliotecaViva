@@ -12,31 +12,55 @@ export type Holding = {
   floor: string;
   shelf: string;
   callNumber: string;
+  /** distância da localização da sessão, quando conhecida */
+  km?: number;
 };
 
-export function holdingsFor(bookId: string): Holding[] {
+export type NearbyLibrary = { lib: Library; km: number };
+
+function makeHolding(r: ReturnType<typeof seeded>, library: Library, km?: number): Holding {
+  const copies = r.int(1, 5);
+  return {
+    library,
+    km,
+    copies,
+    available: r.int(0, copies),
+    floor: `${r.int(1, 4)}º andar`,
+    shelf: `Estante ${String.fromCharCode(65 + r.int(0, 11))}-${r.int(1, 30)}`,
+    callNumber: `${r.int(100, 999)}.${r.int(1, 99)} ${String.fromCharCode(65 + r.int(0, 25))}${r.int(10, 99)}`,
+  };
+}
+
+/**
+ * Exemplares do livro. Com a localização da sessão, usa as bibliotecas mais próximas da pessoa
+ * (ordenadas pela distância); sem ela, bibliotecas conectadas da rede.
+ */
+export function holdingsFor(bookId: string, nearby?: NearbyLibrary[]): Holding[] {
   const r = seeded(bookId);
+  if (nearby && nearby.length) {
+    const pool = nearby.filter((n) => n.lib.kind !== "Digital").slice(0, 14);
+    const n = Math.min(pool.length, r.int(2, 4));
+    const out: Holding[] = [];
+    for (let i = 0; i < n; i++) {
+      const idx = r.int(0, pool.length - 1);
+      const { lib, km } = pool.splice(idx, 1)[0];
+      out.push(makeHolding(r, lib, km));
+    }
+    return out.sort((a, b) => (a.km ?? 0) - (b.km ?? 0));
+  }
   const pool = [...FEATURED_LIBRARIES].filter((l) => l.kind !== "Digital");
   const n = r.int(2, 5);
   const out: Holding[] = [];
   for (let i = 0; i < n && pool.length; i++) {
     const idx = i === 0 ? r.int(0, 6) % pool.length : r.int(0, pool.length - 1);
-    const library = pool.splice(idx, 1)[0];
-    const copies = r.int(1, 5);
-    out.push({
-      library,
-      copies,
-      available: r.int(0, copies),
-      floor: `${r.int(1, 4)}º andar`,
-      shelf: `Estante ${String.fromCharCode(65 + r.int(0, 11))}-${r.int(1, 30)}`,
-      callNumber: `${r.int(100, 999)}.${r.int(1, 99)} ${String.fromCharCode(65 + r.int(0, 25))}${r.int(10, 99)}`,
-    });
+    out.push(makeHolding(r, pool.splice(idx, 1)[0]));
   }
   return out;
 }
 
-export function isAvailable(bookId: string) {
-  return holdingsFor(bookId).some((h) => h.available > 0);
+/** Disponível para retirada — perto da pessoa (até `maxKm`) quando a localização é conhecida. */
+export function isAvailable(bookId: string, nearby?: NearbyLibrary[], maxKm = 15) {
+  return holdingsFor(bookId, nearby).some((h) => h.available > 0 && (h.km === undefined || h.km <= maxKm));
 }
 
 export const CATEGORIES = [

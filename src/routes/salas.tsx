@@ -6,7 +6,8 @@ import { OpenBadge } from "@/components/map/LibraryPanel";
 import { Badge, Button, Card, Container, Tabs } from "@/components/ui";
 import { FEATURED_LIBRARIES } from "@/data/libraries";
 import { actions, useStore } from "@/lib/store";
-import { cn, seeded } from "@/lib/utils";
+import { cn, formatDistance, seeded } from "@/lib/utils";
+import { useAskLocationOnce, useLocation, useNearbyLibraries } from "@/lib/location";
 
 type Search = { biblioteca?: string };
 
@@ -27,14 +28,22 @@ const SLOTS = ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"];
 
 function Salas() {
   const { biblioteca } = Route.useSearch();
-  const libs = FEATURED_LIBRARIES.filter((l) => l.kind !== "Digital");
-  const [slug, setSlug] = useState(biblioteca && libs.some((l) => l.slug === biblioteca) ? biblioteca : libs[1].slug);
+  useAskLocationOnce();
+  const { ask } = useLocation();
+  const nearby = useNearbyLibraries();
+  // Com localização: as bibliotecas mais próximas primeiro (com distância). Sem: as conectadas da rede.
+  const featured = FEATURED_LIBRARIES.filter((l) => l.kind !== "Digital");
+  const near = (nearby.data ?? []).filter((n) => n.lib.kind !== "Digital").slice(0, 8);
+  const libs = near.length ? near.map((n) => n.lib) : featured;
+  const kmOf = (s: string) => near.find((n) => n.lib.slug === s)?.km;
+  const [picked, setSlug] = useState<string | undefined>(biblioteca);
+  const slug = picked && [...libs, ...featured].some((l) => l.slug === picked) ? picked : libs[0]?.slug ?? featured[1].slug;
   const [kind, setKind] = useState<"sala" | "computador">("sala");
   const [dayOffset, setDayOffset] = useState(0);
   const [slot, setSlot] = useState<string>();
   const [resource, setResource] = useState<string>();
   const [done, setDone] = useState(false);
-  const lib = libs.find((l) => l.slug === slug)!;
+  const lib = [...libs, ...featured].find((l) => l.slug === slug)!;
   const reservations = useStore((s) => s.reservations);
 
   const date = new Date();
@@ -71,6 +80,10 @@ function Salas() {
       <Container className="grid gap-8 pb-28 lg:grid-cols-[1fr_360px] lg:pb-16">
         <div className="space-y-7">
           <Step n={1} title="Biblioteca">
+            <p className="-mt-1 mb-3 text-sm text-muted-foreground">
+              {nearby.location ? <>Mais perto de <strong className="text-foreground">{nearby.location.label}</strong> · </> : "Bibliotecas da rede · "}
+              <button onClick={ask} className="text-primary hover:underline">{nearby.location ? "trocar" : "usar minha localização"}</button>
+            </p>
             <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0">
               {libs.slice(0, 8).map((l) => (
                 <button
@@ -79,7 +92,7 @@ function Salas() {
                   className={cn("w-64 shrink-0 snap-start rounded-2xl border bg-surface p-4 text-left transition sm:w-auto", slug === l.slug && "border-primary ring-4 ring-primary/10")}
                 >
                   <p className="truncate font-medium">{l.name}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{l.city} · {l.rooms.available} salas · {l.computers.available} PCs livres</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{kmOf(l.slug) !== undefined ? formatDistance(kmOf(l.slug)!) : l.city} · {l.rooms.available} salas · {l.computers.available} PCs livres</p>
                   <div className="mt-2"><OpenBadge lib={l} /></div>
                 </button>
               ))}

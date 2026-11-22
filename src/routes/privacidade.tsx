@@ -54,7 +54,7 @@ function Privacidade() {
                 <li>livros favoritos, reservas, inscrições em eventos, histórico de livros vistos e progresso de leitura;</li>
                 <li>bibliotecas que você segue e preferências (tema, tamanho da fonte, modo desenvolvedor).</li>
               </ul>
-              <p><strong>Localização:</strong> só quando você toca em “Perto de mim” e autoriza no seu aparelho. Usamos a posição na hora para mostrar bibliotecas próximas e <strong>não a guardamos</strong>.</p>
+              <p><strong>Localização:</strong> só quando você escolhe — autorizando o GPS do aparelho ou digitando a cidade. Ela fica guardada <strong>apenas neste aparelho, durante a sessão</strong> (some ao fechar o navegador/app), para não precisar perguntar de novo em cada tela, e <strong>não é enviada aos nossos servidores</strong>.</p>
               <p><strong>Dados técnicos:</strong> endereço IP, tipo de aparelho e navegador, registrados pela nossa infraestrutura para segurança e funcionamento do serviço.</p>
               <p>
                 <strong>Não pedimos dados sensíveis</strong> (origem racial, religião, opinião política, saúde etc.). Como o histórico de leitura pode indiretamente revelar

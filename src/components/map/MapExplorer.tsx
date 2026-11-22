@@ -2,7 +2,8 @@ import { ClientOnly } from "@tanstack/react-router";
 import { Globe2, List, Loader2, LocateFixed, MapPin, RefreshCw, Search, X } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FEATURED_LIBRARIES, fromOsm, type Library } from "@/data/libraries";
-import { browserLocation, geocode, reverseGeocode, DEFAULT_LOCATION, type GeoPoint, type Place } from "@/lib/api/geo";
+import { geocode, DEFAULT_LOCATION, type GeoPoint, type Place } from "@/lib/api/geo";
+import { useAskLocationOnce, useLocation } from "@/lib/location";
 import { librariesAround } from "@/lib/api/overpass";
 import { useDebounce } from "@/lib/hooks";
 import { cn, formatDistance, haversineKm } from "@/lib/utils";
@@ -16,7 +17,12 @@ const WORLD: MapView = { lat: 20, lon: 0, zoom: 2 };
 
 export function MapExplorer({ className, initialFocus, fullscreen = false }: { className?: string; initialFocus?: string; fullscreen?: boolean }) {
   const [showList, setShowList] = useState(false);
-  const [user, setUser] = useState<GeoPoint>();
+  // Localização única da sessão (definida uma vez, usada no app todo).
+  const session = useLocation();
+  useAskLocationOnce();
+  const user: GeoPoint | undefined = session.location
+    ? { lat: session.location.lat, lon: session.location.lon, city: session.location.label, source: session.location.source === "gps" ? "gps" : "search" }
+    : undefined;
   const [locStatus, setLocStatus] = useState<"idle" | "locating" | "done" | "denied">("idle");
   const [view, setView] = useState<MapView>(WORLD);
   const [nearby, setNearby] = useState<Library[]>([]);
@@ -55,32 +61,31 @@ export function MapExplorer({ className, initialFocus, fullscreen = false }: { c
     [loadAround],
   );
 
-  // Privacidade (LGPD): nenhuma localização é obtida automaticamente.
-  // O mapa abre numa cidade padrão; a posição real só é usada quando a pessoa toca em "Perto de mim"
-  // e autoriza no próprio aparelho.
+  // Privacidade (LGPD): nada é obtido automaticamente. O mapa abre na localização que a pessoa escolheu
+  // para a sessão (GPS ou cidade); sem escolha, numa cidade padrão.
+  const locKey = session.location ? `${session.location.lat},${session.location.lon}` : "";
   useEffect(() => {
+    if (!session.ready) return;
     const focus = initialFocus ? FEATURED_LIBRARIES.find((l) => l.slug === initialFocus) : undefined;
     if (focus) {
       setActive(focus);
       focusOn(focus, 14);
     } else {
-      focusOn(DEFAULT_LOCATION, 12);
+      focusOn(session.location ?? DEFAULT_LOCATION, session.location?.source === "gps" ? 14 : 12);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [session.ready, locKey]);
 
   const locateMe = async () => {
     setLocStatus("locating");
     try {
-      const p = await browserLocation();
-      const r = await reverseGeocode(p.lat, p.lon).catch(() => undefined);
-      const loc = { ...p, ...r };
-      setUser(loc);
+      const loc = await session.locateWithGps();
       focusOn(loc, 14);
       setLocStatus("done");
     } catch {
-      // permissão negada ou GPS indisponível: continua na cidade atual do mapa
+      // permissão negada ou GPS indisponível: deixa escolher a cidade
       setLocStatus("denied");
+      session.ask();
     }
   };
 
@@ -140,7 +145,7 @@ export function MapExplorer({ className, initialFocus, fullscreen = false }: { c
   );
 
   return (
-    <div className={cn("relative overflow-hidden bg-surface", fullscreen ? "h-full" : "rounded-[2rem] border shadow-elevated", className)}>
+    <div className={cn("relative overflow-hidden bg-surface", fullscreen ? "h-full" : "rounded-xl border shadow-elevated", className)}>
       <div className={cn("grid lg:grid-cols-[360px_1fr]", fullscreen ? "h-full" : "h-[72dvh] min-h-[520px] md:h-[680px]")}>
         {/* Lista lateral */}
         <div className="hidden min-h-0 flex-col border-r lg:flex">
