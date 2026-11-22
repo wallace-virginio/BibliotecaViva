@@ -26,6 +26,7 @@ import { Route as RoadmapRouteImport } from './routes/roadmap'
 import { Route as SalasRouteImport } from './routes/salas'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as TermosRouteImport } from './routes/termos'
+import { Route as ApiOverpassRouteImport } from './routes/api.overpass'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
 import { Route as AppComunidadeRouteImport } from './routes/app.comunidade'
@@ -41,6 +42,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as BibliotecaSlugRouteImport } from './routes/biblioteca.$slug'
 import { Route as LerIdRouteImport } from './routes/ler.$id'
 import { Route as LivroIdRouteImport } from './routes/livro.$id'
+import { Route as ApiOlSplatRouteImport } from './routes/api.ol.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -127,6 +129,11 @@ const TermosRoute = TermosRouteImport.update({
   path: '/termos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiOverpassRoute = ApiOverpassRouteImport.update({
+  id: '/api/overpass',
+  path: '/api/overpass',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -202,6 +209,11 @@ const LivroIdRoute = LivroIdRouteImport.update({
   path: '/livro/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiOlSplatRoute = ApiOlSplatRouteImport.update({
+  id: '/api/ol/$',
+  path: '/api/ol/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -221,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/salas': typeof SalasRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
+  '/api/overpass': typeof ApiOverpassRoute
   '/app/admin': typeof AppAdminRoute
   '/app/comunidade': typeof AppComunidadeRoute
   '/app/configuracoes': typeof AppConfiguracoesRoute
@@ -236,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/ler/$id': typeof LerIdRoute
   '/livro/$id': typeof LivroIdRoute
   '/app/': typeof AppIndexRoute
+  '/api/ol/$': typeof ApiOlSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -254,6 +268,7 @@ export interface FileRoutesByTo {
   '/salas': typeof SalasRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
+  '/api/overpass': typeof ApiOverpassRoute
   '/app/admin': typeof AppAdminRoute
   '/app/comunidade': typeof AppComunidadeRoute
   '/app/configuracoes': typeof AppConfiguracoesRoute
@@ -269,6 +284,7 @@ export interface FileRoutesByTo {
   '/ler/$id': typeof LerIdRoute
   '/livro/$id': typeof LivroIdRoute
   '/app': typeof AppIndexRoute
+  '/api/ol/$': typeof ApiOlSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -289,6 +305,7 @@ export interface FileRoutesById {
   '/salas': typeof SalasRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
+  '/api/overpass': typeof ApiOverpassRoute
   '/app/admin': typeof AppAdminRoute
   '/app/comunidade': typeof AppComunidadeRoute
   '/app/configuracoes': typeof AppConfiguracoesRoute
@@ -304,6 +321,7 @@ export interface FileRoutesById {
   '/ler/$id': typeof LerIdRoute
   '/livro/$id': typeof LivroIdRoute
   '/app/': typeof AppIndexRoute
+  '/api/ol/$': typeof ApiOlSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -325,6 +343,7 @@ export interface FileRouteTypes {
     | '/salas'
     | '/sobre'
     | '/termos'
+    | '/api/overpass'
     | '/app/admin'
     | '/app/comunidade'
     | '/app/configuracoes'
@@ -340,6 +359,7 @@ export interface FileRouteTypes {
     | '/ler/$id'
     | '/livro/$id'
     | '/app/'
+    | '/api/ol/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -358,6 +378,7 @@ export interface FileRouteTypes {
     | '/salas'
     | '/sobre'
     | '/termos'
+    | '/api/overpass'
     | '/app/admin'
     | '/app/comunidade'
     | '/app/configuracoes'
@@ -373,6 +394,7 @@ export interface FileRouteTypes {
     | '/ler/$id'
     | '/livro/$id'
     | '/app'
+    | '/api/ol/$'
   id:
     | '__root__'
     | '/'
@@ -392,6 +414,7 @@ export interface FileRouteTypes {
     | '/salas'
     | '/sobre'
     | '/termos'
+    | '/api/overpass'
     | '/app/admin'
     | '/app/comunidade'
     | '/app/configuracoes'
@@ -407,6 +430,7 @@ export interface FileRouteTypes {
     | '/ler/$id'
     | '/livro/$id'
     | '/app/'
+    | '/api/ol/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -427,10 +451,12 @@ export interface RootRouteChildren {
   SalasRoute: typeof SalasRoute
   SobreRoute: typeof SobreRoute
   TermosRoute: typeof TermosRoute
+  ApiOverpassRoute: typeof ApiOverpassRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   BibliotecaSlugRoute: typeof BibliotecaSlugRoute
   LerIdRoute: typeof LerIdRoute
   LivroIdRoute: typeof LivroIdRoute
+  ApiOlSplatRoute: typeof ApiOlSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -554,6 +580,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/overpass': {
+      id: '/api/overpass'
+      path: '/api/overpass'
+      fullPath: '/api/overpass'
+      preLoaderRoute: typeof ApiOverpassRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/': {
       id: '/app/'
       path: '/'
@@ -659,6 +692,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LivroIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ol/$': {
+      id: '/api/ol/$'
+      path: '/api/ol/$'
+      fullPath: '/api/ol/$'
+      preLoaderRoute: typeof ApiOlSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -710,10 +750,12 @@ const rootRouteChildren: RootRouteChildren = {
   SalasRoute: SalasRoute,
   SobreRoute: SobreRoute,
   TermosRoute: TermosRoute,
+  ApiOverpassRoute: ApiOverpassRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   BibliotecaSlugRoute: BibliotecaSlugRoute,
   LerIdRoute: LerIdRoute,
   LivroIdRoute: LivroIdRoute,
+  ApiOlSplatRoute: ApiOlSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

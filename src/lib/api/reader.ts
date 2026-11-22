@@ -4,6 +4,8 @@
  *  - Internet Archive: livro digitalizado página a página (BookReader embutido).
  * O Project Gutenberg não libera CORS, por isso não é usado direto do navegador.
  */
+import { olFetch } from "./http";
+
 export type ReadableSource =
   | { kind: "wikisource"; lang: "pt" | "en"; page: string; title: string }
   | { kind: "archive"; identifier: string; title: string };
@@ -70,7 +72,7 @@ async function fromWikisource(book: { title: string; authors: string[] }, signal
 async function fromArchive(book: { id: string }, signal?: AbortSignal): Promise<ReadableSource | null> {
   try {
     const params = new URLSearchParams({ q: `key:/works/${book.id}`, fields: "title,ia,ebook_access", limit: "1" });
-    const res = await fetch(`https://openlibrary.org/search.json?${params}`, { signal });
+    const res = await olFetch(`search.json?${params}`, signal);
     const doc = (await res.json())?.docs?.[0] as { title: string; ia?: string[]; ebook_access?: string } | undefined;
     if (!doc || doc.ebook_access !== "public" || !doc.ia?.length) return null;
     // Escolhe o primeiro item realmente aberto (itens de empréstimo têm access-restricted-item).
@@ -145,7 +147,8 @@ export async function loadChapter(lang: string, page: string, signal?: AbortSign
 const ALLOWED = new Set(["P", "H1", "H2", "H3", "H4", "H5", "EM", "I", "STRONG", "B", "BR", "BLOCKQUOTE", "UL", "OL", "LI", "SMALL", "SUP", "SUB", "HR", "CENTER"]);
 const DROP = ".ws-noexport, .noprint, .ws-header, #headertemplate, .header_template, table, .mw-editsection, .reference, .references, style, script, sup.reference, .navbox, .wst-header, .licenseContainer, figure, img";
 
-function sanitize(html: string) {
+/** Exportada para testes: deixa só tags de texto, sem scripts, links ou atributos. */
+export function sanitize(html: string) {
   const doc = new DOMParser().parseFromString(html, "text/html");
   doc.querySelectorAll(DROP).forEach((n) => n.remove());
   const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

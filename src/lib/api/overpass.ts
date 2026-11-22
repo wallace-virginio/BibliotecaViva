@@ -19,6 +19,8 @@ type Element = {
   tags?: Record<string, string>;
 };
 
+import { overpassViaProxy } from "./http";
+
 const ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
@@ -27,6 +29,9 @@ const ENDPOINTS = [
 ];
 
 async function overpass(query: string, signal?: AbortSignal, maxMirrors = ENDPOINTS.length, timeoutMs = 12_000): Promise<{ elements: Element[] }> {
+  // 1º: nosso proxy com cache na Cloudflare (resposta compartilhada por todos, sobrevive a quedas da fonte)
+  const cached = await overpassViaProxy(query, signal);
+  if (cached) return await cached.json();
   let lastErr: unknown;
   for (const url of ENDPOINTS.slice(0, maxMirrors)) {
     try {

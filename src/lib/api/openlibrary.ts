@@ -2,6 +2,8 @@
  * Open Library — API pública e gratuita, sem chave.
  * https://openlibrary.org/developers/api
  */
+import { olFetch } from "./http";
+
 const OL = "https://openlibrary.org";
 
 export type Book = {
@@ -70,14 +72,14 @@ export async function searchBooks(
     .filter(Boolean)
     .join(" ");
   params.set("q", query || "subject:fiction");
-  const res = await fetch(`${OL}/search.json?${params}`, { signal: opts.signal });
+  const res = await olFetch(`search.json?${params}`, opts.signal);
   if (!res.ok) throw new Error(`Open Library ${res.status}`);
   const json = (await res.json()) as { numFound: number; docs: SearchDoc[] };
   return { total: json.numFound, books: json.docs.map(toBook) };
 }
 
 export async function booksBySubject(subject: string, limit = 12, signal?: AbortSignal): Promise<Book[]> {
-  const res = await fetch(`${OL}/subjects/${encodeURIComponent(subject)}.json?limit=${limit}`, { signal });
+  const res = await olFetch(`subjects/${encodeURIComponent(subject)}.json?limit=${limit}`, signal);
   if (!res.ok) throw new Error(`Open Library ${res.status}`);
   const json = (await res.json()) as {
     works: {
@@ -107,7 +109,7 @@ async function fetchWork(id: string, signal?: AbortSignal) {
   // Obras mescladas no Open Library viram registros "/type/redirect": seguimos até a obra final.
   let current = id;
   for (let i = 0; i < 4; i++) {
-    const res = await fetch(`${OL}/works/${current}.json`, { signal });
+    const res = await olFetch(`works/${current}.json`, signal);
     if (!res.ok) throw new Error("Livro não encontrado");
     const w = await res.json();
     if (w.type?.key === "/type/redirect" && typeof w.location === "string") {
@@ -122,7 +124,7 @@ async function fetchWork(id: string, signal?: AbortSignal) {
 
 export async function getBook(requestedId: string, signal?: AbortSignal): Promise<BookDetail> {
   const { w, id } = await fetchWork(requestedId, signal);
-  const ratingRes = await fetch(`${OL}/works/${id}/ratings.json`, { signal }).catch(() => undefined);
+  const ratingRes = await olFetch(`works/${id}/ratings.json`, signal).catch(() => undefined);
   const rating = ratingRes?.ok ? await ratingRes.json() : undefined;
 
   const authorKeys: string[] = (w.authors ?? [])
@@ -130,7 +132,7 @@ export async function getBook(requestedId: string, signal?: AbortSignal): Promis
     .filter(Boolean);
   const authors = await Promise.all(
     authorKeys.slice(0, 3).map((k) =>
-      fetch(`${OL}${k}.json`, { signal })
+      olFetch(`${k.replace(/^\//, "")}.json`, signal)
         .then((r) => r.json())
         .then((a) => a.name as string)
         .catch(() => ""),
@@ -158,7 +160,7 @@ export async function getBook(requestedId: string, signal?: AbortSignal): Promis
 /** Busca rápida para autocompletar. */
 export async function suggestBooks(q: string, signal?: AbortSignal) {
   const params = new URLSearchParams({ q, limit: "5", fields: "key,title,author_name,cover_i,first_publish_year" });
-  const res = await fetch(`${OL}/search.json?${params}`, { signal });
+  const res = await olFetch(`search.json?${params}`, signal);
   if (!res.ok) return [];
   const json = (await res.json()) as { docs: SearchDoc[] };
   return json.docs.map(toBook);
