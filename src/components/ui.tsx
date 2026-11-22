@@ -7,14 +7,14 @@ type Size = "sm" | "md" | "lg" | "icon";
 
 export const buttonClass = (variant: Variant = "primary", size: Size = "md", className?: string) =>
   cn(
-    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-medium transition-all duration-200 select-none disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]",
+    "ripple inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-all duration-300 ease-[var(--ease-out)] select-none disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]",
     {
-      primary: "bg-gradient-primary text-primary-foreground shadow-glow hover:brightness-110 hover:-translate-y-0.5",
-      secondary: "bg-foreground text-background hover:opacity-90 hover:-translate-y-0.5",
+      primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
+      secondary: "bg-foreground text-background hover:opacity-90",
       outline: "border border-border-strong bg-surface text-foreground hover:border-primary hover:text-primary",
       ghost: "text-foreground hover:bg-surface-2",
       soft: "bg-primary-soft text-primary-soft-foreground hover:brightness-95",
-      glass: "glass border text-foreground hover:bg-surface",
+      glass: "border bg-surface text-foreground hover:bg-surface-2",
     }[variant],
     {
       sm: "h-9 px-4 text-sm",
@@ -45,7 +45,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium",
         {
           neutral: "bg-surface-2 text-muted-foreground",
           primary: "bg-primary-soft text-primary-soft-foreground",
@@ -74,35 +74,25 @@ export function SectionHeader({
   eyebrow,
   title,
   description,
-  align = "center",
   className,
   action,
 }: {
   eyebrow?: string;
   title: ReactNode;
   description?: ReactNode;
+  /** mantido por compatibilidade; o cabeçalho agora é sempre alinhado à esquerda, como em jornal */
   align?: "center" | "left";
   className?: string;
   action?: ReactNode;
 }) {
   return (
-    <div
-      className={cn(
-        "mb-10 flex flex-col gap-3 md:mb-14",
-        align === "center" ? "items-center text-center" : "md:flex-row md:items-end md:justify-between",
-        className,
-      )}
-    >
-      <div className={cn("flex flex-col gap-3", align === "center" && "items-center")}>
-        {eyebrow && (
-          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{eyebrow}</span>
-        )}
-        <h2 className="max-w-3xl text-3xl font-semibold tracking-tight text-balance md:text-5xl">{title}</h2>
-        {description && (
-          <p className="max-w-2xl text-base text-pretty text-muted-foreground md:text-lg">{description}</p>
-        )}
+    <div className={cn("rule-top mb-8 flex flex-col gap-3 pt-4 md:mb-10 md:flex-row md:items-end md:justify-between", className)}>
+      <div className="flex max-w-3xl flex-col gap-2">
+        {eyebrow && <span className="kicker">{eyebrow}</span>}
+        <h2 className="text-3xl leading-tight text-balance md:text-4xl">{title}</h2>
+        {description && <p className="max-w-2xl text-base text-pretty text-muted-foreground">{description}</p>}
       </div>
-      {action}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }

@@ -7,8 +7,8 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#FCFDFE",
-  "theme_color": "#00AEEF",
+  "background_color": "#F8F3E8",
+  "theme_color": "#7A4E2D",
   "lang": "pt-BR",
   "categories": ["education", "books", "navigation"],
   "icons": [
