@@ -1,14 +1,26 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BookOpen, CalendarDays, House, Map, UserRound } from "lucide-react";
+import { BookOpen, CalendarDays, House, LibraryBig, Map, UserRound } from "lucide-react";
+import { IS_APP } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 
-const TABS = [
+/** Abas do app de celular: o que a pessoa usa todo dia. Eventos e Salas ficam no Início. */
+const APP_TABS = [
+  { to: "/", label: "Início", icon: House, match: (p: string) => p === "/" || p.startsWith("/eventos") || p.startsWith("/salas") },
+  { to: "/mapa", label: "Mapa", icon: Map, match: (p: string) => p.startsWith("/mapa") || p.startsWith("/biblioteca") },
+  { to: "/acervo", label: "Acervo", icon: BookOpen, match: (p: string) => p.startsWith("/acervo") || p.startsWith("/livro") || p.startsWith("/ranking") },
+  { to: "/app/livros", label: "Estante", icon: LibraryBig, match: (p: string) => p.startsWith("/app/livros") || p.startsWith("/app/favoritos") },
+  { to: "/app/perfil", label: "Perfil", icon: UserRound, match: (p: string) => (p.startsWith("/app") && !p.startsWith("/app/livros") && !p.startsWith("/app/favoritos")) || p.startsWith("/entrar") },
+] as const;
+
+const SITE_TABS = [
   { to: "/", label: "Início", icon: House, match: (p: string) => p === "/" },
   { to: "/mapa", label: "Mapa", icon: Map, match: (p: string) => p.startsWith("/mapa") || p.startsWith("/biblioteca") },
   { to: "/acervo", label: "Acervo", icon: BookOpen, match: (p: string) => p.startsWith("/acervo") || p.startsWith("/livro") },
   { to: "/eventos", label: "Eventos", icon: CalendarDays, match: (p: string) => p.startsWith("/eventos") },
   { to: "/app", label: "Perfil", icon: UserRound, match: (p: string) => p.startsWith("/app") || p.startsWith("/entrar") },
 ] as const;
+
+const TABS = IS_APP ? APP_TABS : SITE_TABS;
 
 /** Barra de abas inferior — navegação principal do app no celular. */
 export function MobileTabBar() {
@@ -26,7 +38,7 @@ export function MobileTabBar() {
               <Link
                 to={to}
                 className={cn(
-                  "flex h-full flex-col items-center justify-center gap-1 text-[11px] font-medium transition active:scale-95",
+                  "flex h-full flex-col items-center justify-center gap-1 text-xs font-medium transition active:scale-95",
                   active ? "text-primary" : "text-muted-foreground",
                 )}
               >

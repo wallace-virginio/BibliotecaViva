@@ -1,5 +1,6 @@
 import { Loader2, LocateFixed, MapPin, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useBackHandler } from "@/lib/backButton";
 import { geocode, type Place } from "@/lib/api/geo";
 import { useDebounce } from "@/lib/hooks";
 import { useLocation } from "@/lib/location";
@@ -18,6 +19,7 @@ const QUICK = [
 /** "Onde você está?" — escolhido uma vez e usado em todo o app durante a sessão. */
 export function LocationSheet() {
   const { sheetOpen, closeSheet, setLocation, locateWithGps, location } = useLocation();
+  useBackHandler(sheetOpen, closeSheet); // botão voltar do Android fecha a folha
   const [q, setQ] = useState("");
   const [places, setPlaces] = useState<Place[]>([]);
   const [gps, setGps] = useState<"idle" | "loading" | "denied">("idle");

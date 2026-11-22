@@ -5,6 +5,7 @@
   "version": "0.1.0",
   "scripts": {
     "dev": "vite dev --port 3000",
+    "dev:app": "vite dev --port 3001 --mode app",
     "build": "vite build",
     "start": "vite preview --port 3000",
     "typecheck": "tsc --noEmit",

@@ -1,5 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { BookOpen, CalendarDays, Clock, Flame, Heart, MapPin, Ticket, Trophy } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { BookOpen, CalendarDays, ChevronRight, Clock, Flame, Heart, Info, LogOut, MapPin, Monitor, Settings, ShieldCheck, Ticket, Trophy, Users } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/lib/auth";
+import { IS_APP } from "@/lib/platform";
 import { BadgeGrid } from "@/components/dashboard";
 import { Card } from "@/components/ui";
 import { RANKING } from "@/data/content";
@@ -11,6 +14,53 @@ export const Route = createFileRoute("/app/perfil")({
   head: () => ({ meta: [{ title: "Perfil — Biblioteca Viva" }, { name: "description", content: "Livros lidos, conquistas, badges, ranking e sequência de leitura." }] }),
   component: Perfil,
 });
+
+/** Menu do app (celular): o que antes ficava nas "pílulas" do topo, em lista com toque confortável. */
+function AppMenu() {
+  const auth = useAuth();
+  const counts = useStore((s) => ({ fav: s.favorites.length, res: s.reservations.length }));
+  const groups = [
+    [
+      { to: "/app/reservas", label: "Reservas", icon: Ticket, count: counts.res },
+      { to: "/app/favoritos", label: "Favoritos", icon: Heart, count: counts.fav },
+      { to: "/app/eventos", label: "Meus eventos", icon: CalendarDays },
+      { to: "/app/salas", label: "Minhas salas", icon: Monitor },
+      { to: "/app/comunidade", label: "Comunidade", icon: Users },
+    ],
+    [
+      { to: "/app/configuracoes", label: "Configurações", icon: Settings },
+      { to: "/privacidade", label: "Privacidade e termos", icon: ShieldCheck },
+      { to: "/sobre", label: "Sobre a Biblioteca Viva", icon: Info },
+    ],
+  ] as const;
+  return (
+    <div className="mt-6 space-y-4">
+      {groups.map((items, gi) => (
+        <ul key={gi} className="divide-y overflow-hidden rounded-xl border bg-surface">
+          {items.map((it) => (
+            <li key={it.to}>
+              <Link to={it.to} className="flex min-h-12 items-center gap-3 px-4 py-3 active:bg-surface-2">
+                <it.icon className="size-5 text-primary" />
+                <span className="flex-1 text-[15px]">{it.label}</span>
+                {"count" in it && it.count > 0 && <span className="text-sm text-muted-foreground tabular-nums">{it.count}</span>}
+                <ChevronRight className="size-5 text-muted-foreground" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ))}
+      <div className="flex items-center justify-between rounded-xl border bg-surface px-4 py-2">
+        <span className="text-[15px]">Tema escuro</span>
+        <ThemeToggle />
+      </div>
+      {auth.user && (
+        <button onClick={() => auth.signOut()} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border bg-surface text-[15px] font-medium text-danger active:bg-surface-2">
+          <LogOut className="size-5" /> Sair da conta
+        </button>
+      )}
+    </div>
+  );
+}
 
 function Perfil() {
   const reserved = useStore((s) => s.reservations.filter((r) => r.kind === "livro").length);
@@ -60,6 +110,8 @@ function Perfil() {
           </Card>
         ))}
       </div>
+
+      {IS_APP && <AppMenu />}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_340px]">
         <section>

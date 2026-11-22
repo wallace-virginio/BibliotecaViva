@@ -8,6 +8,7 @@ import { AccessibilityMenu } from "@/components/AccessibilityMenu";
 import { useAuth } from "@/lib/auth";
 import { useUserStats } from "@/lib/userStats";
 import { useStore } from "@/lib/store";
+import { IS_APP } from "@/lib/platform";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -100,7 +101,8 @@ function AppShell() {
 
       {/* Conteúdo */}
       <div className="min-w-0">
-        {/* Cabeçalho + navegação em pílulas (celular) */}
+        {/* Cabeçalho + navegação em pílulas (celular, só no site — no app quem navega são as abas e o menu do Perfil) */}
+        {!IS_APP && (
         <header className="sticky top-0 z-40 border-b glass pt-[env(safe-area-inset-top)] lg:hidden">
           <div className="flex h-14 items-center justify-between px-4">
             <Logo />
@@ -125,7 +127,14 @@ function AppShell() {
             ))}
           </nav>
         </header>
-        <main className="mx-auto max-w-6xl px-4 pt-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:py-10">
+        )}
+        <main
+          className={
+            IS_APP
+              ? "mx-auto max-w-6xl px-4 pt-[calc(3.5rem+env(safe-area-inset-top)+1.25rem)] pb-6"
+              : "mx-auto max-w-6xl px-4 pt-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:py-10"
+          }
+        >
           <Outlet />
           <ConsentGate />
         </main>

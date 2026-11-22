@@ -2,7 +2,8 @@
 import { execSync } from "node:child_process";
 import { cpSync, existsSync, rmSync } from "node:fs";
 
-execSync("vite build", { stdio: "inherit", env: { ...process.env, MOBILE: "1" } });
+// VITE_APP=1 liga a experiência de app (src/lib/platform.ts): Início do app, abas próprias, sem área de site.
+execSync("vite build", { stdio: "inherit", env: { ...process.env, MOBILE: "1", VITE_APP: "1" } });
 rmSync("dist/mobile", { recursive: true, force: true });
 cpSync("dist/client", "dist/mobile", { recursive: true });
 rmSync("dist/mobile/sw.js", { force: true }); // no app nativo os arquivos já são locais

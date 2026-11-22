@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, BookOpenText, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BookCover, LibraryImage, Reveal } from "@/components/common";
+import { AppHome } from "@/components/app/AppHome";
+import { IS_APP } from "@/lib/platform";
 import { CoverWall } from "@/components/CoverWall";
 import { CurationGrid } from "@/components/CurationGrid";
 import { GlobalSearch } from "@/components/GlobalSearch";
@@ -27,7 +29,8 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: Home,
+  // No app de celular, "/" é a tela Início do app; no site, a home editorial (voltada também às bibliotecas).
+  component: IS_APP ? AppHome : Home,
 });
 
 /*

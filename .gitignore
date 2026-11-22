@@ -22,3 +22,6 @@ ios/App/Pods
 .wrangler
 .dev.vars
 .dev.vars.*
+
+# Android Studio / IntelliJ
+.idea/

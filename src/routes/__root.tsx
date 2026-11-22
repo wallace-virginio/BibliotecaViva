@@ -1,7 +1,10 @@
 /// <reference types="vite/client" />
-import { HeadContent, Outlet, Scripts, createRootRoute, useRouterState } from "@tanstack/react-router";
+import { HeadContent, Outlet, Scripts, createRootRoute, useRouter, useRouterState } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { initAppShell } from "@/lib/native";
+import { installBackButton } from "@/lib/backButton";
+import { IS_APP } from "@/lib/platform";
+import { AppHeader } from "@/components/app/AppHeader";
 import { installRipple } from "@/lib/motion";
 import { AuthProvider } from "@/lib/auth";
 import { LocationProvider } from "@/lib/location";
@@ -59,15 +62,33 @@ function RootLayout() {
 }
 
 function AppFrame() {
+  const router = useRouter();
   useEffect(() => {
     initAppShell();
-    return installRipple();
-  }, []);
+    let removeBack = () => {};
+    installBackButton(() => router.navigate({ to: "/" })).then((off) => (removeBack = off));
+    const removeRipple = installRipple();
+    return () => {
+      removeBack();
+      removeRipple();
+    };
+  }, [router]);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isApp = pathname === "/app" || pathname.startsWith("/app/");
   const isFullscreen = pathname === "/mapa";
   // Leitor: tela cheia, sem navegação do app (como um app de leitura nativo).
   if (pathname.startsWith("/ler/")) return <Outlet />;
+  // App de celular: cabeçalho simples + abas, sem menu nem rodapé de site.
+  if (IS_APP)
+    return (
+      <>
+        <AppHeader />
+        <main id="conteudo" tabIndex={-1} className={isFullscreen ? "" : "min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]"}>
+          <Outlet />
+        </main>
+        <MobileTabBar />
+      </>
+    );
   if (isApp)
     return (
       <>
