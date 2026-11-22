@@ -19,6 +19,7 @@ import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as EventosRouteImport } from './routes/eventos'
 import { Route as MapaRouteImport } from './routes/mapa'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
+import { Route as RankingRouteImport } from './routes/ranking'
 import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as RoadmapRouteImport } from './routes/roadmap'
@@ -89,6 +90,11 @@ const MapaRoute = MapaRouteImport.update({
 const PrivacidadeRoute = PrivacidadeRouteImport.update({
   id: '/privacidade',
   path: '/privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RankingRoute = RankingRouteImport.update({
+  id: '/ranking',
+  path: '/ranking',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/eventos': typeof EventosRoute
   '/mapa': typeof MapaRoute
   '/privacidade': typeof PrivacidadeRoute
+  '/ranking': typeof RankingRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/roadmap': typeof RoadmapRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByTo {
   '/eventos': typeof EventosRoute
   '/mapa': typeof MapaRoute
   '/privacidade': typeof PrivacidadeRoute
+  '/ranking': typeof RankingRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/roadmap': typeof RoadmapRoute
@@ -274,6 +282,7 @@ export interface FileRoutesById {
   '/eventos': typeof EventosRoute
   '/mapa': typeof MapaRoute
   '/privacidade': typeof PrivacidadeRoute
+  '/ranking': typeof RankingRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/roadmap': typeof RoadmapRoute
@@ -309,6 +318,7 @@ export interface FileRouteTypes {
     | '/eventos'
     | '/mapa'
     | '/privacidade'
+    | '/ranking'
     | '/recuperar-senha'
     | '/redefinir-senha'
     | '/roadmap'
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/eventos'
     | '/mapa'
     | '/privacidade'
+    | '/ranking'
     | '/recuperar-senha'
     | '/redefinir-senha'
     | '/roadmap'
@@ -374,6 +385,7 @@ export interface FileRouteTypes {
     | '/eventos'
     | '/mapa'
     | '/privacidade'
+    | '/ranking'
     | '/recuperar-senha'
     | '/redefinir-senha'
     | '/roadmap'
@@ -408,6 +420,7 @@ export interface RootRouteChildren {
   EventosRoute: typeof EventosRoute
   MapaRoute: typeof MapaRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
+  RankingRoute: typeof RankingRoute
   RecuperarSenhaRoute: typeof RecuperarSenhaRoute
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   RoadmapRoute: typeof RoadmapRoute
@@ -490,6 +503,13 @@ declare module '@tanstack/react-router' {
       path: '/privacidade'
       fullPath: '/privacidade'
       preLoaderRoute: typeof PrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ranking': {
+      id: '/ranking'
+      path: '/ranking'
+      fullPath: '/ranking'
+      preLoaderRoute: typeof RankingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/recuperar-senha': {
@@ -683,6 +703,7 @@ const rootRouteChildren: RootRouteChildren = {
   EventosRoute: EventosRoute,
   MapaRoute: MapaRoute,
   PrivacidadeRoute: PrivacidadeRoute,
+  RankingRoute: RankingRoute,
   RecuperarSenhaRoute: RecuperarSenhaRoute,
   RedefinirSenhaRoute: RedefinirSenhaRoute,
   RoadmapRoute: RoadmapRoute,

@@ -12,7 +12,7 @@ const COLS = [
       { to: "/acervo", label: "Acervo" },
       { to: "/eventos", label: "Eventos" },
       { to: "/salas", label: "Salas de estudo" },
-      { to: "/assistente", label: "Biblioteca Viva AI" },
+      { to: "/assistente", label: "Peça uma indicação" },
     ],
   },
   {

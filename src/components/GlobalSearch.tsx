@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, BookOpen, CalendarDays, Coffee, GraduationCap, Hammer, Library as LibraryIcon, Loader2, MessagesSquare, Search, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, CalendarDays, Coffee, GraduationCap, Hammer, Library as LibraryIcon, Loader2, MessagesSquare, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { EVENTS } from "@/data/content";
 import { FEATURED_LIBRARIES } from "@/data/libraries";
@@ -75,7 +75,7 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
           submit();
         }}
         className={cn(
-          "group relative flex items-center rounded-full border bg-surface shadow-card transition-all",
+          "group relative flex items-center rounded-xl border bg-surface shadow-soft transition-all",
           open && "border-primary shadow-elevated ring-4 ring-primary/10",
         )}
       >
@@ -93,7 +93,7 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
           aria-label="Busca global"
         />
         {loading && <Loader2 className="mr-2 size-5 animate-spin text-primary" />}
-        <button type="submit" className="mr-2 grid size-12 shrink-0 place-items-center rounded-full bg-gradient-primary text-primary-foreground shadow-glow md:size-14" aria-label="Buscar">
+        <button type="submit" className="mr-2 grid size-12 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover md:size-14" aria-label="Buscar">
           <ArrowRight className="size-5" />
         </button>
       </form>
@@ -106,7 +106,7 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
               <div className="flex flex-wrap gap-2">
                 {TOPICS.map((t) => (
                   <button key={t} onClick={() => setQ(t)} className="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition hover:border-primary hover:text-primary">
-                    <Sparkles className="size-3.5 text-primary" /> {t}
+                    <Search className="size-3.5 text-muted-foreground" /> {t}
                   </button>
                 ))}
               </div>

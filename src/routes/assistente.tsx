@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUp, Bot, CalendarDays, Sparkles } from "lucide-react";
+import { ArrowUp, BookHeart, BookOpen, CalendarDays } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BookCard, LibraryCard } from "@/components/common";
 import { Badge } from "@/components/ui";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/assistente")({
   head: () => ({
     meta: [
-      { title: "Biblioteca Viva AI — Assistente" },
+      { title: "Peça uma indicação — Biblioteca Viva" },
       { name: "description", content: "Pergunte em linguagem natural e receba livros, bibliotecas e eventos sob medida." },
     ],
   }),
@@ -114,11 +114,11 @@ function Assistente() {
     <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-3xl flex-col px-4 pt-20 lg:min-h-screen lg:pt-24">
       {msgs.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center py-10 text-center">
-          <span className="grid size-16 animate-float place-items-center rounded-3xl bg-gradient-primary text-primary-foreground shadow-glow">
-            <Sparkles className="size-7" />
+          <span className="grid size-14 place-items-center rounded-xl bg-primary-soft text-primary">
+            <BookHeart className="size-7" />
           </span>
-          <h1 className="mt-6 text-3xl font-semibold tracking-tight md:text-4xl">Biblioteca Viva <span className="text-gradient">AI</span></h1>
-          <p className="mt-2 max-w-md text-muted-foreground">Pergunte qualquer coisa. Eu procuro livros, bibliotecas e eventos para você.</p>
+          <h1 className="mt-6 text-3xl md:text-4xl">Peça uma indicação</h1>
+          <p className="mt-2 max-w-md text-muted-foreground">Conte o que você quer aprender, ler ou fazer. A gente sugere livros, bibliotecas e eventos que combinam.</p>
           <div className="mt-8 grid w-full gap-2 sm:grid-cols-2">
             {SUGGESTIONS.map((s) => (
               <button key={s} onClick={() => ask(s)} className="rounded-2xl border bg-surface px-4 py-3.5 text-left text-sm transition hover:border-primary active:scale-[0.98]">
@@ -136,7 +136,7 @@ function Assistente() {
               </div>
             ) : (
               <div key={i} className="flex gap-3">
-                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-soft-foreground"><Bot className="size-4" /></span>
+                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-soft-foreground"><BookOpen className="size-4" /></span>
                 <div className="min-w-0 flex-1 space-y-4">
                   {!m.answer ? (
                     <div className="flex gap-1 py-3">

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Flame, Sparkles } from "lucide-react";
+import { ArrowRight, Flame, MessageCircleQuestion } from "lucide-react";
 import { BookCard, BookCover, BookGridSkeleton, EventCard } from "@/components/common";
+import { ProgressRing } from "@/components/motion";
 import { BadgeGrid, DashHeader, FreeClassics, SavedBookRow } from "@/components/dashboard";
 import { Card } from "@/components/ui";
 import { EVENTS, USER } from "@/data/content";
@@ -31,11 +32,11 @@ function Home() {
   return (
     <>
       <DashHeader
-        title={<>{mounted ? greeting() : "Olá"}, {me.name}. 👋</>}
-        description="Que bom te ver de novo. Aqui está o que separamos para você hoje."
+        title={<>{mounted ? greeting() : "Olá"}, {me.name}.</>}
+        description="Que bom te ver por aqui. Separamos algumas coisas para hoje."
         action={
-          <Link to="/assistente" className="inline-flex h-10 items-center gap-2 self-start rounded-full bg-primary-soft px-4 text-sm font-medium text-primary-soft-foreground">
-            <Sparkles className="size-4" /> Pergunte à IA
+          <Link to="/assistente" className="inline-flex h-10 items-center gap-2 self-start rounded-lg border bg-surface px-4 text-sm font-medium hover:border-primary">
+            <MessageCircleQuestion className="size-4 text-primary" /> Não sabe o que ler?
           </Link>
         }
       />
@@ -66,11 +67,8 @@ function Home() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">{b.title}</p>
                   <p className="text-sm text-muted-foreground">{b.author}</p>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-3">
-                    <div className="h-full rounded-full bg-gradient-primary" style={{ width: `${b.progress}%` }} />
-                  </div>
-                  <p className="mt-1.5 text-xs text-muted-foreground">{b.progress}% concluído</p>
                 </div>
+                <ProgressRing value={b.progress} size={56} />
               </Card>
             </Link>
           ))}

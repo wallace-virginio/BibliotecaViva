@@ -19,7 +19,7 @@ export const Route = createFileRoute("/descobrir")({
 function Descobrir() {
   return (
     <>
-      <PageHero eyebrow="Descobrir" title="Curadorias para explorar o mundo dos livros" description="Coleções organizadas pela comunidade. Cada lugar leva ao seu perfil completo." />
+      <PageHero eyebrow="Descobrir" title="Bibliotecas que valem a visita" description="Salões históricos, cantinhos para estudar, espaços para crianças e laboratórios maker — escolhidos a dedo." />
       <Container className="pb-8">
         <CurationGrid />
       </Container>
@@ -29,13 +29,10 @@ function Descobrir() {
           return (
             <section key={c.key} id={c.key} className="scroll-mt-24">
               <Container>
-                <div className="mb-5 flex items-end justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className={cn("grid size-12 shrink-0 place-items-center rounded-2xl text-2xl shadow-soft", c.cover)}>{c.emoji}</span>
-                    <div>
-                      <h2 className="text-xl font-semibold tracking-tight md:text-2xl">{c.title}</h2>
-                      <p className="text-sm text-muted-foreground">{c.description}</p>
-                    </div>
+                <div className="rule-top mb-5 flex items-end justify-between gap-4 pt-4">
+                  <div>
+                    <h2 className="text-2xl md:text-3xl">{c.title}</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">{c.description}</p>
                   </div>
                   <Link to="/acervo" className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary sm:flex">
                     Ver acervo <ArrowRight className="size-4" />

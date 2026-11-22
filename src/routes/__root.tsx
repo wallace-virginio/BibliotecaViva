@@ -2,13 +2,17 @@
 import { HeadContent, Outlet, Scripts, createRootRoute, useRouterState } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { initAppShell } from "@/lib/native";
+import { installRipple } from "@/lib/motion";
 import { AuthProvider } from "@/lib/auth";
+import { LocationProvider } from "@/lib/location";
+import { LocationSheet } from "@/components/LocationSheet";
 import appCss from "@/styles.css?url";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { MobileTabBar } from "@/components/MobileTabBar";
 import { NotFound } from "@/components/NotFound";
 import { themeScript } from "@/components/ThemeToggle";
+import { a11yScript } from "@/components/AccessibilityMenu";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -21,7 +25,7 @@ export const Route = createRootRoute({
         content:
           "Plataforma aberta e colaborativa para descobrir bibliotecas, eventos, espaços de estudo e livros perto de você — em qualquer lugar do mundo.",
       },
-      { name: "theme-color", content: "#00AEEF" },
+      { name: "theme-color", content: "#7A4E2D" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
@@ -36,7 +40,7 @@ export const Route = createRootRoute({
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/icons/icon-192.png" },
     ],
-    scripts: [{ children: themeScript }],
+    scripts: [{ children: themeScript }, { children: a11yScript }],
   }),
   shellComponent: RootDocument,
   component: RootLayout,
@@ -46,7 +50,10 @@ export const Route = createRootRoute({
 function RootLayout() {
   return (
     <AuthProvider>
-      <AppFrame />
+      <LocationProvider>
+        <AppFrame />
+        <LocationSheet />
+      </LocationProvider>
     </AuthProvider>
   );
 }
@@ -54,6 +61,7 @@ function RootLayout() {
 function AppFrame() {
   useEffect(() => {
     initAppShell();
+    return installRipple();
   }, []);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isApp = pathname === "/app" || pathname.startsWith("/app/");
@@ -69,8 +77,9 @@ function AppFrame() {
     );
   return (
     <>
+      <a href="#conteudo" className="skip-link">Pular para o conteúdo</a>
       <Navbar />
-      <main className={isFullscreen ? "" : "min-h-screen pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0"}>
+      <main id="conteudo" tabIndex={-1} className={isFullscreen ? "" : "min-h-screen pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0"}>
         <Outlet />
       </main>
       {!isFullscreen && (

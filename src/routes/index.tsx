@@ -1,336 +1,105 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Building2, CalendarDays, Check, DoorOpen, MapPin, Sparkles, Star, Users } from "lucide-react";
-import { useState } from "react";
-import { CountUp, EventCard, Reveal } from "@/components/common";
+import { ArrowRight, BookOpenText, MapPin } from "lucide-react";
+import { useEffect, useState } from "react";
+import { BookCover, LibraryImage, Reveal } from "@/components/common";
+import { CoverWall } from "@/components/CoverWall";
+import { CurationGrid } from "@/components/CurationGrid";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { MapExplorer } from "@/components/map/MapExplorer";
-import { Badge, buttonClass, Card, Container, SectionHeader } from "@/components/ui";
-import { COMMUNITY_STATS, EVENTS, FUTURE_FEATURES, ROADMAP, STATUS_TONE } from "@/data/content";
-import { FEATURED_LIBRARIES } from "@/data/libraries";
-import { CurationGrid } from "@/components/CurationGrid";
-import { cn } from "@/lib/utils";
+import { TextFill } from "@/components/motion";
+import { RankNumber, ShelfRow } from "@/components/Ranking";
+import { buttonClass, Container, SectionHeader } from "@/components/ui";
+import { EVENTS, FREE_CLASSICS } from "@/data/content";
+import { FEATURED_LIBRARIES, getFeaturedLibrary } from "@/data/libraries";
+import { trending } from "@/lib/api/rankings";
+import { useAsync } from "@/lib/hooks";
+import { useLocation } from "@/lib/location";
+import { actions, useStore } from "@/lib/store";
+import { cn, formatDistance, haversineKm } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Biblioteca Viva — Conectando pessoas ao conhecimento" },
+      { title: "Biblioteca Viva — o que a biblioteca do seu bairro tem para você" },
       {
         name: "description",
-        content:
-          "Descubra bibliotecas, participe de eventos, encontre espaços para estudar e ajude a construir a maior rede aberta de bibliotecas do mundo.",
+        content: "Livros para emprestar, salas para estudar, clubes de leitura e oficinas — quase tudo de graça. Veja o que tem na biblioteca perto de você.",
       },
     ],
   }),
   component: Home,
 });
 
+/*
+ * Página inicial com cara de publicação, não de "landing de startup".
+ * Referências: NYPL (fotos reais com legenda, agenda em lista), Airbnb (busca logo de cara),
+ * Letterboxd (pôsteres numerados), Spotify (estantes de conteúdo) e jornais como The Guardian (fios, serifa, hierarquia).
+ */
 function Home() {
   return (
     <>
-      <Hero />
-      <MapSection />
-      <SearchSection />
-      <Audiences />
-      <Discover />
-      <Community />
-      <WeekEvents />
-      <RoadmapPreview />
-      <Future />
-      <FinalCta />
+      <Masthead />
+      <NearYou />
+      <OnTheShelf />
+      <PickOfTheWeek />
+      <Manifesto />
+      <Agenda />
+      <Collections />
+      <ForLibraries />
     </>
   );
 }
 
-/* ============ HERO ============ */
-function Hero() {
+const FREE_BOOKS = FREE_CLASSICS.map((b) => ({ id: b.id, title: b.title, authors: [b.author], coverId: b.coverId, subjects: [] }));
+
+/* ============ ABERTURA: frase humana + busca + fotos reais ============ */
+function Masthead() {
+  const { location, ask } = useLocation();
+  const [today, setToday] = useState("");
+  useEffect(() => setToday(new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })), []);
+  const photos = ["real-gabinete-portugues-de-leitura", "biblioteca-mario-de-andrade", "state-library-victoria"].map((s) => getFeaturedLibrary(s)!);
+
   return (
-    <section className="relative overflow-hidden pt-24 pb-14 md:pt-40 md:pb-28">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-hero" />
-      <div className="pointer-events-none absolute inset-0 bg-grid opacity-60" />
-      <Container className="relative grid items-center gap-16 lg:grid-cols-[1.1fr_1fr]">
-        <div className="animate-fade-up">
-          <Link to="/roadmap" className="mb-6 inline-flex items-center gap-2 rounded-full border glass py-1 pr-3 pl-1 text-xs font-medium shadow-soft">
-            <span className="rounded-full bg-gradient-primary px-2 py-0.5 text-primary-foreground">Novo</span>
-            Conheça a Biblioteca Viva AI <ArrowRight className="size-3" />
-          </Link>
-          <h1 className="text-[2.6rem] leading-[1.05] sm:text-5xl font-semibold tracking-tight text-balance md:text-6xl lg:text-7xl">
-            Conectando pessoas ao <span className="text-gradient">conhecimento.</span>
-          </h1>
-          <p className="mt-6 max-w-xl text-lg text-pretty text-muted-foreground md:text-xl">
-            Descubra bibliotecas, participe de eventos, encontre espaços para estudar e ajude a construir a maior rede
-            aberta de bibliotecas do mundo.
-          </p>
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Link to="/mapa" className={buttonClass("primary", "lg")}>
-              <MapPin className="size-5" /> Encontrar Biblioteca
-            </Link>
-            <Link to="/entrar" search={{ modo: "biblioteca" }} className={buttonClass("outline", "lg")}>
-              <Building2 className="size-5" /> Quero cadastrar minha biblioteca
-            </Link>
-          </div>
-          <div className="mt-10 flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex -space-x-2">
-              {["bg-cover-1", "bg-cover-2", "bg-cover-3", "bg-cover-4"].map((c, i) => (
-                <span key={c} className={cn("grid size-8 place-items-center rounded-full border-2 border-background text-[11px] font-semibold text-on-image", c)}>
-                  {["AR", "KW", "LM", "SG"][i]}
-                </span>
-              ))}
+    <section className="pt-20 pb-12 md:pt-28 md:pb-16">
+      <Container>
+        <div className="rule-thin mb-6 flex flex-wrap items-center justify-between gap-2 pt-3 text-xs text-muted-foreground">
+          <span className="first-letter:uppercase">{today || " "}</span>
+          <button onClick={ask} className="flex items-center gap-1 hover:text-foreground">
+            <MapPin className="size-3.5" /> {location ? `Edição de ${location.label}` : "Escolha sua cidade"}
+          </button>
+        </div>
+
+        <div className="grid items-start gap-10 lg:grid-cols-[1.15fr_1fr] lg:gap-14">
+          <div className="animate-fade-up">
+            <h1 className="text-[2.35rem] leading-[1.08] text-balance sm:text-5xl md:text-[3.6rem]">
+              Descubra o que a biblioteca do seu bairro tem para você.
+            </h1>
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-pretty text-muted-foreground">
+              Livros para emprestar, salas para estudar, clubes de leitura e oficinas — <span className="highlight text-foreground">quase tudo de graça</span>. A gente mostra onde fica, quando abre e o que está disponível agora.
+            </p>
+
+            <div className="mt-7">
+              <GlobalSearch className="!mx-0 !max-w-none" />
             </div>
-            <span>
-              <strong className="text-foreground">12.480 bibliotecas</strong> em 64 países já fazem parte.
-            </span>
+
+            <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+              <li><Link to="/mapa" className="font-medium text-primary underline-offset-4 hover:underline">Abertas agora perto de mim</Link></li>
+              <li><Link to="/acervo" search={{ ebook: true }} className="font-medium text-primary underline-offset-4 hover:underline">Livros para ler de graça</Link></li>
+              <li><Link to="/eventos" className="font-medium text-primary underline-offset-4 hover:underline">O que tem esta semana</Link></li>
+            </ul>
           </div>
-        </div>
-        <HeroIllustration />
-      </Container>
-    </section>
-  );
-}
 
-function HeroIllustration() {
-  const lib = FEATURED_LIBRARIES[1];
-  return (
-    <div className="relative mx-auto hidden aspect-square w-full max-w-[520px] animate-fade-in [animation-delay:200ms] md:block">
-      {/* globo estilizado */}
-      <div className="absolute inset-[8%] rounded-full bg-gradient-primary opacity-15 blur-3xl" />
-      <svg viewBox="0 0 400 400" className="absolute inset-[6%] text-primary" fill="none" aria-hidden>
-        <defs>
-          <radialGradient id="g1" cx="35%" cy="30%">
-            <stop offset="0" stopColor="currentColor" stopOpacity=".25" />
-            <stop offset="1" stopColor="currentColor" stopOpacity=".03" />
-          </radialGradient>
-        </defs>
-        <circle cx="200" cy="200" r="170" fill="url(#g1)" stroke="currentColor" strokeOpacity=".25" />
-        {[40, 80, 120, 160].map((r) => (
-          <ellipse key={r} cx="200" cy="200" rx={r} ry="170" stroke="currentColor" strokeOpacity=".14" />
-        ))}
-        {[-110, -55, 0, 55, 110].map((y) => (
-          <ellipse key={y} cx="200" cy={200 + y} rx={Math.sqrt(170 * 170 - y * y)} ry="10" stroke="currentColor" strokeOpacity=".14" />
-        ))}
-        {[
-          [140, 150], [250, 120], [290, 220], [180, 260], [110, 230], [230, 300], [200, 180],
-        ].map(([x, y], i) => (
-          <g key={i}>
-            <circle cx={x} cy={y} r="14" fill="currentColor" opacity=".12">
-              <animate attributeName="r" values="6;18;6" dur={`${2.5 + i * 0.3}s`} repeatCount="indefinite" />
-            </circle>
-            <circle cx={x} cy={y} r="5" fill="currentColor" />
-          </g>
-        ))}
-        <path d="M140 150 Q200 100 250 120 M250 120 Q300 160 290 220 M200 180 Q150 220 180 260 M180 260 Q210 290 230 300 M110 230 Q130 190 140 150" stroke="currentColor" strokeOpacity=".4" strokeDasharray="4 6" />
-      </svg>
-
-      {/* cartões flutuantes */}
-      <Card className="absolute top-[6%] left-[-4%] w-56 animate-float p-3.5 glass shadow-elevated">
-        <div className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-xl bg-success-soft text-success"><DoorOpen className="size-5" /></span>
-          <div>
-            <p className="text-sm font-semibold">{lib.name.replace("Biblioteca ", "")}</p>
-            <p className="text-xs text-success">● Aberta agora · 3 salas livres</p>
-          </div>
-        </div>
-      </Card>
-      <Card className="absolute top-[40%] right-[-6%] w-52 animate-float p-3.5 glass shadow-elevated [animation-delay:1.2s]">
-        <p className="text-xs text-muted-foreground">Hoje · 19:00</p>
-        <p className="mt-0.5 text-sm font-semibold">Clube de leitura: Dom Casmurro</p>
-        <div className="mt-2 flex items-center justify-between">
-          <Badge tone="primary">7 vagas</Badge>
-          <span className="text-xs font-medium text-primary">Participar →</span>
-        </div>
-      </Card>
-      <Card className="absolute bottom-[6%] left-[4%] w-60 animate-float p-3.5 glass shadow-elevated [animation-delay:2.2s]">
-        <div className="flex items-center gap-3">
-          <img src="https://covers.openlibrary.org/b/id/8231856-M.jpg" alt="" className="h-14 w-10 rounded-md object-cover shadow-soft" />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">Disponível perto de você</p>
-            <p className="text-xs text-muted-foreground">Estante B · 3º andar · 1,2 km</p>
-            <div className="mt-1 flex text-star">{[0, 1, 2, 3, 4].map((i) => <Star key={i} className="size-3 fill-current" />)}</div>
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-/* ============ MAPA ============ */
-function MapSection() {
-  return (
-    <section id="mapa" className="scroll-mt-24 py-16 md:py-20">
-      <Container>
-        <SectionHeader
-          eyebrow="Mapa vivo"
-          title={<>Tudo o que existe <span className="text-gradient">perto de você.</span></>}
-          description="Bibliotecas reais do OpenStreetMap e da rede Biblioteca Viva, com horários, salas, computadores e eventos de hoje. Clique em um marcador para explorar."
-        />
-        <Reveal>
-          <MapExplorer />
-        </Reveal>
-      </Container>
-    </section>
-  );
-}
-
-/* ============ BUSCA ============ */
-function SearchSection() {
-  return (
-    <section className="relative py-20 md:py-28">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-hero opacity-60" />
-      <Container className="relative text-center">
-        <SectionHeader
-          eyebrow="Busca global"
-          title="Uma pergunta. Todo o conhecimento da rede."
-          description="Livros, eventos, bibliotecas, cursos, oficinas, clubes de leitura e espaços de estudo — tudo ao mesmo tempo."
-        />
-        <GlobalSearch />
-        <p className="mt-6 text-sm text-muted-foreground">Mais de 40 milhões de livros indexados via Open Library.</p>
-      </Container>
-    </section>
-  );
-}
-
-/* ============ PÚBLICOS ============ */
-function Audiences() {
-  const items = [
-    {
-      icon: Users,
-      who: "Para cidadãos",
-      title: "Descubra o que existe perto de você",
-      points: ["Mapa de bibliotecas abertas agora", "Eventos, cursos e clubes de leitura", "Reserve salas e computadores", "Assistente de IA para estudar"],
-      cta: { to: "/descobrir", label: "Começar a explorar" },
-      tone: "bg-cover-2",
-    },
-    {
-      icon: Building2,
-      who: "Para bibliotecas",
-      title: "Seja encontrada e gerencie tudo em um lugar",
-      points: ["Perfil público estilo Airbnb", "Agenda, acervo, salas e equipe", "Indicadores e comunidade", "Grátis para bibliotecas públicas"],
-      cta: { to: "/app/admin", label: "Ver painel da biblioteca" },
-      tone: "bg-cover-4",
-    },
-  ] as const;
-  return (
-    <section className="py-20 md:py-28">
-      <Container>
-        <SectionHeader eyebrow="Um ecossistema" title="Para quem lê e para quem faz a biblioteca acontecer." description="Cidadãos descobrem, bibliotecas são encontradas — e a rede cresce junto." />
-        <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
-          {items.map((it, i) => (
-            <Reveal key={it.who} delay={i * 100}>
-              <Card className="card-hover flex h-full flex-col p-7">
-                <span className={cn("grid size-12 place-items-center rounded-2xl text-on-image shadow-soft", it.tone)}>
-                  <it.icon className="size-6" />
-                </span>
-                <p className="mt-6 text-sm font-medium text-primary">{it.who}</p>
-                <h3 className="mt-1 text-xl font-semibold tracking-tight">{it.title}</h3>
-                <ul className="mt-5 flex-1 space-y-2.5">
-                  {it.points.map((p) => (
-                    <li key={p} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                      <Check className="mt-0.5 size-4 shrink-0 text-primary" /> {p}
-                    </li>
-                  ))}
-                </ul>
-                <Link to={it.cta.to} className="mt-7 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:gap-2.5 transition-all">
-                  {it.cta.label} <ArrowRight className="size-4" />
-                </Link>
-              </Card>
-            </Reveal>
-          ))}
-        </div>
-      </Container>
-    </section>
-  );
-}
-
-/* ============ DESCOBRIR ============ */
-function Discover() {
-  return (
-    <section className="bg-surface-2/50 py-20 md:py-28">
-      <Container>
-        <SectionHeader
-          align="left"
-          eyebrow="Descobrir"
-          title="Curadorias para cada tipo de curiosidade"
-          description="Coleções feitas pela comunidade para você encontrar o lugar certo."
-          action={<Link to="/descobrir" className={buttonClass("outline", "md")}>Ver todas <ArrowRight className="size-4" /></Link>}
-        />
-        <CurationGrid />
-      </Container>
-    </section>
-  );
-}
-
-/* ============ COMUNIDADE ============ */
-function Community() {
-  return (
-    <section className="py-20 md:py-28">
-      <Container>
-        <SectionHeader eyebrow="Comunidade" title="Uma rede que cresce todos os dias" description="Cada biblioteca conectada, cada conector publicado e cada evento cadastrado deixa a rede mais viva." />
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-          {COMMUNITY_STATS.map((s, i) => (
-            <Reveal key={s.label} delay={i * 60}>
-              <Card className="h-full p-6 text-center">
-                <p className="text-3xl font-semibold tracking-tight text-gradient md:text-4xl">
-                  <CountUp value={s.value} suffix={s.suffix} compact={s.value > 1_000_000} />
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">{s.label}</p>
-              </Card>
-            </Reveal>
-          ))}
-        </div>
-      </Container>
-    </section>
-  );
-}
-
-/* ============ EVENTOS ============ */
-function WeekEvents() {
-  const [joined, setJoined] = useState<string[]>([]);
-  return (
-    <section className="bg-surface-2/50 py-20 md:py-28">
-      <Container>
-        <SectionHeader
-          align="left"
-          eyebrow="Agenda"
-          title="Eventos globais desta semana"
-          description="Presenciais e online, em bibliotecas do mundo inteiro."
-          action={<Link to="/eventos" className={buttonClass("outline", "md")}>Ver agenda completa <ArrowRight className="size-4" /></Link>}
-        />
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {EVENTS.slice(0, 4).map((e, i) => (
-            <Reveal key={e.id} delay={i * 80}>
-              <EventCard event={e} joined={joined.includes(e.id)} onJoin={() => setJoined((j) => (j.includes(e.id) ? j : [...j, e.id]))} />
-            </Reveal>
-          ))}
-        </div>
-      </Container>
-    </section>
-  );
-}
-
-/* ============ ROADMAP ============ */
-function RoadmapPreview() {
-  return (
-    <section className="bg-surface-2/50 py-20 md:py-28">
-      <Container>
-        <SectionHeader align="left" eyebrow="Roadmap" title="O que vem por aí" action={<Link to="/roadmap" className={buttonClass("outline", "md")}>Roadmap completo <ArrowRight className="size-4" /></Link>} />
-        <div className="relative -mx-4 overflow-x-auto px-4 pb-4 scrollbar-none">
-          <div className="flex min-w-max gap-4">
-            {ROADMAP.map((r, i) => (
-              <Reveal key={r.version} delay={i * 60}>
-                <div className="relative w-64">
-                  <div className="mb-4 flex items-center gap-2">
-                    <span className={cn("size-3 rounded-full ring-4", r.status === "lançado" ? "bg-success ring-success-soft" : r.status === "em construção" ? "bg-primary ring-primary-soft" : "bg-border-strong ring-surface-3")} />
-                    <span className="h-px flex-1 bg-border-strong" />
-                  </div>
-                  <Card className="p-5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-primary">{r.version}</span>
-                      <Badge tone={STATUS_TONE[r.status]}>{r.status}</Badge>
-                    </div>
-                    <h3 className="mt-2 font-semibold">{r.title}</h3>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{r.period}</p>
-                  </Card>
-                </div>
-              </Reveal>
+          {/* Fotos de bibliotecas de verdade, com legenda — como numa revista */}
+          <div className="grid grid-cols-5 grid-rows-[auto_auto] gap-3">
+            <figure className="col-span-5 sm:col-span-3 sm:row-span-2">
+              <LibraryImage lib={photos[0]} className="aspect-[4/5] w-full rounded-lg sm:aspect-auto sm:h-[26rem]" />
+              <figcaption className="caption mt-1.5">{photos[0].name}, {photos[0].city}</figcaption>
+            </figure>
+            {photos.slice(1).map((l) => (
+              <figure key={l.slug} className="col-span-5 hidden sm:col-span-2 sm:block">
+                <LibraryImage lib={l} className="h-[11.6rem] w-full rounded-lg" />
+                <figcaption className="caption mt-1.5 line-clamp-1">{l.name}, {l.city}</figcaption>
+              </figure>
             ))}
           </div>
         </div>
@@ -339,45 +108,203 @@ function RoadmapPreview() {
   );
 }
 
-/* ============ FUTURO ============ */
-function Future() {
+/* ============ PERTO DE VOCÊ (mapa) ============ */
+function NearYou() {
+  const { location } = useLocation();
   return (
-    <section className="py-20 md:py-28">
+    <section id="mapa" className="scroll-mt-24 pb-16">
       <Container>
-        <SectionHeader eyebrow="Laboratório" title="A biblioteca do futuro já está em rascunho" description="Conceitos que estamos explorando com a comunidade." />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {FUTURE_FEATURES.map((f, i) => {
-            const Icon = f.icon;
-            return (
-              <Reveal key={f.title} delay={(i % 5) * 60}>
-                <Card className="card-hover group h-full p-5">
-                  <span className="grid size-11 place-items-center rounded-2xl bg-primary-soft text-primary-soft-foreground transition group-hover:bg-gradient-primary group-hover:text-primary-foreground">
-                    <Icon className="size-5" />
-                  </span>
-                  <h3 className="mt-4 text-[15px] font-semibold">{f.title}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{f.description}</p>
-                </Card>
-              </Reveal>
-            );
-          })}
+        <SectionHeader
+          eyebrow="No mapa"
+          title={location ? `Bibliotecas perto de ${location.label}` : "Bibliotecas perto de você"}
+          description="Horário de hoje, salas e computadores livres, e o que está acontecendo lá dentro. Toque em uma para ver."
+        />
+        <MapExplorer />
+      </Container>
+    </section>
+  );
+}
+
+/* ============ NA ESTANTE: o que estão lendo (pôsteres numerados) ============ */
+function OnTheShelf() {
+  const hot = useAsync((sig) => trending("weekly", 10, sig), []);
+  return (
+    <section className="bg-surface-2/60 py-14 md:py-16">
+      <Container className="space-y-12">
+        <div>
+          <SectionHeader
+            eyebrow="Na estante"
+            title="O que mais procuraram esta semana"
+            action={<Link to="/ranking" className="flex items-center gap-1 text-sm font-medium text-primary">Ver o ranking <ArrowRight className="size-4" /></Link>}
+          />
+          <ShelfRow title="" books={hot.data} loading={hot.loading} badge={(_, i) => <RankNumber n={i + 1} />} />
+        </div>
+        <div>
+          <SectionHeader eyebrow="Domínio público" title="Para ler agora, sem pagar nada" description="Clássicos completos que você abre aqui mesmo, no celular ou no computador." />
+          <ShelfRow title="" books={FREE_BOOKS} />
         </div>
       </Container>
     </section>
   );
 }
 
-function FinalCta() {
+/* ============ ESCOLHA DA SEMANA: uma indicação com texto de gente ============ */
+function PickOfTheWeek() {
+  const pick = FREE_CLASSICS[0]; // Dom Casmurro
+  const progress = useStore((s) => s.reading[pick.id]);
   return (
-    <section className="pb-24">
+    <section className="py-16 md:py-24">
       <Container>
-        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-primary p-10 text-center text-primary-foreground shadow-glow md:p-16">
-          <div className="pointer-events-none absolute inset-0 bg-grid opacity-20" />
-          <CalendarDays className="relative mx-auto size-10 opacity-80" />
-          <h2 className="relative mt-4 text-3xl font-semibold tracking-tight text-balance md:text-5xl">Sua próxima descoberta está a poucos quarteirões.</h2>
-          <div className="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <a href="#mapa" className={buttonClass("secondary", "lg")}>Abrir o mapa</a>
-            <Link to="/assistente" className={buttonClass("glass", "lg")}><Sparkles className="size-4" /> Perguntar à IA</Link>
+        <div className="rule-top grid gap-8 pt-6 md:grid-cols-[minmax(0,280px)_1fr] md:gap-14">
+          <Reveal>
+            <Link to="/livro/$id" params={{ id: pick.id }} className="block">
+              <BookCover coverId={pick.coverId} title={pick.title} author={pick.author} size="L" className="mx-auto w-48 rotate-[-2deg] rounded-md shadow-elevated md:w-full" />
+            </Link>
+          </Reveal>
+          <div className="max-w-2xl">
+            <p className="kicker">Escolha da semana</p>
+            <h2 className="mt-2 text-4xl md:text-5xl">{pick.title}</h2>
+            <p className="mt-1 text-muted-foreground">{pick.author} · 1899</p>
+            <div className="mt-6 space-y-4 font-serif text-lg leading-relaxed md:text-xl">
+              <p>
+                Um narrador em quem não dá para confiar, um Rio de Janeiro que ainda era capital do Império e uma pergunta que atravessa gerações de
+                leitores: Capitu traiu Bentinho?
+              </p>
+              <p className="text-muted-foreground">
+                Dá para ler inteirinho aqui, de graça. Se preferir o livro na mão, a gente mostra qual biblioteca perto de você tem um exemplar livre.
+              </p>
+            </div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link to="/ler/$id" params={{ id: pick.id }} className={buttonClass("primary", "lg")}>
+                <BookOpenText className="size-5" /> {progress ? `Continuar (${progress.percent}%)` : "Ler agora"}
+              </Link>
+              <Link to="/livro/$id" params={{ id: pick.id }} className={buttonClass("outline", "lg")}>Onde retirar</Link>
+            </div>
           </div>
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+/* ============ MANIFESTO (texto que se preenche com a rolagem) ============ */
+function Manifesto() {
+  return (
+    <section className="bg-foreground py-20 text-background md:py-28">
+      <Container className="max-w-4xl">
+        <p className="mb-6 text-xs font-bold tracking-[0.12em] uppercase opacity-70">Por que fazemos isso</p>
+        <TextFill
+          className="font-serif text-3xl leading-snug md:text-5xl md:leading-tight"
+          text="Toda cidade tem uma biblioteca. Lá dentro há livros, cursos, salas silenciosas, computadores e gente que gosta de ensinar — quase sempre de graça. A gente quer que ninguém mais passe na frente dela sem saber disso."
+        />
+      </Container>
+    </section>
+  );
+}
+
+/* ============ AGENDA: lista como programação impressa ============ */
+function Agenda() {
+  const { location } = useLocation();
+  const joined = useStore((s) => s.reservations.filter((r) => r.kind === "evento").map((r) => r.id));
+  const items = EVENTS.map((e) => {
+    const lib = FEATURED_LIBRARIES.find((l) => l.slug === e.librarySlug);
+    return { e, lib, km: location && lib ? haversineKm(location, lib) : undefined };
+  })
+    // o hackathon é coisa da área do desenvolvedor: fica fora da página inicial
+    .filter((x) => x.e.category !== "Hackathon")
+    .filter((x) => !location || x.e.online || (x.km ?? 0) <= 60)
+    .sort((a, b) => a.e.date.getTime() - b.e.date.getTime() || a.e.time.localeCompare(b.e.time))
+    .slice(0, 6);
+
+  return (
+    <section className="py-16 md:py-24">
+      <Container>
+        <SectionHeader
+          eyebrow="Agenda"
+          title={location ? `Esta semana em ${location.label}` : "Esta semana nas bibliotecas"}
+          action={<Link to="/eventos" className="flex items-center gap-1 text-sm font-medium text-primary">Agenda completa <ArrowRight className="size-4" /></Link>}
+        />
+        <ol className="divide-y border-y">
+          {items.map(({ e, lib, km }) => {
+            const id = `evento-${e.id}`;
+            const done = joined.includes(id);
+            return (
+              <li key={e.id} className="grid grid-cols-[3.5rem_1fr] gap-x-4 gap-y-2 py-5 sm:grid-cols-[4.5rem_1fr_auto] sm:items-center">
+                <div className="text-center leading-none">
+                  <div className="font-serif text-3xl font-semibold tabular-nums">{e.date.getDate()}</div>
+                  <div className="mt-1 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                    {e.date.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-deep">{e.category}{e.online ? " · Online" : ""}</p>
+                  <p className="mt-0.5 font-serif text-lg leading-snug font-medium">{e.title}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {e.time} · {e.online ? "pela internet" : lib?.name}
+                    {!e.online && km !== undefined ? ` · ${formatDistance(km)}` : ""}
+                    {" · "}
+                    <span className={cn(e.spotsLeft === 0 ? "text-danger" : e.spotsLeft < 10 && "text-warning")}>
+                      {e.spotsLeft === 0 ? "lotado" : `${e.spotsLeft} vagas`}
+                    </span>
+                  </p>
+                </div>
+                <button
+                  disabled={e.spotsLeft === 0 && !done}
+                  onClick={() =>
+                    done
+                      ? actions.cancelReservation(id)
+                      : actions.reserve({ id, kind: "evento", title: e.title, subtitle: e.online ? "Online" : lib?.name, when: `${e.date.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })} · ${e.time}` })
+                  }
+                  className={cn("col-start-2 justify-self-start text-sm font-semibold underline-offset-4 hover:underline disabled:opacity-40 sm:col-start-3", done ? "text-success" : "text-primary")}
+                >
+                  {done ? "Inscrito ✓" : e.spotsLeft === 0 ? "Sem vagas" : "Quero ir"}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </Container>
+    </section>
+  );
+}
+
+/* ============ COLEÇÕES (fotos reais) + parede de capas ============ */
+function Collections() {
+  return (
+    <section className="bg-surface-2/60 py-16 md:py-24">
+      <Container>
+        <SectionHeader
+          eyebrow="Para descobrir"
+          title="Bibliotecas que valem a visita"
+          action={<Link to="/descobrir" className="flex items-center gap-1 text-sm font-medium text-primary">Todas as coleções <ArrowRight className="size-4" /></Link>}
+        />
+        <CurationGrid />
+      </Container>
+      <div className="mt-16">
+        <Container><p className="kicker mb-4">Do acervo</p></Container>
+        <CoverWall rows={2} className="h-[22rem]" />
+      </div>
+    </section>
+  );
+}
+
+/* ============ PARA BIBLIOTECAS (bloco honesto, sem marketing) ============ */
+function ForLibraries() {
+  return (
+    <section className="py-16 md:py-20">
+      <Container>
+        <div className="rule-top grid gap-6 pt-6 md:grid-cols-[1fr_auto] md:items-end">
+          <div className="max-w-2xl">
+            <p className="kicker">Para quem trabalha em biblioteca</p>
+            <h2 className="mt-2 text-3xl md:text-4xl">Sua biblioteca merece ser encontrada.</h2>
+            <p className="mt-3 text-muted-foreground">
+              Cadastre de graça: horários, agenda, salas e acervo num só lugar, e um perfil público para a vizinhança achar vocês. Bibliotecas públicas,
+              comunitárias e escolares nunca pagam.
+            </p>
+          </div>
+          <Link to="/entrar" search={{ modo: "biblioteca" }} className={buttonClass("secondary", "lg")}>
+            Cadastrar minha biblioteca
+          </Link>
         </div>
       </Container>
     </section>

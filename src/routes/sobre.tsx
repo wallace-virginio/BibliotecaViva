@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Globe2, HeartHandshake, Lock, Sparkles, Unlock, Users } from "lucide-react";
-import { CountUp, PageHero, Reveal } from "@/components/common";
+import { Globe2, HeartHandshake, Lock, Unlock, Users } from "lucide-react";
+import { PageHero, Reveal } from "@/components/common";
 import { buttonClass, Card, Container } from "@/components/ui";
-import { COMMUNITY_STATS } from "@/data/content";
 
 export const Route = createFileRoute("/sobre")({
   head: () => ({
@@ -20,7 +19,7 @@ const PRINCIPLES = [
   { icon: Users, title: "Feita pela comunidade", text: "Desenvolvedores criam Providers, leitores avaliam, bibliotecários curam." },
   { icon: Lock, title: "Privacidade primeiro", text: "Seu histórico de leitura é seu. Nada é vendido, nada é rastreado sem consentimento." },
   { icon: HeartHandshake, title: "Gratuita para bibliotecas públicas", text: "Bibliotecas públicas, escolares e comunitárias nunca pagam para estar na rede." },
-  { icon: Sparkles, title: "Tecnologia a serviço das pessoas", text: "IA, mapas e dados para aproximar pessoas do conhecimento — não para substituí-las." },
+  { icon: Users, title: "Gente antes de tecnologia", text: "Mapas e dados servem para levar você até a biblioteca e até quem trabalha nela — não para substituir ninguém." },
 ];
 
 function Sobre() {
@@ -44,11 +43,15 @@ function Sobre() {
             </Reveal>
           ))}
         </div>
-        <div className="mt-14 grid grid-cols-2 gap-4 md:grid-cols-3">
-          {COMMUNITY_STATS.map((s) => (
-            <div key={s.label} className="rounded-3xl bg-surface-2 p-6">
-              <p className="text-3xl font-semibold text-gradient"><CountUp value={s.value} compact={s.value > 1_000_000} suffix={s.suffix} /></p>
-              <p className="mt-1 text-sm text-muted-foreground">{s.label}</p>
+        <div className="rule-top mt-14 grid gap-8 pt-6 sm:grid-cols-3">
+          {[
+            { n: "+40 milhões", t: "de títulos no acervo aberto da Open Library, que a gente usa para buscar livros." },
+            { n: "Dezenas de milhares", t: "de bibliotecas mapeadas por voluntários no OpenStreetMap — a base do nosso mapa." },
+            { n: "Domínio público", t: "clássicos completos do Wikisource e do Internet Archive, para ler aqui de graça." },
+          ].map((f) => (
+            <div key={f.n}>
+              <p className="font-serif text-3xl font-semibold">{f.n}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{f.t}</p>
             </div>
           ))}
         </div>

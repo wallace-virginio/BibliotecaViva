@@ -3,6 +3,8 @@ import { BookOpen, Building2, CalendarDays, Code2, Heart, House, Loader2, LogOut
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ConsentGate } from "@/components/ConsentGate";
+import { LocationChip } from "@/components/LocationSheet";
+import { AccessibilityMenu } from "@/components/AccessibilityMenu";
 import { useAuth } from "@/lib/auth";
 import { useUserStats } from "@/lib/userStats";
 import { useStore } from "@/lib/store";
@@ -103,6 +105,8 @@ function AppShell() {
           <div className="flex h-14 items-center justify-between px-4">
             <Logo />
             <div className="flex items-center gap-1">
+              <LocationChip className="max-w-[8.5rem]" />
+              <AccessibilityMenu />
               <ThemeToggle />
               <Link to="/app/perfil" className="grid size-9 place-items-center rounded-full bg-gradient-primary text-sm font-semibold text-primary-foreground">{initial}</Link>
             </div>
