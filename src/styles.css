@@ -255,14 +255,22 @@
 
 @layer base {
   * { border-color: var(--border); }
-  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  /* Grid sem colunas definidas (ex.: "grid lg:grid-cols-[1fr_300px]" no celular): por padrão a coluna implícita
+     cresce até o conteúdo (uma fileira de filtros, um título comprido) e empurra a tela para o lado.
+     Uma coluna "minmax(0, 1fr)" nunca passa da largura disponível. Classes grid-cols-* continuam valendo. */
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  /* overflow-x: clip no html E no body: o WebView do Android ignora o "hidden" só no body e deixava a página
+     inteira arrastar para o lado quando uma fileira horizontal (filtros, estantes) passava da tela.
+     "clip" (diferente de "hidden") não quebra position: sticky nem as fileiras que rolam sozinhas. */
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; overflow-x: clip; max-width: 100%; }
   body {
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
     font-feature-settings: "cv11", "ss01", "ss03";
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    overflow-x: clip;
+    max-width: 100%;
     overscroll-behavior-y: none;
     -webkit-tap-highlight-color: transparent;
   }
