@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { BookOpen, CalendarDays, House, LibraryBig, Map, UserRound } from "lucide-react";
 import { IS_APP } from "@/lib/platform";
+import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
 
 /** Abas do app de celular: o que a pessoa usa todo dia. Eventos e Salas ficam no Início. */
@@ -37,6 +38,7 @@ export function MobileTabBar() {
             <li key={to}>
               <Link
                 to={to}
+                onClick={() => !active && haptic()}
                 className={cn(
                   "flex h-full flex-col items-center justify-center gap-1 text-xs font-medium transition active:scale-95",
                   active ? "text-primary" : "text-muted-foreground",

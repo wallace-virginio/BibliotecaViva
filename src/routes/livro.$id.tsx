@@ -8,6 +8,8 @@ import { BookNotFoundError, booksBySubject, getBook } from "@/lib/api/openlibrar
 import { holdingsFor } from "@/lib/catalog";
 import { ShelfMenuButton } from "@/components/ShelfButton";
 import { confetti } from "@/lib/motion";
+import { haptic, shareLink } from "@/lib/native";
+import { IS_APP } from "@/lib/platform";
 import { useAskLocationOnce, useLocation, useNearbyLibraries } from "@/lib/location";
 import { formatDistance } from "@/lib/utils";
 import { useAsync } from "@/lib/hooks";
@@ -80,9 +82,12 @@ function BookPage() {
     <div className="relative pt-24 pb-24">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-gradient-hero" />
       <Container className="relative">
-        <Link to="/acervo" className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="size-4" /> Acervo
-        </Link>
+        {/* no app o "Voltar" fica no cabeçalho */}
+        {!IS_APP && (
+          <Link to="/acervo" className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="size-4" /> Acervo
+          </Link>
+        )}
         <div className="grid gap-10 md:grid-cols-[300px_1fr] lg:gap-16">
           <div className="mx-auto w-56 animate-fade-up md:w-full">
             <BookCover coverId={book.coverId} title={book.title} author={book.authors[0]} size="L" className="rounded-2xl shadow-elevated" />
@@ -124,6 +129,7 @@ function BookPage() {
                   }
                   actions.reserve({ id: `livro-${id}`, kind: "livro", title: book.title, subtitle: best?.library.name, when: "Retirar em até 3 dias", bookId: book.id, author: book.authors[0], coverId: book.coverId });
                   setToast(`Reservado em ${best?.library.name}. Veja em Minhas reservas.`);
+                  haptic("success");
                   confetti();
                 }}
               >
@@ -136,12 +142,8 @@ function BookPage() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => {
-                  if (navigator.share) navigator.share({ title: book.title, url: location.href }).catch(() => {});
-                  else {
-                    navigator.clipboard?.writeText(location.href);
-                    setToast("Link copiado!");
-                  }
+                onClick={async () => {
+                  if ((await shareLink(book.title, `/livro/${book.id}`)) === "copied") setToast("Link copiado!");
                 }}
               >
                 <Share2 className="size-4" /> Compartilhar

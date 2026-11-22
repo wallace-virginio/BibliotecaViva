@@ -21,6 +21,7 @@ import type { Library } from "@/data/libraries";
 import { DAY_NAMES, formatRanges, openStatus } from "@/lib/hours";
 import { cn, compactNumber, formatDistance, haversineKm } from "@/lib/utils";
 import { useLibraryPhotos } from "../common";
+import { shareLink } from "@/lib/native";
 import { Badge, buttonClass, Stars } from "../ui";
 
 export function OpenBadge({ lib }: { lib: Library }) {
@@ -61,10 +62,10 @@ export function PhotoCarousel({ lib, className }: { lib: Library; className?: st
       <img key={list[idx]} src={list[idx]} alt={lib.name} className="size-full animate-fade-in object-cover" />
       {list.length > 1 && (
         <>
-          <button onClick={() => setI((idx - 1 + list.length) % list.length)} className="absolute top-1/2 left-2 grid size-8 -translate-y-1/2 place-items-center rounded-full glass border opacity-0 transition group-hover:opacity-100" aria-label="Foto anterior">
+          <button onClick={() => setI((idx - 1 + list.length) % list.length)} className="absolute top-1/2 left-2 grid size-10 -translate-y-1/2 place-items-center rounded-full glass border opacity-0 transition group-hover:opacity-100 [@media(hover:none)]:opacity-100" aria-label="Foto anterior">
             <ChevronLeft className="size-4" />
           </button>
-          <button onClick={() => setI((idx + 1) % list.length)} className="absolute top-1/2 right-2 grid size-8 -translate-y-1/2 place-items-center rounded-full glass border opacity-0 transition group-hover:opacity-100" aria-label="Próxima foto">
+          <button onClick={() => setI((idx + 1) % list.length)} className="absolute top-1/2 right-2 grid size-10 -translate-y-1/2 place-items-center rounded-full glass border opacity-0 transition group-hover:opacity-100 [@media(hover:none)]:opacity-100" aria-label="Próxima foto">
             <ChevronRight className="size-4" />
           </button>
           <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1">
@@ -184,11 +185,7 @@ export function LibraryPanel({
         <button
           className={buttonClass("outline", "icon")}
           aria-label="Compartilhar"
-          onClick={() => {
-            const url = `${location.origin}/biblioteca/${lib.slug}`;
-            if (navigator.share) navigator.share({ title: lib.name, url }).catch(() => {});
-            else navigator.clipboard?.writeText(url);
-          }}
+          onClick={() => shareLink(lib.name, `/biblioteca/${lib.slug}`)}
         >
           <Share2 className="size-4" />
         </button>

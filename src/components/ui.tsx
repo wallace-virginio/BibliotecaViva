@@ -17,10 +17,11 @@ export const buttonClass = (variant: Variant = "primary", size: Size = "md", cla
       glass: "border bg-surface text-foreground hover:bg-surface-2",
     }[variant],
     {
-      sm: "h-9 px-4 text-sm",
+      // no celular, todo alvo de toque tem pelo menos 44px (recomendação de Apple e Google)
+      sm: "h-11 px-4 text-sm lg:h-9",
       md: "h-11 px-5 text-sm",
       lg: "h-13 px-7 text-base",
-      icon: "size-10",
+      icon: "size-11 lg:size-10",
     }[size],
     className,
   );
@@ -114,7 +115,7 @@ export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInp
   return (
     <input
       className={cn(
-        "h-11 w-full rounded-xl border bg-surface px-4 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/15",
+        "h-11 w-full rounded-xl border bg-surface px-4 text-base md:text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/15",
         className,
       )}
       {...props}

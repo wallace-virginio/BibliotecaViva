@@ -28,6 +28,8 @@ import { Badge, Button, buttonClass, Card, Container, EmptyState, Stars } from "
 import { EVENTS, FAQ } from "@/data/content";
 import { fromOsm, getFeaturedLibrary, type Library } from "@/data/libraries";
 import { booksBySubject } from "@/lib/api/openlibrary";
+import { shareLink } from "@/lib/native";
+import { IS_APP } from "@/lib/platform";
 import { libraryByOsmId } from "@/lib/api/overpass";
 import { DAY_NAMES, formatRanges } from "@/lib/hours";
 import { useAsync } from "@/lib/hooks";
@@ -141,9 +143,12 @@ function LibraryProfile({ lib }: { lib: Library }) {
   return (
     <div className="pt-24 pb-24">
       <Container>
-        <Link to="/" hash="mapa" className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="size-4" /> Voltar ao mapa
-        </Link>
+        {/* no app o "Voltar" fica no cabeçalho */}
+        {!IS_APP && (
+          <Link to="/" hash="mapa" className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="size-4" /> Voltar ao mapa
+          </Link>
+        )}
         <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div className="animate-fade-up">
             <div className="mb-2 flex flex-wrap gap-2">
@@ -159,7 +164,7 @@ function LibraryProfile({ lib }: { lib: Library }) {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigator.share?.({ title: lib.name, url: location.href }).catch(() => {}) ?? navigator.clipboard?.writeText(location.href)}>
+            <Button variant="outline" size="sm" onClick={() => shareLink(lib.name, `/biblioteca/${lib.slug}`)}>
               <Share2 className="size-4" /> Compartilhar
             </Button>
             <Button variant={followed ? "soft" : "outline"} size="sm" onClick={() => actions.toggleFollowLibrary(lib.slug)}>

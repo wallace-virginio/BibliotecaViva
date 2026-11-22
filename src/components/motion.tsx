@@ -214,8 +214,8 @@ export function HorizontalGallery({ title, children }: { title: ReactNode; child
 
   // sem distância (celular, ou menos movimento): vira uma faixa normal com rolagem lateral
   return (
-    <div ref={outer} style={dist ? { height: `calc(100vh + ${dist}px)` } : undefined}>
-      <div className={cn(dist && "sticky top-0 flex h-screen flex-col justify-center")}>
+    <div ref={outer} style={dist ? { height: `calc(100dvh + ${dist}px)` } : undefined}>
+      <div className={cn(dist && "sticky top-0 flex h-dvh flex-col justify-center")}>
         {title}
         <div ref={track} className={cn("mt-5", dist ? "overflow-hidden" : "-mx-4 overflow-x-auto px-4 scrollbar-none sm:mx-0 sm:px-0")}>
           <div className="flex w-max gap-5 will-change-transform" style={{ transform: `translateX(${x}px)` }}>

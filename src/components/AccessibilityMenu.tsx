@@ -81,7 +81,7 @@ export function AccessibilityMenu({ className }: { className?: string }) {
         aria-expanded={open}
         aria-controls="menu-acessibilidade"
         aria-label="Acessibilidade"
-        className="grid size-10 place-items-center rounded-full text-muted-foreground transition hover:bg-surface-2 hover:text-foreground"
+        className="grid size-11 lg:size-10 place-items-center rounded-full text-muted-foreground transition hover:bg-surface-2 hover:text-foreground"
       >
         <Accessibility className="size-[19px]" />
       </button>
