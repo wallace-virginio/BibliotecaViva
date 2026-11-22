@@ -105,21 +105,58 @@ export async function booksBySubject(subject: string, limit = 12, signal?: Abort
   }));
 }
 
+/** O livro não existe (404). Qualquer outro erro é falha temporária da Open Library ou da rede. */
+export class BookNotFoundError extends Error {
+  constructor() {
+    super("Livro não encontrado");
+    this.name = "BookNotFoundError";
+  }
+}
+
+/** Busca com uma nova tentativa automática quando a Open Library está lenta/instável (não repete 404). */
+async function olFetchRetry(path: string, signal?: AbortSignal) {
+  try {
+    const res = await olFetch(path, signal);
+    if (res.ok || res.status === 404) return res;
+  } catch (e) {
+    if (signal?.aborted) throw e;
+  }
+  await new Promise((r) => setTimeout(r, 1200));
+  return olFetch(path, signal);
+}
+
+/**
+ * Resumos da Open Library vêm em Markdown: tira links, negrito/itálico, títulos e a seção
+ * de "veja também" depois de "----".
+ */
+export function cleanDescription(text: string | undefined) {
+  if (!text) return undefined;
+  const out = text
+    .split(/-{4,}/)[0]
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/(\*\*|__)(.+?)\1/g, "$2")
+    .replace(/(^|[\s(])[*_]([^*_\n]+)[*_](?=[\s).,;:!?]|$)/g, "$1$2")
+    .replace(/^#{1,6}\s+/gm, "")
+    .trim();
+  return out || undefined;
+}
+
 async function fetchWork(id: string, signal?: AbortSignal) {
   // Obras mescladas no Open Library viram registros "/type/redirect": seguimos até a obra final.
   let current = id;
   for (let i = 0; i < 4; i++) {
-    const res = await olFetch(`works/${current}.json`, signal);
-    if (!res.ok) throw new Error("Livro não encontrado");
+    const res = await olFetchRetry(`works/${current}.json`, signal);
+    if (res.status === 404) throw new BookNotFoundError();
+    if (!res.ok) throw new Error(`Open Library ${res.status}`);
     const w = await res.json();
     if (w.type?.key === "/type/redirect" && typeof w.location === "string") {
       current = w.location.replace("/works/", "");
       continue;
     }
-    if (!w.title) throw new Error("Livro não encontrado");
+    if (!w.title) throw new BookNotFoundError();
     return { w, id: current };
   }
-  throw new Error("Livro não encontrado");
+  throw new BookNotFoundError();
 }
 
 export async function getBook(requestedId: string, signal?: AbortSignal): Promise<BookDetail> {
@@ -147,10 +184,7 @@ export async function getBook(requestedId: string, signal?: AbortSignal): Promis
     coverId: w.covers?.find((c: number) => c > 0),
     year: yearMatch ? parseInt(yearMatch[0], 10) : undefined,
     subjects: (w.subjects ?? []).slice(0, 10),
-    description: desc
-      ?.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-      .split(/-{4,}/)[0]
-      .trim(),
+    description: cleanDescription(desc),
     rating: rating?.summary ? { average: rating.summary.average, count: rating.summary.count } : undefined,
     links: w.links,
     firstSentence: typeof w.first_sentence === "string" ? w.first_sentence : w.first_sentence?.value,

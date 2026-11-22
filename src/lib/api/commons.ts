@@ -45,6 +45,15 @@ export async function photosNear(lat: number, lon: number, radius = 250, signal?
   return photos;
 }
 
+/**
+ * A "imagem original" da Wikipédia pode ter 4000px+; pedimos uma miniatura de 1280px.
+ * O Wikimedia só gera larguras padronizadas (ex.: 960, 1280) — outras dão erro.
+ */
+export function sizedImage(url: string | undefined, width = 1280) {
+  if (!url) return url;
+  return /\/\d+px-/.test(url) ? url.replace(/\/\d+px-/, `/${width}px-`) : url;
+}
+
 export async function wikiSummary(title: string, lang = "pt", signal?: AbortSignal) {
   const res = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`, {
     signal,
@@ -53,7 +62,7 @@ export async function wikiSummary(title: string, lang = "pt", signal?: AbortSign
   const j = await res.json();
   return {
     extract: j.extract as string,
-    image: (j.originalimage?.source ?? j.thumbnail?.source) as string | undefined,
+    image: sizedImage((j.originalimage?.source ?? j.thumbnail?.source) as string | undefined),
     url: j.content_urls?.desktop?.page as string | undefined,
   };
 }

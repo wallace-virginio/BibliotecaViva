@@ -30,6 +30,7 @@ const IMG = [
   "https://*.archive.org",
   "https://archive.org",
   "https://upload.wikimedia.org",
+  "https://thumb.wikimedia.org", // miniaturas da Wikipédia (API de resumo)
   "https://tile.openstreetmap.org",
   "https://*.tile.openstreetmap.org",
 ];

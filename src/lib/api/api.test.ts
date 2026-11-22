@@ -1,6 +1,27 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { trending } from "./rankings";
 import { sanitize } from "./reader";
+import { cleanDescription } from "./openlibrary";
+import { sizedImage } from "./commons";
+
+describe("resumo da Open Library", () => {
+  it("tira negrito, itálico, links e a seção depois de ----", () => {
+    const md = "**Dom Casmurro**, de *Machado de Assis*, ver [aqui](https://x.org).\n----\nVeja também: outra coisa";
+    expect(cleanDescription(md)).toBe("Dom Casmurro, de Machado de Assis, ver aqui.");
+  });
+  it("não mexe em asteriscos soltos nem em texto comum", () => {
+    expect(cleanDescription("Nota 5 * 3 = 15")).toBe("Nota 5 * 3 = 15");
+    expect(cleanDescription(undefined)).toBeUndefined();
+  });
+});
+
+describe("fotos da Wikipédia", () => {
+  it("pede miniatura de 1280px (largura padrão do Wikimedia) em vez da original gigante", () => {
+    const u = "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7a/Foto.jpg/3840px-Foto.jpg?utm=1";
+    expect(sizedImage(u)).toBe("https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7a/Foto.jpg/1280px-Foto.jpg?utm=1");
+    expect(sizedImage("https://upload.wikimedia.org/a/b.jpg")).toBe("https://upload.wikimedia.org/a/b.jpg");
+  });
+});
 
 describe("leitor: limpeza do HTML do Wikisource", () => {
   it("remove scripts, estilos, links e atributos, mantendo o texto", () => {

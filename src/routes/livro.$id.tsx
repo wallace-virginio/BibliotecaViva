@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, BookmarkCheck, BookmarkPlus, BookOpenText, ExternalLink, Heart, Loader2, MapPin, Navigation, Share2, Star } from "lucide-react";
+import { ArrowLeft, BookmarkCheck, BookmarkPlus, BookOpenText, ExternalLink, Heart, Loader2, MapPin, Navigation, RefreshCw, Share2, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BookCard, BookCover, BookGridSkeleton } from "@/components/common";
 import { Badge, Button, buttonClass, Card, Container, EmptyState } from "@/components/ui";
 import { findReadableSource } from "@/lib/api/reader";
-import { booksBySubject, getBook } from "@/lib/api/openlibrary";
+import { BookNotFoundError, booksBySubject, getBook } from "@/lib/api/openlibrary";
 import { holdingsFor } from "@/lib/catalog";
 import { ShelfMenuButton } from "@/components/ShelfButton";
 import { confetti } from "@/lib/motion";
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/livro/$id")({
 
 function BookPage() {
   const { id } = Route.useParams();
-  const { data: book, loading, error } = useAsync((s) => getBook(id, s), [id]);
+  const { data: book, loading, error, retry } = useAsync((s) => getBook(id, s), [id]);
   const fav = useStore((s) => s.favorites.some((b) => b.id === id));
   const reserved = useStore((s) => s.reservations.some((r) => r.id === `livro-${id}`));
   const [toast, setToast] = useState<string>();
@@ -60,7 +60,16 @@ function BookPage() {
   if (error || !book)
     return (
       <Container className="pt-32 pb-24">
-        <EmptyState icon={<BookmarkPlus className="size-6" />} title="Livro não encontrado" description="Não encontramos este título na Open Library." />
+        {error && !(error instanceof BookNotFoundError) ? (
+          <EmptyState
+            icon={<RefreshCw className="size-6" />}
+            title="Não deu para carregar este livro agora"
+            description="A Open Library, de onde vêm os dados, está lenta ou fora do ar. Tente de novo em alguns segundos."
+            action={<Button onClick={retry}><RefreshCw className="size-4" /> Tentar de novo</Button>}
+          />
+        ) : (
+          <EmptyState icon={<BookmarkPlus className="size-6" />} title="Livro não encontrado" description="Não encontramos este título na Open Library." />
+        )}
       </Container>
     );
 

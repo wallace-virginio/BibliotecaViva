@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useDebounce<T>(value: T, delay = 300) {
   const [v, setV] = useState(value);
@@ -53,6 +53,7 @@ export function useCountUp(target: number, start: boolean, duration = 1600) {
 /** Minimal async-data hook (no external query lib needed). */
 export function useAsync<T>(fn: (signal: AbortSignal) => Promise<T>, deps: unknown[]) {
   const [state, setState] = useState<{ data?: T; error?: Error; loading: boolean }>({ loading: true });
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     const ctrl = new AbortController();
     setState((s) => ({ data: s.data, loading: true }));
@@ -64,8 +65,10 @@ export function useAsync<T>(fn: (signal: AbortSignal) => Promise<T>, deps: unkno
       });
     return () => ctrl.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-  return state;
+  }, [...deps, attempt]);
+  /** Repete a busca (botão "Tentar de novo"). */
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
+  return { ...state, retry };
 }
 
 export function useMounted() {

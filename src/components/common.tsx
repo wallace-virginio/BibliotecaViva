@@ -132,17 +132,19 @@ export function useLibraryPhotos(lib?: Pick<Library, "slug" | "lat" | "lon" | "w
 
 export function LibraryImage({ lib, className, index = 0 }: { lib: Library; className?: string; index?: number }) {
   const { data, loading } = useLibraryPhotos(lib);
-  const [failed, setFailed] = useState(false);
-  const src = data?.[index] ?? data?.[0];
+  // se uma foto falhar, tenta a próxima da lista antes de cair no ícone
+  const [skip, setSkip] = useState(0);
+  const list = data ?? [];
+  const src = list[index + skip] ?? (skip === 0 ? list[0] : undefined);
   const tone = COVER_TONES[lib.name.length % COVER_TONES.length];
   if (loading && !data) return <div className={cn("skeleton", className)} />;
-  if (!src || failed)
+  if (!src)
     return (
       <div className={cn("grid place-items-center text-on-image", tone, className)}>
         <BookOpen className="size-8 opacity-70" />
       </div>
     );
-  return <img src={src} alt={lib.name} loading="lazy" onError={() => setFailed(true)} className={cn("object-cover", className)} />;
+  return <img key={src} src={src} alt={lib.name} loading="lazy" onError={() => setSkip((n) => n + 1)} className={cn("object-cover", className)} />;
 }
 
 export function LibraryCard({ lib, distance }: { lib: Library; distance?: string }) {
