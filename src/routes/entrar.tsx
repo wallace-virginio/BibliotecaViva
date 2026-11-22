@@ -5,6 +5,7 @@ import { AppleIcon, AuthLayout, FormError, GoogleIcon } from "@/components/AuthL
 import { Button, Input, Tabs } from "@/components/ui";
 import { authErrorMessage, useAuth, type AccountType, type OAuthProvider } from "@/lib/auth";
 import { MIN_PASSWORD } from "@/lib/legal";
+import { SOCIAL_LOGIN_ENABLED } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 
 type Search = { modo?: "biblioteca" | "cadastro"; redirect?: string };
@@ -103,6 +104,8 @@ function Entrar() {
       )}
       <Tabs className="mb-6 w-full [&>button]:flex-1" value={tab} onChange={(v) => { setTab(v); setError(undefined); }} options={[{ value: "entrar", label: "Entrar" }, { value: "cadastro", label: "Criar conta" }]} />
 
+      {SOCIAL_LOGIN_ENABLED && (
+      <>
       <div className="grid gap-2">
         <Button type="button" variant="outline" size="lg" disabled={!!busy} onClick={() => social("apple")} className="w-full">
           {busy === "apple" ? <Loader2 className="size-4 animate-spin" /> : <AppleIcon className="size-5" />} Continuar com Apple
@@ -118,6 +121,8 @@ function Entrar() {
       </p>
 
       <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" /> ou com e-mail <span className="h-px flex-1 bg-border" /></div>
+      </>
+      )}
 
       <form onSubmit={submit} className="space-y-3">
         {tab === "cadastro" && (

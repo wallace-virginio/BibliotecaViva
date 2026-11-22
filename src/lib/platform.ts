@@ -10,5 +10,11 @@
  */
 export const IS_APP = import.meta.env.VITE_APP === "1";
 
+/**
+ * Login com Google e Apple: desligado até os provedores estarem configurados no Supabase
+ * (docs/SUPABASE.md). Para religar, troque para true — o fluxo no app e no site já está pronto.
+ */
+export const SOCIAL_LOGIN_ENABLED = false;
+
 /** Endereço público do site — usado em links que saem do app (compartilhar, e-mails). */
 export const PUBLIC_SITE_URL = "https://biblioteca-viva.biblioteca-viva.workers.dev";

@@ -1,14 +1,33 @@
 apply plugin: 'com.android.application'
 
+// Assinatura da versão da Play Store: lida de android/keystore.properties (fora do git — ver docs/ANDROID.md).
+// Sem esse arquivo, o build de release sai sem assinatura (dá para gerar, não para enviar à loja).
+def keystorePropsFile = rootProject.file("keystore.properties")
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.withInputStream { keystoreProps.load(it) }
+}
+
 android {
+    signingConfigs {
+        release {
+            if (keystorePropsFile.exists()) {
+                storeFile rootProject.file(keystoreProps["storeFile"])
+                storePassword keystoreProps["storePassword"]
+                keyAlias keystoreProps["keyAlias"]
+                keyPassword keystoreProps["keyPassword"]
+            }
+        }
+    }
     namespace = "org.bibliotecaviva.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "org.bibliotecaviva.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
+        // a cada envio para a Play Store: versionCode +1 (obrigatório) e versionName para as pessoas
         versionCode 1
-        versionName "1.0"
+        versionName "0.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -18,6 +37,7 @@ android {
     }
     buildTypes {
         release {
+            if (keystorePropsFile.exists()) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

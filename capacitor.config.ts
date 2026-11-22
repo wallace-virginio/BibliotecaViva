@@ -8,11 +8,13 @@ const config: CapacitorConfig = {
   appId: "org.bibliotecaviva.app",
   appName: "Biblioteca Viva",
   webDir: "dist/mobile",
-  backgroundColor: "#F8F3E8",
+  // marrom da abertura: é o que aparece por trás do WebView antes da primeira pintura (nada de tela branca)
+  backgroundColor: "#6B3D20",
   ios: { contentInset: "never" },
   android: { allowMixedContent: false },
   plugins: {
-    SplashScreen: { launchShowDuration: 1200, backgroundColor: "#7A4E2D", showSpinner: false },
+    // a abertura nativa fica até o app mandar esconder (src/lib/native.ts), já com a animação web pintada por baixo
+    SplashScreen: { launchAutoHide: false, launchShowDuration: 0, backgroundColor: "#6B3D20", showSpinner: false },
     StatusBar: { overlaysWebView: true },
   },
 };

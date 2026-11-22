@@ -5,6 +5,7 @@ import { initAppShell } from "@/lib/native";
 import { installBackButton } from "@/lib/backButton";
 import { IS_APP } from "@/lib/platform";
 import { AppHeader } from "@/components/app/AppHeader";
+import { AppIntro } from "@/components/app/AppIntro";
 import { installRipple } from "@/lib/motion";
 import { AuthProvider } from "@/lib/auth";
 import { LocationProvider } from "@/lib/location";
@@ -120,6 +121,7 @@ function RootDocument({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        {IS_APP && <AppIntro />}
         {children}
         <Scripts />
       </body>

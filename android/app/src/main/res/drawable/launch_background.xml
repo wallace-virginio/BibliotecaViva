@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fundo da janela enquanto o WebView carrega: o mesmo marrom + o mesmo ícone, no mesmo tamanho (240dp) e lugar
+     da abertura nativa do Android 12+. Assim a abertura nativa, esta espera e a animação web (AppIntro) emendam
+     sem nenhum "pulo" nem tela vazia. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/splash_background" />
+    <item
+        android:width="240dp"
+        android:height="240dp"
+        android:gravity="center"
+        android:drawable="@mipmap/ic_launcher_foreground" />
+</layer-list>

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- marrom couro (mesmo de scripts/icons.mjs): fundo do ícone adaptativo e da abertura -->
+    <color name="ic_launcher_background">#6B3D20</color>
+    <color name="splash_background">#6B3D20</color>
 </resources>
