@@ -20,7 +20,59 @@ export async function olFetch(path: string, signal?: AbortSignal): Promise<Respo
       if (signal?.aborted) throw e;
     }
   }
-  return fetch(`https://openlibrary.org/${path}`, { signal });
+  const url = `https://openlibrary.org/${path}`;
+  return withOfflineCache(url, () => fetch(url, { signal }), signal);
+}
+
+/* ------------------------------------------------------------------ */
+/* Uso sem internet (app): guarda a última resposta boa de cada fonte  */
+/* ------------------------------------------------------------------ */
+
+const OFFLINE_CACHE = "bv-dados-v1";
+const isNativeApp = () =>
+  typeof window !== "undefined" && Boolean((window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.());
+const cacheAvailable = () => isNativeApp() && typeof caches !== "undefined";
+
+/**
+ * No app: devolve a resposta da rede e guarda uma cópia; se a rede falhar (sem internet, fonte fora do ar),
+ * devolve a última cópia guardada. No navegador não faz nada além de buscar (lá quem cuida é o proxy/SW).
+ */
+export async function withOfflineCache(key: string, load: () => Promise<Response>, signal?: AbortSignal): Promise<Response> {
+  if (!cacheAvailable()) return load();
+  const fromCache = () => caches.open(OFFLINE_CACHE).then((c) => c.match(key)).catch(() => undefined);
+  try {
+    const res = await load();
+    if (res.ok) {
+      const copy = res.clone();
+      caches.open(OFFLINE_CACHE).then((c) => c.put(key, copy)).catch(() => {});
+      return res;
+    }
+    return (await fromCache()) ?? res;
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    const hit = await fromCache();
+    if (hit) return hit;
+    throw e;
+  }
+}
+
+/** Mesmo princípio para resultados já processados (ex.: lista de bibliotecas perto de um ponto). */
+export async function withOfflineJson<T>(key: string, load: () => Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!cacheAvailable()) return load();
+  const url = `https://cache.bibliotecaviva.local/${encodeURIComponent(key)}`;
+  try {
+    const value = await load();
+    caches
+      .open(OFFLINE_CACHE)
+      .then((c) => c.put(url, new Response(JSON.stringify(value), { headers: { "content-type": "application/json" } })))
+      .catch(() => {});
+    return value;
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    const hit = await caches.open(OFFLINE_CACHE).then((c) => c.match(url)).catch(() => undefined);
+    if (hit) return (await hit.json()) as T;
+    throw e;
+  }
 }
 
 /** Overpass pelo proxy; devolve null para o chamador tentar os espelhos diretamente. */

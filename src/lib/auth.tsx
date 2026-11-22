@@ -2,6 +2,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { USER } from "@/data/content";
 import { isNative } from "./native";
+import { PUBLIC_SITE_URL } from "./platform";
 import { getSupabase, NATIVE_REDIRECT, supabaseConfigured } from "./supabase";
 import { MIN_PASSWORD, PRIVACY_VERSION, TERMS_VERSION } from "./legal";
 import { getState } from "./store";
@@ -56,8 +57,14 @@ export function authErrorMessage(e: unknown): string {
   return msg;
 }
 
+/**
+ * Endereço para onde os links dos e-mails (confirmar cadastro, redefinir senha) levam.
+ * No app aponta para o site público: o e-mail pode ser aberto em outro aparelho ou num leitor de e-mail que
+ * não abre links "org.bibliotecaviva.app://", e o endereço interno do app (https://localhost) não existe fora dele.
+ * Depois de confirmar no site, a pessoa entra normalmente no app com e-mail e senha.
+ */
 function redirectUrl(path: string) {
-  return isNative() ? NATIVE_REDIRECT : `${window.location.origin}${path}`;
+  return `${isNative() ? PUBLIC_SITE_URL : window.location.origin}${path}`;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -105,14 +112,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // App nativo: o login social volta por deep link (org.bibliotecaviva.app://login-callback?code=…)
     let removeListener: (() => void) | undefined;
     if (isNative()) {
-      import("@capacitor/app").then(({ App }) => {
-        App.addListener("appUrlOpen", async ({ url }) => {
-          if (!url.startsWith(NATIVE_REDIRECT)) return;
-          const code = new URL(url).searchParams.get("code");
-          if (code) await sb.auth.exchangeCodeForSession(code).catch(() => {});
-          const { Browser } = await import("@capacitor/browser");
-          Browser.close().catch(() => {});
-        }).then((h) => (removeListener = () => h.remove()));
+      const handleDeepLink = async (url: string | undefined) => {
+        if (!url?.startsWith(NATIVE_REDIRECT)) return;
+        const params = new URL(url).searchParams;
+        const code = params.get("code");
+        const { Browser } = await import("@capacitor/browser");
+        Browser.close().catch(() => {});
+        if (!code) {
+          console.warn("[auth] login social sem código:", params.get("error_description") ?? params.get("error") ?? url);
+          return;
+        }
+        const { error } = await sb.auth.exchangeCodeForSession(code);
+        if (error) console.warn("[auth] não foi possível concluir o login social:", error.message);
+      };
+      import("@capacitor/app").then(async ({ App }) => {
+        const h = await App.addListener("appUrlOpen", ({ url }) => void handleDeepLink(url));
+        removeListener = () => h.remove();
+        // app aberto "do zero" pelo link de volta do login (o evento appUrlOpen já passou)
+        const launch = await App.getLaunchUrl().catch(() => undefined);
+        await handleDeepLink(launch?.url);
       });
     }
 
@@ -188,7 +206,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
       },
       async sendPasswordReset(email) {
-        const { error } = await need().auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/redefinir-senha` });
+        const { error } = await need().auth.resetPasswordForEmail(email, { redirectTo: redirectUrl("/redefinir-senha") });
         if (error) throw error;
       },
       async updatePassword(password) {

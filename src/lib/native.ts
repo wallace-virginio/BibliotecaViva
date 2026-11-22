@@ -14,6 +14,17 @@ export async function initAppShell() {
   if (isNative()) {
     const root = document.documentElement;
     root.classList.add("native");
+    // dados importantes com cópia nativa: se o Android limpou o WebView, restaura e recarrega uma vez
+    try {
+      const { restoreDurable, mirrorDurable } = await import("./durable");
+      if (await restoreDurable()) {
+        window.location.reload();
+        return;
+      }
+      await mirrorDurable();
+    } catch {
+      /* plugin indisponível: segue só com o localStorage */
+    }
     interceptExternalLinks();
     try {
       const [{ StatusBar, Style }, { SplashScreen }] = await Promise.all([import("@capacitor/status-bar"), import("@capacitor/splash-screen")]);

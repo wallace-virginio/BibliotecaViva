@@ -1,5 +1,22 @@
 import { useRouter, useRouterState } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, WifiOff } from "lucide-react";
+import { useEffect, useState } from "react";
+
+/** true enquanto o aparelho tem conexão (eventos online/offline do sistema). */
+function useOnline() {
+  const [online, setOnline] = useState(true);
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+  return online;
+}
 import { Logo } from "@/components/Logo";
 import { LocationChip } from "@/components/LocationSheet";
 import { AccessibilityMenu } from "@/components/AccessibilityMenu";
@@ -14,6 +31,7 @@ const TAB_ROOTS = ["/", "/acervo", "/app/livros", "/app/perfil", "/app"];
 export function AppHeader() {
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const online = useOnline();
   if (pathname === "/mapa") return null; // o mapa ocupa a tela toda e tem a própria busca
   const isRoot = TAB_ROOTS.includes(pathname);
 
@@ -36,6 +54,15 @@ export function AppHeader() {
           <AccessibilityMenu />
         </div>
       </div>
+      {/* aviso logo acima das abas: não empurra nem cobre o topo das telas */}
+      {!online && (
+        <p
+          role="status"
+          className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] flex items-center justify-center gap-1.5 rounded-full border bg-warning-soft px-3 py-2 text-center text-[13px] font-medium text-warning shadow-soft"
+        >
+          <WifiOff className="size-4 shrink-0" /> Sem internet — mostrando o que já foi carregado
+        </p>
+      )}
     </header>
   );
 }

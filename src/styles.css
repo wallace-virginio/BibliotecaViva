@@ -259,6 +259,9 @@
      cresce até o conteúdo (uma fileira de filtros, um título comprido) e empurra a tela para o lado.
      Uma coluna "minmax(0, 1fr)" nunca passa da largura disponível. Classes grid-cols-* continuam valendo. */
   .grid { grid-template-columns: minmax(0, 1fr); }
+  /* Fileiras com "imã" (snap-x) no celular: o primeiro item para na margem da página, não colado na borda
+     (sem isso o snap ignora o padding e encosta o card em x=0). */
+  @media (max-width: 639px) { .snap-x { scroll-padding-inline: 1rem; } }
   /* overflow-x: clip no html E no body: o WebView do Android ignora o "hidden" só no body e deixava a página
      inteira arrastar para o lado quando uma fileira horizontal (filtros, estantes) passava da tela.
      "clip" (diferente de "hidden") não quebra position: sticky nem as fileiras que rolam sozinhas. */

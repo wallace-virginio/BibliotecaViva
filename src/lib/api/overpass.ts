@@ -19,7 +19,7 @@ type Element = {
   tags?: Record<string, string>;
 };
 
-import { overpassViaProxy } from "./http";
+import { overpassViaProxy, withOfflineJson } from "./http";
 
 const ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
@@ -70,12 +70,18 @@ export async function librariesAround(
   const q = `[out:json][timeout:25];nwr["amenity"="library"]["name"](around:${radiusM},${lat},${lon});out center tags 80;`;
   // Overpass e Nominatim em paralelo: usa a primeira fonte que responder com sucesso
   // (os servidores públicos do Overpass às vezes ficam sobrecarregados).
-  const libs = await Promise.any([
-    overpass(q, signal, 2, 8_000).then((json) => json.elements.map(toLib).filter((l) => l.lat && l.lon)),
-    nominatimLibraries(lat, lon, radiusM, signal),
-  ]).catch((e: AggregateError) => {
-    throw e.errors?.[0] ?? e;
-  });
+  // no app, sem internet, usa a última lista boa deste mesmo ponto (withOfflineJson)
+  const libs = await withOfflineJson(
+    `libraries:${key}`,
+    () =>
+      Promise.any([
+        overpass(q, signal, 2, 8_000).then((json) => json.elements.map(toLib).filter((l) => l.lat && l.lon)),
+        nominatimLibraries(lat, lon, radiusM, signal),
+      ]).catch((e: AggregateError) => {
+        throw e.errors?.[0] ?? e;
+      }),
+    signal,
+  );
   cache.set(key, libs);
   return libs;
 }
