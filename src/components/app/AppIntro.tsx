@@ -38,12 +38,16 @@ const RAYS = Array.from({ length: 8 }, (_, i) => i * 45);
 
 export function AppIntro({ variant = "app" }: { variant?: "app" | "site" }) {
   const [phase, setPhase] = useState<"in" | "out" | "gone">("in");
+  // a animação só começa quando o app está pronto (até lá fica o livro fechado parado, igual à abertura
+  // nativa): assim ela não "corre" escondida atrás da abertura do Android nem recomeça no meio
+  const [run, setRun] = useState(false);
 
   useEffect(() => {
     if (document.documentElement.classList.contains("bv-intro-skip")) {
       setPhase("gone");
       return;
     }
+    setRun(true);
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const outAt = reduced ? 400 : variant === "site" ? 2500 : 2700;
     const t1 = setTimeout(() => setPhase("out"), outAt);
@@ -62,7 +66,7 @@ export function AppIntro({ variant = "app" }: { variant?: "app" | "site" }) {
 
   if (phase === "gone") return null;
   return (
-    <div id="bv-intro" className={phase === "out" ? "is-out" : undefined} aria-hidden="true" onClick={() => setPhase("out")}>
+    <div id="bv-intro" className={[run && "run", phase === "out" && "is-out"].filter(Boolean).join(" ") || undefined} aria-hidden="true" onClick={() => setPhase("out")}>
       <style>{CSS}</style>
       <svg viewBox="0 0 100 100" className="bvi-mark">
         <defs>
@@ -144,7 +148,14 @@ const CSS = `
   background:radial-gradient(120% 80% at 50% 42%,#8A5530 0%,#6B3D20 55%,#4E2A14 100%)}
 #bv-intro.is-out{opacity:0;transform:scale(1.04);pointer-events:none}
 html.bv-intro-skip #bv-intro{display:none!important}
+/* parada no 1º quadro (livro fechado) até o app ficar pronto e pôr .run */
+#bv-intro:not(.run) *,#bv-intro:not(.run)::before{animation-play-state:paused!important}
+/* rede de segurança: se o JavaScript não rodar, a camada some sozinha e o conteúdo aparece */
+#bv-intro:not(.run){animation:bvi-safety .3s 8s forwards}
+@keyframes bvi-safety{to{opacity:0;visibility:hidden}}
+/* enquanto a abertura está na tela: sem efeito de transição de página (ele misturava a abertura com a tela de trás) */
 html:has(#bv-intro) .vt-static-header,html:has(#bv-intro) .vt-static-tabbar{view-transition-name:none!important}
+html:has(#bv-intro)::view-transition-old(*),html:has(#bv-intro)::view-transition-new(*){animation:none!important}
 #bv-intro .bvi-mark{position:absolute;left:50%;top:50%;width:172.8px;height:172.8px;margin:-86.4px 0 0 -86.4px;overflow:visible}
 #bv-intro .bvi-cover{transform-box:view-box;transform-origin:50px 73px;animation:bvi-cover .45s .05s cubic-bezier(.55,0,.75,.4) forwards}
 #bv-intro .bvi-page{transform-box:view-box;transform-origin:50px 72px;transform:scaleX(.04);animation:bvi-unfold .62s .15s cubic-bezier(.16,1,.3,1) forwards}

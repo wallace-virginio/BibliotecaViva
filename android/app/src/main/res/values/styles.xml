@@ -21,7 +21,7 @@
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_background</item>
         <!-- livro fechado = 1º quadro da animação web; ela continua dali (o livro abre) sem pulo -->
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/splash_cover</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/splash_icon</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
         <item name="android:background">@drawable/splash</item>
     </style>

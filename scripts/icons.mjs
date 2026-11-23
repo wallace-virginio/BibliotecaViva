@@ -55,8 +55,8 @@ const fullIcon = (size, { markScale = 0.8, radius = 0.22 } = {}) => {
 };
 
 /** Camada da frente do ícone adaptativo (fundo transparente; o sistema recorta em círculo/gota/quadrado). */
-const foreground = (size, art = MARK) => {
-  const m = size * 0.72; // dentro da área segura (66%) do ícone adaptativo
+const foreground = (size, art = MARK, fraction = 0.72) => {
+  const m = size * fraction; // dentro da área segura (66%) do ícone adaptativo
   const off = (size - m) / 2;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}"><g transform="translate(${off} ${off}) scale(${m / 100})">${art}</g></svg>`;
 };
@@ -83,7 +83,10 @@ if (existsSync(RES)) {
     await png(fullIcon(512, { radius: 0.5, markScale: 0.74 }), 48 * k, 48 * k, join(dir, "ic_launcher_round.png"));
     await png(foreground(432), 108 * k, 108 * k, join(dir, "ic_launcher_foreground.png")); // adaptativo (108dp)
     // abertura nativa (240dp): o livro fechado, igual ao 1º quadro da animação — emenda sem pulo
-    await png(foreground(960, COVER), 240 * k, 240 * k, join(dir, "splash_cover.png"));
+    await png(foreground(960, COVER), 240 * k, 240 * k, join(dir, "splash_cover.png")); // fundo da janela (240dp)
+    // ícone da SplashScreen API: o Android desenha com 288dp; 60% de 288 = 172.8dp, o mesmo tamanho do
+    // livro no fundo da janela (72% de 240) e na animação web (172.8px) — nada "encolhe" na troca
+    await png(foreground(1152, COVER, 0.6), 288 * k, 288 * k, join(dir, "splash_icon.png"));
   }
   // abertura (aparelhos sem a SplashScreen API e fundo do plugin): marrom + símbolo no centro, mesmo tamanho de cada arquivo
   for (const dir of readdirSync(RES).filter((d) => d.startsWith("drawable"))) {
