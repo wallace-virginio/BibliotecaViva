@@ -7,6 +7,8 @@ import { EVENTS, type PlatformEvent } from "@/data/content";
 import { FEATURED_LIBRARIES, type Library } from "@/data/libraries";
 import { booksBySubject, searchBooks, type Book } from "@/lib/api/openlibrary";
 import { openStatus } from "@/lib/hours";
+import { askAssistant, type AssistantPlan, type ChatTurn } from "@/lib/api/assistant";
+import { useLocation } from "@/lib/location";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/assistente")({
@@ -27,7 +29,7 @@ const SUGGESTIONS = [
   "Sugira um clube de leitura de ficção científica.",
 ];
 
-type Answer = { text: string; books?: Book[]; libraries?: Library[]; events?: PlatformEvent[] };
+type Answer = { text: string; books?: Book[]; libraries?: Library[]; events?: PlatformEvent[]; ai?: boolean };
 type Msg = { role: "user"; text: string } | { role: "bot"; answer?: Answer };
 
 const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -87,22 +89,44 @@ async function answer(q: string): Promise<Answer> {
   };
 }
 
+/** Transforma o plano da IA em cards com dados reais (Open Library, bibliotecas, agenda). */
+async function fromPlan(plan: AssistantPlan): Promise<Answer> {
+  let books: Book[] | undefined;
+  if (plan.books?.query) books = (await searchBooks(plan.books.query, { limit: 6 }).catch(() => ({ books: [] as Book[] }))).books;
+  if (!books?.length && plan.books?.subject) books = await booksBySubject(plan.books.subject, 6).catch(() => []);
+  const libraries = plan.libraries ? (plan.libraries === "estudar" ? studySpots() : FEATURED_LIBRARIES.filter((l) => l.curations.includes(plan.libraries!)).slice(0, 3)) : undefined;
+  const events = plan.events ? EVENTS.filter((e) => (plan.events as string[]).includes(e.category)) : undefined;
+  return { text: plan.reply, books, libraries, events, ai: true };
+}
+
 function Assistente() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const end = useRef<HTMLDivElement>(null);
+  const { location } = useLocation();
 
-  useEffect(() => end.current?.scrollIntoView({ behavior: "smooth", block: "end" }), [msgs]);
+  // chaves: no Chrome novo scrollIntoView() devolve uma Promise, e um efeito não pode devolver nada além de limpeza
+  useEffect(() => {
+    end.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [msgs]);
 
   const ask = async (q: string) => {
     if (!q.trim() || busy) return;
     setInput("");
     setBusy(true);
+    // histórico para a IA (só o texto: perguntas e respostas anteriores)
+    const history: ChatTurn[] = [
+      ...msgs.flatMap((m): ChatTurn[] => (m.role === "user" ? [{ role: "user", content: m.text }] : m.answer ? [{ role: "assistant", content: m.answer.text }] : [])),
+      { role: "user", content: q },
+    ];
     setMsgs((m) => [...m, { role: "user", text: q }, { role: "bot" }]);
     let a: Answer;
     try {
-      a = await answer(q);
+      const res = await askAssistant(history, location?.label);
+      // IA indisponível (sem internet, cota do dia, limite): assistente local, sem IA
+      a = "plan" in res ? await fromPlan(res.plan) : await answer(q);
+      if ("error" in res && res.error === "limite") a.text = `Você fez muitas perguntas seguidas — por alguns minutos eu respondo sem a IA. ${a.text}`;
     } catch {
       a = { text: "Tive um problema para consultar o acervo agora. Tente novamente em instantes." };
     }
@@ -145,6 +169,9 @@ function Assistente() {
                   ) : (
                     <>
                       <p className="animate-fade-in text-[15px] leading-relaxed">{m.answer.text}</p>
+                      {m.answer.ai && (
+                        <p className="text-xs text-muted-foreground">Resposta escrita por IA · livros, lugares e eventos abaixo são dados reais</p>
+                      )}
                       {!!m.answer.books?.length && (
                         <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-6 sm:px-0">
                           {m.answer.books.slice(0, 6).map((b) => <BookCard key={b.id} book={b} className="w-28 shrink-0 sm:w-auto" />)}

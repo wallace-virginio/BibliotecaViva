@@ -26,6 +26,7 @@ import { Route as RoadmapRouteImport } from './routes/roadmap'
 import { Route as SalasRouteImport } from './routes/salas'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as TermosRouteImport } from './routes/termos'
+import { Route as ApiAssistenteRouteImport } from './routes/api.assistente'
 import { Route as ApiOverpassRouteImport } from './routes/api.overpass'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
@@ -127,6 +128,11 @@ const SobreRoute = SobreRouteImport.update({
 const TermosRoute = TermosRouteImport.update({
   id: '/termos',
   path: '/termos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAssistenteRoute = ApiAssistenteRouteImport.update({
+  id: '/api/assistente',
+  path: '/api/assistente',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOverpassRoute = ApiOverpassRouteImport.update({
@@ -233,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/salas': typeof SalasRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
+  '/api/assistente': typeof ApiAssistenteRoute
   '/api/overpass': typeof ApiOverpassRoute
   '/app/admin': typeof AppAdminRoute
   '/app/comunidade': typeof AppComunidadeRoute
@@ -268,6 +275,7 @@ export interface FileRoutesByTo {
   '/salas': typeof SalasRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
+  '/api/assistente': typeof ApiAssistenteRoute
   '/api/overpass': typeof ApiOverpassRoute
   '/app/admin': typeof AppAdminRoute
   '/app/comunidade': typeof AppComunidadeRoute
@@ -305,6 +313,7 @@ export interface FileRoutesById {
   '/salas': typeof SalasRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
+  '/api/assistente': typeof ApiAssistenteRoute
   '/api/overpass': typeof ApiOverpassRoute
   '/app/admin': typeof AppAdminRoute
   '/app/comunidade': typeof AppComunidadeRoute
@@ -343,6 +352,7 @@ export interface FileRouteTypes {
     | '/salas'
     | '/sobre'
     | '/termos'
+    | '/api/assistente'
     | '/api/overpass'
     | '/app/admin'
     | '/app/comunidade'
@@ -378,6 +388,7 @@ export interface FileRouteTypes {
     | '/salas'
     | '/sobre'
     | '/termos'
+    | '/api/assistente'
     | '/api/overpass'
     | '/app/admin'
     | '/app/comunidade'
@@ -414,6 +425,7 @@ export interface FileRouteTypes {
     | '/salas'
     | '/sobre'
     | '/termos'
+    | '/api/assistente'
     | '/api/overpass'
     | '/app/admin'
     | '/app/comunidade'
@@ -451,6 +463,7 @@ export interface RootRouteChildren {
   SalasRoute: typeof SalasRoute
   SobreRoute: typeof SobreRoute
   TermosRoute: typeof TermosRoute
+  ApiAssistenteRoute: typeof ApiAssistenteRoute
   ApiOverpassRoute: typeof ApiOverpassRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   BibliotecaSlugRoute: typeof BibliotecaSlugRoute
@@ -578,6 +591,13 @@ declare module '@tanstack/react-router' {
       path: '/termos'
       fullPath: '/termos'
       preLoaderRoute: typeof TermosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/assistente': {
+      id: '/api/assistente'
+      path: '/api/assistente'
+      fullPath: '/api/assistente'
+      preLoaderRoute: typeof ApiAssistenteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/overpass': {
@@ -750,6 +770,7 @@ const rootRouteChildren: RootRouteChildren = {
   SalasRoute: SalasRoute,
   SobreRoute: SobreRoute,
   TermosRoute: TermosRoute,
+  ApiAssistenteRoute: ApiAssistenteRoute,
   ApiOverpassRoute: ApiOverpassRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   BibliotecaSlugRoute: BibliotecaSlugRoute,

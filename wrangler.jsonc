@@ -6,5 +6,7 @@
   "compatibility_flags": ["nodejs_compat"],
   // entrada própria: handler do TanStack Start + cabeçalhos de segurança (src/lib/server/security.ts)
   "main": "./src/server.ts",
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // IA do assistente "Peça uma indicação" (Workers AI, plano grátis: 10.000 neurons/dia) — src/routes/api.assistente.ts
+  "ai": { "binding": "AI" }
 }
