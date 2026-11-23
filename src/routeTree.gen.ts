@@ -27,6 +27,7 @@ import { Route as SalasRouteImport } from './routes/salas'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as TermosRouteImport } from './routes/termos'
 import { Route as ApiAssistenteRouteImport } from './routes/api.assistente'
+import { Route as ApiConversasRouteImport } from './routes/api.conversas'
 import { Route as ApiOverpassRouteImport } from './routes/api.overpass'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
@@ -43,6 +44,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as BibliotecaSlugRouteImport } from './routes/biblioteca.$slug'
 import { Route as LerIdRouteImport } from './routes/ler.$id'
 import { Route as LivroIdRouteImport } from './routes/livro.$id'
+import { Route as ApiConversasIdRouteImport } from './routes/api.conversas.$id'
 import { Route as ApiOlSplatRouteImport } from './routes/api.ol.$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -135,6 +137,11 @@ const ApiAssistenteRoute = ApiAssistenteRouteImport.update({
   path: '/api/assistente',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiConversasRoute = ApiConversasRouteImport.update({
+  id: '/api/conversas',
+  path: '/api/conversas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiOverpassRoute = ApiOverpassRouteImport.update({
   id: '/api/overpass',
   path: '/api/overpass',
@@ -215,6 +222,11 @@ const LivroIdRoute = LivroIdRouteImport.update({
   path: '/livro/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiConversasIdRoute = ApiConversasIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiConversasRoute,
+} as any)
 const ApiOlSplatRoute = ApiOlSplatRouteImport.update({
   id: '/api/ol/$',
   path: '/api/ol/$',
@@ -240,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/api/assistente': typeof ApiAssistenteRoute
+  '/api/conversas': typeof ApiConversasRouteWithChildren
   '/api/overpass': typeof ApiOverpassRoute
   '/app/admin': typeof AppAdminRoute
   '/app/comunidade': typeof AppComunidadeRoute
@@ -256,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/ler/$id': typeof LerIdRoute
   '/livro/$id': typeof LivroIdRoute
   '/app/': typeof AppIndexRoute
+  '/api/conversas/$id': typeof ApiConversasIdRoute
   '/api/ol/$': typeof ApiOlSplatRoute
 }
 export interface FileRoutesByTo {
@@ -276,6 +290,7 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/api/assistente': typeof ApiAssistenteRoute
+  '/api/conversas': typeof ApiConversasRouteWithChildren
   '/api/overpass': typeof ApiOverpassRoute
   '/app/admin': typeof AppAdminRoute
   '/app/comunidade': typeof AppComunidadeRoute
@@ -292,6 +307,7 @@ export interface FileRoutesByTo {
   '/ler/$id': typeof LerIdRoute
   '/livro/$id': typeof LivroIdRoute
   '/app': typeof AppIndexRoute
+  '/api/conversas/$id': typeof ApiConversasIdRoute
   '/api/ol/$': typeof ApiOlSplatRoute
 }
 export interface FileRoutesById {
@@ -314,6 +330,7 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/api/assistente': typeof ApiAssistenteRoute
+  '/api/conversas': typeof ApiConversasRouteWithChildren
   '/api/overpass': typeof ApiOverpassRoute
   '/app/admin': typeof AppAdminRoute
   '/app/comunidade': typeof AppComunidadeRoute
@@ -330,6 +347,7 @@ export interface FileRoutesById {
   '/ler/$id': typeof LerIdRoute
   '/livro/$id': typeof LivroIdRoute
   '/app/': typeof AppIndexRoute
+  '/api/conversas/$id': typeof ApiConversasIdRoute
   '/api/ol/$': typeof ApiOlSplatRoute
 }
 export interface FileRouteTypes {
@@ -353,6 +371,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/api/assistente'
+    | '/api/conversas'
     | '/api/overpass'
     | '/app/admin'
     | '/app/comunidade'
@@ -369,6 +388,7 @@ export interface FileRouteTypes {
     | '/ler/$id'
     | '/livro/$id'
     | '/app/'
+    | '/api/conversas/$id'
     | '/api/ol/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -389,6 +409,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/api/assistente'
+    | '/api/conversas'
     | '/api/overpass'
     | '/app/admin'
     | '/app/comunidade'
@@ -405,6 +426,7 @@ export interface FileRouteTypes {
     | '/ler/$id'
     | '/livro/$id'
     | '/app'
+    | '/api/conversas/$id'
     | '/api/ol/$'
   id:
     | '__root__'
@@ -426,6 +448,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/api/assistente'
+    | '/api/conversas'
     | '/api/overpass'
     | '/app/admin'
     | '/app/comunidade'
@@ -442,6 +465,7 @@ export interface FileRouteTypes {
     | '/ler/$id'
     | '/livro/$id'
     | '/app/'
+    | '/api/conversas/$id'
     | '/api/ol/$'
   fileRoutesById: FileRoutesById
 }
@@ -464,6 +488,7 @@ export interface RootRouteChildren {
   SobreRoute: typeof SobreRoute
   TermosRoute: typeof TermosRoute
   ApiAssistenteRoute: typeof ApiAssistenteRoute
+  ApiConversasRoute: typeof ApiConversasRouteWithChildren
   ApiOverpassRoute: typeof ApiOverpassRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   BibliotecaSlugRoute: typeof BibliotecaSlugRoute
@@ -600,6 +625,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAssistenteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/conversas': {
+      id: '/api/conversas'
+      path: '/api/conversas'
+      fullPath: '/api/conversas'
+      preLoaderRoute: typeof ApiConversasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/overpass': {
       id: '/api/overpass'
       path: '/api/overpass'
@@ -712,6 +744,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LivroIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/conversas/$id': {
+      id: '/api/conversas/$id'
+      path: '/$id'
+      fullPath: '/api/conversas/$id'
+      preLoaderRoute: typeof ApiConversasIdRouteImport
+      parentRoute: typeof ApiConversasRoute
+    }
     '/api/ol/$': {
       id: '/api/ol/$'
       path: '/api/ol/$'
@@ -752,6 +791,18 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface ApiConversasRouteChildren {
+  ApiConversasIdRoute: typeof ApiConversasIdRoute
+}
+
+const ApiConversasRouteChildren: ApiConversasRouteChildren = {
+  ApiConversasIdRoute: ApiConversasIdRoute,
+}
+
+const ApiConversasRouteWithChildren = ApiConversasRoute._addFileChildren(
+  ApiConversasRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcervoRoute: AcervoRoute,
@@ -771,6 +822,7 @@ const rootRouteChildren: RootRouteChildren = {
   SobreRoute: SobreRoute,
   TermosRoute: TermosRoute,
   ApiAssistenteRoute: ApiAssistenteRoute,
+  ApiConversasRoute: ApiConversasRouteWithChildren,
   ApiOverpassRoute: ApiOverpassRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   BibliotecaSlugRoute: BibliotecaSlugRoute,

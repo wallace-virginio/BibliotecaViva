@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUp, BookHeart, BookOpen, CalendarDays } from "lucide-react";
+import { ArrowUp, BookHeart, BookOpen, CalendarDays, History, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BookCard, LibraryCard } from "@/components/common";
 import { Badge } from "@/components/ui";
@@ -8,6 +8,8 @@ import { FEATURED_LIBRARIES, type Library } from "@/data/libraries";
 import { booksBySubject, searchBooks, type Book } from "@/lib/api/openlibrary";
 import { openStatus } from "@/lib/hours";
 import { askAssistant, type AssistantPlan, type ChatTurn } from "@/lib/api/assistant";
+import { deleteConversation, getConversation, listConversations, saveConversation, type ConversationSummary, type StoredMessage } from "@/lib/api/conversations";
+import { useAuth } from "@/lib/auth";
 import { useLocation } from "@/lib/location";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +31,7 @@ const SUGGESTIONS = [
   "Sugira um clube de leitura de ficção científica.",
 ];
 
-type Answer = { text: string; books?: Book[]; libraries?: Library[]; events?: PlatformEvent[]; ai?: boolean };
+type Answer = { text: string; books?: Book[]; libraries?: Library[]; events?: PlatformEvent[]; ai?: boolean; plan?: AssistantPlan };
 type Msg = { role: "user"; text: string } | { role: "bot"; answer?: Answer };
 
 const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -96,8 +98,14 @@ async function fromPlan(plan: AssistantPlan): Promise<Answer> {
   if (!books?.length && plan.books?.subject) books = await booksBySubject(plan.books.subject, 6).catch(() => []);
   const libraries = plan.libraries ? (plan.libraries === "estudar" ? studySpots() : FEATURED_LIBRARIES.filter((l) => l.curations.includes(plan.libraries!)).slice(0, 3)) : undefined;
   const events = plan.events ? EVENTS.filter((e) => (plan.events as string[]).includes(e.category)) : undefined;
-  return { text: plan.reply, books, libraries, events, ai: true };
+  return { text: plan.reply, books, libraries, events, ai: true, plan };
 }
+
+/** Mensagens da tela → formato guardado no histórico (só texto + o plano da IA para refazer os cards). */
+const toStored = (msgs: Msg[]): StoredMessage[] =>
+  msgs.flatMap((m): StoredMessage[] =>
+    m.role === "user" ? [{ role: "user", content: m.text }] : m.answer ? [{ role: "assistant", content: m.answer.text, ...(m.answer.plan && { plan: m.answer.plan }) }] : [],
+  );
 
 function Assistente() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -105,6 +113,38 @@ function Assistente() {
   const [busy, setBusy] = useState(false);
   const end = useRef<HTMLDivElement>(null);
   const { location } = useLocation();
+  const auth = useAuth();
+  // histórico (só com login): id da conversa aberta e situação do último salvamento
+  const [convId, setConvId] = useState<string>();
+  const [saved, setSaved] = useState<"ok" | "erro" | "desligado">();
+  const [showHistory, setShowHistory] = useState(false);
+
+  const newConversation = () => {
+    setMsgs([]);
+    setConvId(undefined);
+    setSaved(undefined);
+    setShowHistory(false);
+  };
+
+  const openConversation = async (id: string) => {
+    setShowHistory(false);
+    setBusy(true);
+    try {
+      const c = await getConversation(id);
+      const rebuilt: Msg[] = [];
+      for (const m of c.messages) {
+        if (m.role === "user") rebuilt.push({ role: "user", text: m.content });
+        // os cards são refeitos com dados atuais (livros, bibliotecas, agenda) a partir do plano guardado
+        else rebuilt.push({ role: "bot", answer: m.plan ? await fromPlan(m.plan) : { text: m.content } });
+      }
+      setMsgs(rebuilt);
+      setConvId(c.id);
+      setSaved("ok");
+    } catch {
+      setSaved("erro");
+    }
+    setBusy(false);
+  };
 
   // chaves: no Chrome novo scrollIntoView() devolve uma Promise, e um efeito não pode devolver nada além de limpeza
   useEffect(() => {
@@ -132,10 +172,40 @@ function Assistente() {
     }
     setMsgs((m) => [...m.slice(0, -1), { role: "bot", answer: a }]);
     setBusy(false);
+
+    // guarda no histórico da pessoa (criptografado no servidor; só ela lê)
+    if (auth.user) {
+      const stored = toStored([...msgs, { role: "user", text: q }, { role: "bot", answer: a }]);
+      saveConversation(convId, stored)
+        .then((id) => {
+          setConvId(id);
+          setSaved("ok");
+        })
+        .catch((e: Error) => setSaved(e.message === "historico-desligado" ? "desligado" : "erro"));
+    }
   };
 
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-3xl flex-col px-4 pt-20 lg:min-h-screen lg:pt-24">
+      {/* barra do histórico */}
+      <div className="relative flex items-center justify-between gap-2 pt-3">
+        {msgs.length > 0 ? (
+          <button onClick={newConversation} className="flex h-11 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-primary hover:bg-surface-2">
+            <Plus className="size-4" /> Nova conversa
+          </button>
+        ) : (
+          <span />
+        )}
+        <button
+          onClick={() => setShowHistory((v) => !v)}
+          aria-expanded={showHistory}
+          className="flex h-11 items-center gap-1.5 rounded-full border bg-surface px-3.5 text-sm font-medium hover:border-primary"
+        >
+          <History className="size-4" /> Histórico
+        </button>
+        {showHistory && <HistoryPanel loggedIn={!!auth.user} currentId={convId} onOpen={openConversation} onDeleted={(id) => id === convId && newConversation()} onClose={() => setShowHistory(false)} />}
+      </div>
+
       {msgs.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center py-10 text-center">
           <span className="grid size-14 place-items-center rounded-xl bg-primary-soft text-primary">
@@ -199,6 +269,27 @@ function Assistente() {
               </div>
             ),
           )}
+          {/* situação do histórico, discreta, depois da última resposta */}
+          {!busy && (
+            <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+              {!auth.user ? (
+                <>
+                  <Link to="/entrar" search={{ redirect: "/assistente" }} className="font-medium text-primary underline-offset-2 hover:underline">
+                    Entre na sua conta
+                  </Link>{" "}
+                  para guardar esta conversa no seu histórico.
+                </>
+              ) : saved === "ok" ? (
+                <>
+                  <Lock className="size-3.5" /> Salva no seu histórico · criptografada, só você vê
+                </>
+              ) : saved === "desligado" ? (
+                "O histórico de conversas ainda não está ativo."
+              ) : saved === "erro" ? (
+                "Não deu para salvar esta conversa agora."
+              ) : null}
+            </p>
+          )}
           <div ref={end} />
         </div>
       )}
@@ -215,6 +306,97 @@ function Assistente() {
           <ArrowUp className="size-5" />
         </button>
       </form>
+    </div>
+  );
+}
+
+/** Lista das conversas guardadas (só da pessoa logada). Tocar abre; a lixeira pede confirmação e apaga de vez. */
+function HistoryPanel({
+  loggedIn,
+  currentId,
+  onOpen,
+  onDeleted,
+  onClose,
+}: {
+  loggedIn: boolean;
+  currentId?: string;
+  onOpen: (id: string) => void;
+  onDeleted: (id: string) => void;
+  onClose: () => void;
+}) {
+  const [items, setItems] = useState<ConversationSummary[]>();
+  const [state, setState] = useState<"carregando" | "ok" | "erro" | "desligado">("carregando");
+  const [confirm, setConfirm] = useState<string>();
+
+  useEffect(() => {
+    if (!loggedIn) return;
+    const c = new AbortController();
+    listConversations(c.signal)
+      .then((list) => {
+        setItems(list);
+        setState("ok");
+      })
+      .catch((e: Error) => !c.signal.aborted && setState(e.message === "historico-desligado" ? "desligado" : "erro"));
+    return () => c.abort();
+  }, [loggedIn]);
+
+  const remove = async (id: string) => {
+    setConfirm(undefined);
+    setItems((l) => l?.filter((x) => x.id !== id));
+    await deleteConversation(id).catch(() => setState("erro"));
+    onDeleted(id);
+  };
+
+  return (
+    <div className="absolute top-full right-0 z-40 mt-2 w-[min(24rem,calc(100vw-2rem))] rounded-xl border bg-surface p-2 shadow-elevated" role="dialog" aria-label="Histórico de conversas">
+      <div className="flex items-center justify-between px-2 py-1.5">
+        <p className="flex items-center gap-1.5 text-sm font-semibold">
+          <Lock className="size-3.5 text-primary" /> Suas conversas
+        </p>
+        <button onClick={onClose} className="h-9 rounded-full px-3 text-sm text-muted-foreground hover:bg-surface-2">
+          Fechar
+        </button>
+      </div>
+      {!loggedIn ? (
+        <p className="px-2 pb-2 text-sm text-muted-foreground">
+          <Link to="/entrar" search={{ redirect: "/assistente" }} className="font-medium text-primary">
+            Entre na sua conta
+          </Link>{" "}
+          para guardar suas conversas e voltar a elas quando quiser. Elas ficam criptografadas e só você vê.
+        </p>
+      ) : state === "carregando" ? (
+        <p className="flex items-center gap-2 px-2 pb-2 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" /> Carregando…
+        </p>
+      ) : state === "desligado" ? (
+        <p className="px-2 pb-2 text-sm text-muted-foreground">O histórico de conversas ainda não está ativo.</p>
+      ) : state === "erro" ? (
+        <p className="px-2 pb-2 text-sm text-muted-foreground">Não deu para carregar o histórico agora. Tente de novo em instantes.</p>
+      ) : !items?.length ? (
+        <p className="px-2 pb-2 text-sm text-muted-foreground">Nenhuma conversa ainda. As próximas ficam guardadas aqui.</p>
+      ) : (
+        <ul className="max-h-[55vh] overflow-y-auto">
+          {items.map((c) => (
+            <li key={c.id} className={cn("flex items-center gap-1 rounded-lg", c.id === currentId && "bg-surface-2")}>
+              <button onClick={() => onOpen(c.id)} className="min-h-12 min-w-0 flex-1 px-2 py-1.5 text-left">
+                <span className="block truncate text-sm font-medium">{c.titulo}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {new Date(c.atualizada).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} · {c.mensagens} mensagens
+                </span>
+              </button>
+              {confirm === c.id ? (
+                <button onClick={() => remove(c.id)} className="h-9 shrink-0 rounded-full bg-danger px-3 text-xs font-semibold text-white">
+                  Apagar
+                </button>
+              ) : (
+                <button onClick={() => setConfirm(c.id)} className="grid size-11 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-danger" aria-label={`Apagar a conversa "${c.titulo}"`}>
+                  <Trash2 className="size-4" />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
