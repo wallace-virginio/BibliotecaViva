@@ -60,11 +60,14 @@ const toBook = (d: SearchDoc): Book => ({
 
 export async function searchBooks(
   q: string,
-  opts: { limit?: number; page?: number; subject?: string; lang?: string; ebook?: boolean; signal?: AbortSignal } = {},
+  opts: { limit?: number; page?: number; subject?: string; author?: string; lang?: string; ebook?: boolean; signal?: AbortSignal } = {},
 ) {
   const params = new URLSearchParams({ fields: FIELDS, limit: String(opts.limit ?? 20), page: String(opts.page ?? 1) });
+  // autor: campo da busca da Open Library (aceita nome parcial, ex.: "machado" acha "Machado de Assis")
+  const author = opts.author?.replace(/["\\]/g, " ").trim();
   const query = [
     q.trim(),
+    author ? `author:"${author}"` : "",
     opts.subject ? `subject:"${opts.subject}"` : "",
     opts.lang ? `language:${opts.lang}` : "",
     opts.ebook ? "ebook_access:public" : "",

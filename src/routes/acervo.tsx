@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { BookOpenText, BookX, Flame, MapPin, Search, X } from "lucide-react";
+import { BookOpenText, BookX, Flame, MapPin, PenLine, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BookCard, BookGridSkeleton } from "@/components/common";
 import { LoadMoreSentinel } from "@/components/motion";
@@ -13,11 +13,12 @@ import { useAsync } from "@/lib/hooks";
 import { useLocation, useNearbyLibraries } from "@/lib/location";
 import { cn, formatNumber } from "@/lib/utils";
 
-type Search = { q?: string; categoria?: string; tipo?: string; disponivel?: boolean; ebook?: boolean; pagina?: number };
+type Search = { q?: string; autor?: string; categoria?: string; tipo?: string; disponivel?: boolean; ebook?: boolean; pagina?: number };
 
 export const Route = createFileRoute("/acervo")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     q: typeof s.q === "string" && s.q ? s.q : undefined,
+    autor: typeof s.autor === "string" && s.autor.trim() ? s.autor.trim().slice(0, 80) : undefined,
     categoria: typeof s.categoria === "string" && s.categoria ? s.categoria : undefined,
     tipo: typeof s.tipo === "string" && s.tipo ? s.tipo : undefined,
     disponivel: s.disponivel === true || s.disponivel === "true" ? true : undefined,
@@ -46,15 +47,18 @@ function Acervo() {
 
   const tipo = MATERIAL_TYPES.find((t) => t.value === (search.tipo ?? "livros")) ?? MATERIAL_TYPES[0];
   const subject = search.categoria || tipo.subject || undefined;
-  const browsing = !search.q && !search.categoria && !search.tipo && !search.ebook && !search.disponivel;
+  const browsing = !search.q && !search.autor && !search.categoria && !search.tipo && !search.ebook && !search.disponivel;
+  // com autor escolhido e sem categoria, não restringe ao assunto padrão do tipo (senão some parte da obra do autor)
+  const subjectFor = search.autor && !search.categoria ? undefined : subject;
 
   const results = useAsync(
-    (signal) => (browsing ? Promise.resolve(undefined) : searchBooks(search.q ?? "", { subject, page: 1, limit: PAGE, ebook: search.ebook, signal })),
-    [browsing, search.q, subject, search.ebook],
+    (signal) =>
+      browsing ? Promise.resolve(undefined) : searchBooks(search.q ?? "", { subject: subjectFor, author: search.autor, page: 1, limit: PAGE, ebook: search.ebook, signal }),
+    [browsing, search.q, search.autor, subjectFor, search.ebook],
   );
 
   // j24 · carregar mais ao chegar no fim (no lugar de "próxima página")
-  const queryKey = `${search.q}|${subject}|${search.ebook}`;
+  const queryKey = `${search.q}|${search.autor}|${subjectFor}|${search.ebook}`;
   const [more, setMore] = useState<{ key: string; books: Book[]; page: number; loading: boolean; failed: boolean }>({ key: "", books: [], page: 1, loading: false, failed: false });
   const extra = more.key === queryKey ? more : { key: queryKey, books: [] as Book[], page: 1, loading: false, failed: false };
   const loaded = (results.data?.books.length ?? 0) + extra.books.length;
@@ -64,7 +68,7 @@ function Acervo() {
     const page = extra.page + 1;
     setMore({ ...extra, loading: true });
     try {
-      const r = await searchBooks(search.q ?? "", { subject, page, limit: PAGE, ebook: search.ebook });
+      const r = await searchBooks(search.q ?? "", { subject: subjectFor, author: search.autor, page, limit: PAGE, ebook: search.ebook });
       setMore((m) => (m.key === queryKey || extra.key === queryKey ? { key: queryKey, books: [...extra.books, ...r.books], page, loading: false, failed: r.books.length === 0 } : m));
     } catch {
       setMore({ ...extra, loading: false, failed: true });
@@ -144,6 +148,7 @@ function Acervo() {
             <FilterChip active={!!search.ebook} onClick={() => set({ ebook: search.ebook ? undefined : true })} icon={<BookOpenText className="size-3.5" />}>
               Grátis para ler no app
             </FilterChip>
+            <AuthorFilter value={search.autor} onChange={(autor) => set({ autor })} />
             <span className="mx-1 hidden h-5 w-px bg-border sm:block" />
             <div className="-mx-4 flex w-full gap-2 overflow-x-auto px-4 scrollbar-none sm:mx-0 sm:w-auto sm:flex-wrap sm:px-0">
               {CATEGORIES.slice(1).map((c) => (
@@ -228,6 +233,56 @@ function Acervo() {
         </aside>
       </Container>
     </div>
+  );
+}
+
+/**
+ * Filtro por autor: um botão "Autor" que vira campo de texto; aplicado, mostra "Autor: Fulano ✕".
+ * Soma com os outros filtros (categoria, grátis para ler, disponível perto) e com a busca por título.
+ */
+function AuthorFilter({ value, onChange }: { value?: string; onChange: (v: string | undefined) => void }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState(value ?? "");
+  useEffect(() => setText(value ?? ""), [value]);
+
+  if (value && !open)
+    return (
+      <FilterChip active onClick={() => onChange(undefined)} icon={<PenLine className="size-3.5" />}>
+        Autor: {value} <X className="size-3.5" aria-label="remover filtro de autor" />
+      </FilterChip>
+    );
+  if (!open)
+    return (
+      <FilterChip active={false} onClick={() => setOpen(true)} icon={<PenLine className="size-3.5" />}>
+        Autor
+      </FilterChip>
+    );
+  return (
+    <form
+      role="search"
+      aria-label="Filtrar por autor"
+      onSubmit={(e) => {
+        e.preventDefault();
+        setOpen(false);
+        onChange(text.trim() || undefined);
+      }}
+      className="flex h-9 items-center gap-1 rounded-full border border-primary bg-surface pr-1 pl-3"
+    >
+      <PenLine className="size-3.5 shrink-0 text-primary" aria-hidden />
+      <input
+        autoFocus
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
+        onBlur={() => !text.trim() && setOpen(false)}
+        placeholder="Nome do autor"
+        aria-label="Nome do autor"
+        className="w-36 min-w-0 bg-transparent text-sm outline-none sm:w-44"
+      />
+      <button type="submit" className="h-7 rounded-full bg-primary px-3 text-xs font-semibold text-primary-foreground">
+        Filtrar
+      </button>
+    </form>
   );
 }
 

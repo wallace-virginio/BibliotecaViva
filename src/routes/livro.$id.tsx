@@ -98,7 +98,17 @@ function BookPage() {
             </div>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-balance md:text-5xl">{book.title}</h1>
             <p className="mt-2 text-lg text-muted-foreground">
-              {book.authors.join(", ") || "Autor desconhecido"}
+              {/* cada autor leva ao acervo filtrado por ele */}
+              {book.authors.length
+                ? book.authors.map((a, i) => (
+                    <span key={a}>
+                      {i > 0 && ", "}
+                      <Link to="/acervo" search={{ autor: a }} className="underline-offset-4 hover:text-primary hover:underline" title={`Mais livros de ${a}`}>
+                        {a}
+                      </Link>
+                    </span>
+                  ))
+                : "Autor desconhecido"}
               {book.year ? ` · ${book.year}` : ""}
             </p>
             {book.rating?.average && (
