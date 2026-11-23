@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { BookOpenText, BookX, Flame, MapPin, PenLine, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BookCard, BookGridSkeleton } from "@/components/common";
-import { SuggestList, useSuggestBox } from "@/components/SearchSuggest";
+import { closeUnlessWindowSwitch, SuggestList, useSuggestBox } from "@/components/SearchSuggest";
 import { LoadMoreSentinel } from "@/components/motion";
 import { PopularSubjects, RankNumber, ShelfRow, TrendingSidebar } from "@/components/Ranking";
 import { Button, Container, EmptyState } from "@/components/ui";
@@ -141,7 +141,7 @@ function Acervo() {
                   setFocused(true);
                 }}
                 onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
+                onBlur={() => closeUnlessWindowSwitch(() => setFocused(false))}
                 onKeyDown={(e) => (e.key === "Escape" ? setFocused(false) : suggest.onKeyDown(e))}
                 placeholder={`Buscar ${tipo.label.toLowerCase()} por título, autor ou assunto…`}
                 className="h-12 min-w-0 flex-1 bg-transparent px-3 outline-none"
@@ -268,6 +268,7 @@ function Acervo() {
  */
 function AuthorFilter({ value, onChange }: { value?: string; onChange: (v: string | undefined) => void }) {
   const [open, setOpen] = useState(false);
+  const [listOpen, setListOpen] = useState(false);
   const [text, setText] = useState(value ?? "");
   useEffect(() => setText(value ?? ""), [value]);
   // sugestões de autores enquanto digita (nome + nº de obras)
@@ -307,7 +308,13 @@ function AuthorFilter({ value, onChange }: { value?: string; onChange: (v: strin
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => (e.key === "Escape" ? setOpen(false) : suggest.onKeyDown(e))}
-        onBlur={() => !text.trim() && setOpen(false)}
+        onFocus={() => setListOpen(true)}
+        onBlur={() =>
+          closeUnlessWindowSwitch(() => {
+            setListOpen(false);
+            if (!text.trim()) setOpen(false);
+          })
+        }
         placeholder="Nome do autor"
         aria-label="Nome do autor"
         role="combobox"
@@ -321,7 +328,7 @@ function AuthorFilter({ value, onChange }: { value?: string; onChange: (v: strin
         Filtrar
       </button>
     </form>
-    <SuggestList box={suggest} id="autor-sugestoes" className="right-auto w-[min(20rem,calc(100vw-2rem))]" />
+    {listOpen && <SuggestList box={suggest} id="autor-sugestoes" className="right-auto w-[min(20rem,calc(100vw-2rem))]" />}
     </div>
   );
 }

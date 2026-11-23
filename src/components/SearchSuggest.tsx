@@ -1,8 +1,39 @@
 import { BookOpen, Loader2, PenLine } from "lucide-react";
-import { useEffect, useState, type KeyboardEvent } from "react";
-import { coverUrl, suggestAuthors, suggestBooks, type AuthorSuggestion, type Book } from "@/lib/api/openlibrary";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { FREE_CLASSICS } from "@/data/content";
+import { POPULAR_AUTHORS } from "@/data/popularAuthors";
+import { authorMatches, coverUrl, suggestAll, type AuthorSuggestion, type Book } from "@/lib/api/openlibrary";
 import { useDebounce } from "@/lib/hooks";
+import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+
+/**
+ * Fecha a lista ao sair do campo — MENOS quando a pessoa só trocou de janela/aba/monitor: aí a página inteira
+ * perde o foco (document.hasFocus() = false) e a lista continua lá quando ela voltar.
+ */
+export function closeUnlessWindowSwitch(close: () => void) {
+  setTimeout(() => {
+    if (document.hasFocus()) close();
+  }, 0);
+}
+
+/** Autores conhecidos que combinam com o texto — instantâneo, sem rede. */
+export function localAuthorSuggestions(q: string): AuthorSuggestion[] {
+  if (q.trim().length < 2) return [];
+  return POPULAR_AUTHORS.filter((a) => authorMatches(a.name, q)).map((a) => ({ key: `local:${a.name}`, name: a.name, topWork: a.topWork }));
+}
+
+/** Título começa com o texto (palavra a palavra, sem acento) — para clássicos e histórico, sem rede. */
+const titleMatches = (title: string, q: string) => {
+  const words = norm(title).split(/[\s:,.-]+/);
+  const t = norm(q).split(/\s+/).filter(Boolean);
+  return t.length > 0 && t.every((w) => words.some((x) => x.startsWith(w)));
+};
+
+const uniqueBy = <T,>(list: T[], key: (x: T) => string) => {
+  const seen = new Set<string>();
+  return list.filter((x) => (seen.has(key(x)) ? false : (seen.add(key(x)), true)));
+};
 
 /**
  * Sugestões enquanto a pessoa digita: livros (capa, título, autor) e autores (nome, nº de obras).
@@ -16,34 +47,54 @@ type Kind = "books" | "authors";
 const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 export function useSuggestBox(q: string, kinds: Kind[], onSelect: (s: Suggestion) => void) {
-  const debounced = useDebounce(q, 250);
-  const [items, setItems] = useState<Suggestion[]>([]);
+  const wantBooks = kinds.includes("books");
+  const wantAuthors = kinds.includes("authors");
+  const text = q.trim();
+  const debounced = useDebounce(text, 160);
+  const [net, setNet] = useState<{ books: Book[]; authors: AuthorSuggestion[] }>({ books: [], authors: [] });
   const [loading, setLoading] = useState(false);
   const [active, setActive] = useState(-1);
-  const kindsKey = kinds.join(",");
+  const history = useStore((s) => s.history);
 
+  // 1) instantâneo, sem rede: autores conhecidos, clássicos grátis e livros que a pessoa já abriu
+  const local = useMemo(() => {
+    if (text.length < 2) return { books: [] as Book[], authors: [] as AuthorSuggestion[] };
+    const known: Book[] = [
+      ...history.map((h) => ({ id: h.id, title: h.title, authors: h.author ? [h.author] : [], coverId: h.coverId, subjects: [] })),
+      ...FREE_CLASSICS.map((b) => ({ id: b.id, title: b.title, authors: [b.author], coverId: b.coverId, subjects: [] })),
+    ];
+    return {
+      books: known.filter((b) => titleMatches(b.title, text) || b.authors.some((a) => authorMatches(a, text))).slice(0, 3),
+      authors: localAuthorSuggestions(text),
+    };
+  }, [text, history]);
+
+  // 2) Open Library (a partir de 3 letras; um pedido só; com memória). Os resultados anteriores ficam
+  //    na tela até os novos chegarem — a lista não pisca a cada letra.
   useEffect(() => {
-    const t = debounced.trim();
     setActive(-1);
-    if (t.length < 2) {
-      setItems([]);
+    if (debounced.length < 3) {
+      setNet({ books: [], authors: [] });
       setLoading(false);
       return;
     }
     const c = new AbortController();
     setLoading(true);
-    Promise.all([
-      kindsKey.includes("authors") ? suggestAuthors(t, c.signal).catch(() => []) : Promise.resolve([]),
-      kindsKey.includes("books") ? suggestBooks(t, c.signal).catch(() => []) : Promise.resolve([]),
-    ]).then(([authors, books]) => {
-      if (c.signal.aborted) return;
-      // com livros também na lista, mostra só os autores mais relevantes
-      const a = kindsKey.includes("books") ? authors.slice(0, 2) : authors;
-      setItems([...a.map((author): Suggestion => ({ type: "author", author })), ...books.map((book): Suggestion => ({ type: "book", book }))]);
-      setLoading(false);
-    });
+    suggestAll(debounced, c.signal)
+      .then((r) => !c.signal.aborted && setNet(r))
+      .catch(() => {})
+      .finally(() => !c.signal.aborted && setLoading(false));
     return () => c.abort();
-  }, [debounced, kindsKey]);
+  }, [debounced]);
+
+  const items = useMemo<Suggestion[]>(() => {
+    if (text.length < 2) return [];
+    const authors = wantAuthors
+      ? uniqueBy([...local.authors, ...net.authors.filter((a) => authorMatches(a.name, text))], (a) => norm(a.name)).slice(0, wantBooks ? 3 : 6)
+      : [];
+    const books = wantBooks ? uniqueBy([...local.books, ...net.books], (b) => b.id).slice(0, 6) : [];
+    return [...authors.map((author): Suggestion => ({ type: "author", author })), ...books.map((book): Suggestion => ({ type: "book", book }))];
+  }, [text, local, net, wantAuthors, wantBooks]);
 
   /** Devolve true quando a tecla foi usada pela lista (o formulário não deve tratar o Enter). */
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -61,7 +112,7 @@ export function useSuggestBox(q: string, kinds: Kind[], onSelect: (s: Suggestion
     return false;
   };
 
-  return { q: debounced.trim(), items, loading, active, setActive, onKeyDown, onSelect, visible: debounced.trim().length >= 2 && (loading || items.length > 0) };
+  return { q: text, items, loading, active, setActive, onKeyDown, onSelect, visible: text.length >= 2 && (loading || items.length > 0) };
 }
 
 /** Destaca o trecho digitado (sem ligar para acento ou maiúscula). */
@@ -84,13 +135,14 @@ export function SuggestList({ box, id, className }: { box: ReturnType<typeof use
       id={id}
       role="listbox"
       aria-label="Sugestões"
-      className={cn("absolute inset-x-0 top-full z-50 mt-2 max-h-[60vh] overflow-y-auto rounded-xl border bg-surface p-1.5 text-left shadow-elevated", className)}
+      className={cn("absolute inset-x-0 top-full z-50 mt-2 flex max-h-[60vh] flex-col overflow-y-auto rounded-xl border bg-surface p-1.5 text-left shadow-elevated", className)}
       // mousedown (e não click): escolhe antes de o campo perder o foco e a lista fechar
       onMouseDown={(e) => e.preventDefault()}
     >
-      {box.loading && !box.items.length && (
-        <li className="flex items-center gap-2 px-3 py-3 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> Procurando…
+      {box.loading && (
+        // aviso discreto no fim da lista: as sugestões que já chegaram continuam clicáveis
+        <li className="order-last flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
+          <Loader2 className="size-3.5 animate-spin" /> Buscando mais no acervo…
         </li>
       )}
       {box.items.map((s, i) => (

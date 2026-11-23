@@ -214,40 +214,56 @@ export function prefixQuery(q: string, field?: string) {
   return t.map((w, i) => `${field ? `${field}:` : ""}${w}${i === t.length - 1 && w.length >= 2 ? "*" : ""}`).join(" ");
 }
 
-/**
- * Autores cujo nome começa com o que a pessoa está digitando. Vem da busca de livros (estável e com prefixo),
- * agrupando por autor — a busca de autores da Open Library cai com frequência (erro 500).
- */
-export async function suggestAuthors(q: string, signal?: AbortSignal): Promise<AuthorSuggestion[]> {
+/** O nome do autor combina com o que foi digitado: contém as palavras completas e começa com a última (sem acento). */
+export function authorMatches(name: string, q: string) {
   const t = tokens(q);
-  if (!t.length) return [];
-  const params = new URLSearchParams({ q: prefixQuery(q, "author"), limit: "40", fields: "title,author_name,author_key" });
-  const res = await olFetch(`search.json?${params}`, signal);
-  if (!res.ok) return [];
-  const json = (await res.json()) as { docs: { title?: string; author_name?: string[]; author_key?: string[] }[] };
+  if (!t.length) return false;
+  const words = foldAccents(name).split(/[\s.,-]+/);
   const last = t[t.length - 1];
-  // o nome precisa conter as palavras completas e ter uma palavra que comece com a última digitada
-  const matches = (name: string) => {
-    const words = foldAccents(name).split(/[\s.,-]+/);
-    return t.slice(0, -1).every((w) => words.includes(w)) && words.some((w) => w.startsWith(last));
-  };
+  return t.slice(0, -1).every((w) => words.some((x) => x.startsWith(w))) && words.some((w) => w.startsWith(last));
+}
+
+export type Suggestions = { books: Book[]; authors: AuthorSuggestion[] };
+// memória das sugestões desta sessão: apagar uma letra ou repetir a busca responde na hora
+const suggestCache = new Map<string, Suggestions>();
+
+/**
+ * Sugestões enquanto digita, num pedido só: livros (os 5 primeiros) e autores (agrupados a partir dos
+ * mesmos resultados). A busca de autores da Open Library é lenta (5–20s) e cai com erro 500; a de livros
+ * com prefixo responde em ~3s, e pelo nosso proxy com cache em ~0,4s quando o termo já foi buscado.
+ */
+export async function suggestAll(q: string, signal?: AbortSignal): Promise<Suggestions> {
+  const pq = prefixQuery(q);
+  if (!pq) return { books: [], authors: [] };
+  const hit = suggestCache.get(pq);
+  if (hit) return hit;
+  const params = new URLSearchParams({ q: pq, limit: "20", fields: "key,title,author_name,author_key,cover_i,first_publish_year" });
+  const res = await olFetch(`search.json?${params}`, signal);
+  if (!res.ok) return { books: [], authors: [] }; // falha não vai para a memória
+  const json = (await res.json()) as { docs: (SearchDoc & { author_key?: string[] })[] };
   const count = new Map<string, AuthorSuggestion & { n: number }>();
   for (const d of json.docs) {
     (d.author_name ?? []).forEach((name, i) => {
-      if (!matches(name)) return;
+      if (!authorMatches(name, q)) return;
       const key = d.author_key?.[i] ?? name;
       const cur = count.get(key);
       if (cur) cur.n++;
       else count.set(key, { key, name, topWork: d.title, n: 1 });
     });
   }
-  return [...count.values()].sort((a, b) => b.n - a.n).slice(0, 4).map(({ n: _n, ...a }) => a);
-}
-
-export async function suggestBooks(q: string, signal?: AbortSignal) {
-  const params = new URLSearchParams({ q: prefixQuery(q) || q, limit: "5", fields: "key,title,author_name,cover_i,first_publish_year" });
-  const res = await olFetch(`search.json?${params}`, signal);
-  if (!res.ok) return [];
-  const json = (await res.json()) as { docs: SearchDoc[] };
-  return json.docs.map(toBook);
+  // só livros cujo TÍTULO ou AUTOR começa com o digitado: a busca também casa campos que a pessoa não vê
+  // (ex.: "clar" → editora "Clarendon Press" trazia a Bíblia e a Odisseia)
+  const t = tokens(q);
+  const titleHit = (title = "") => {
+    const words = foldAccents(title).split(/[\s:,.;!?()'"-]+/);
+    return t.every((w) => words.some((x) => x.startsWith(w)));
+  };
+  const relevant = json.docs.filter((d) => titleHit(d.title) || (d.author_name ?? []).some((a) => authorMatches(a, q)));
+  const out: Suggestions = {
+    books: relevant.slice(0, 5).map(toBook),
+    authors: [...count.values()].sort((a, b) => b.n - a.n).slice(0, 4).map(({ n: _n, ...a }) => a),
+  };
+  suggestCache.set(pq, out);
+  if (suggestCache.size > 300) suggestCache.delete(suggestCache.keys().next().value!);
+  return out;
 }

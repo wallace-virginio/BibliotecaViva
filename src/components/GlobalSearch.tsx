@@ -3,7 +3,8 @@ import { ArrowRight, BookOpen, CalendarDays, Coffee, GraduationCap, Hammer, Libr
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { EVENTS } from "@/data/content";
 import { FEATURED_LIBRARIES } from "@/data/libraries";
-import { coverUrl, suggestAuthors, suggestBooks, type AuthorSuggestion, type Book } from "@/lib/api/openlibrary";
+import { coverUrl, suggestAll, type AuthorSuggestion, type Book } from "@/lib/api/openlibrary";
+import { localAuthorSuggestions } from "@/components/SearchSuggest";
 import { useDebounce } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +19,7 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
   const [books, setBooks] = useState<Book[]>([]);
   const [authors, setAuthors] = useState<AuthorSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
-  const debounced = useDebounce(q, 280);
+  const debounced = useDebounce(q, 180);
   const navigate = useNavigate();
   const box = useRef<HTMLDivElement>(null);
 
@@ -29,16 +30,24 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
       setAuthors([]);
       return;
     }
+    // autores conhecidos na hora (sem rede); livros e mais autores chegam num pedido só, a partir de 3 letras
+    const quick = localAuthorSuggestions(t);
+    setAuthors(quick.slice(0, 3));
+    if (t.length < 3) {
+      setBooks([]);
+      return;
+    }
     const c = new AbortController();
     setLoading(true);
-    suggestBooks(t, c.signal)
-      .then(setBooks)
+    suggestAll(t, c.signal)
+      .then((r) => {
+        if (c.signal.aborted) return;
+        setBooks(r.books);
+        const seen = new Set(quick.map((a) => a.name.toLowerCase()));
+        setAuthors([...quick, ...r.authors.filter((a) => !seen.has(a.name.toLowerCase()))].slice(0, 3));
+      })
       .catch(() => {})
       .finally(() => !c.signal.aborted && setLoading(false));
-    // autores em paralelo (aparecem acima dos livros; levam ao acervo filtrado pelo autor)
-    suggestAuthors(t, c.signal)
-      .then((a) => !c.signal.aborted && setAuthors(a.slice(0, 3)))
-      .catch(() => {});
     return () => c.abort();
   }, [debounced]);
 
