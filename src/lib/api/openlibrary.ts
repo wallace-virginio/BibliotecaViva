@@ -195,8 +195,57 @@ export async function getBook(requestedId: string, signal?: AbortSignal): Promis
 }
 
 /** Busca rápida para autocompletar. */
+export type AuthorSuggestion = { key: string; name: string; topWork?: string };
+
+const foldAccents = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const tokens = (q: string) =>
+  foldAccents(q)
+    .replace(/[^\p{L}\p{N}\s'-]/gu, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 6);
+
+/**
+ * Busca "enquanto digita": a última palavra vira prefixo (macha → macha*), porque a Open Library
+ * só casa palavras inteiras — sem isso "macha" não acharia Machado de Assis.
+ */
+export function prefixQuery(q: string, field?: string) {
+  const t = tokens(q);
+  return t.map((w, i) => `${field ? `${field}:` : ""}${w}${i === t.length - 1 && w.length >= 2 ? "*" : ""}`).join(" ");
+}
+
+/**
+ * Autores cujo nome começa com o que a pessoa está digitando. Vem da busca de livros (estável e com prefixo),
+ * agrupando por autor — a busca de autores da Open Library cai com frequência (erro 500).
+ */
+export async function suggestAuthors(q: string, signal?: AbortSignal): Promise<AuthorSuggestion[]> {
+  const t = tokens(q);
+  if (!t.length) return [];
+  const params = new URLSearchParams({ q: prefixQuery(q, "author"), limit: "40", fields: "title,author_name,author_key" });
+  const res = await olFetch(`search.json?${params}`, signal);
+  if (!res.ok) return [];
+  const json = (await res.json()) as { docs: { title?: string; author_name?: string[]; author_key?: string[] }[] };
+  const last = t[t.length - 1];
+  // o nome precisa conter as palavras completas e ter uma palavra que comece com a última digitada
+  const matches = (name: string) => {
+    const words = foldAccents(name).split(/[\s.,-]+/);
+    return t.slice(0, -1).every((w) => words.includes(w)) && words.some((w) => w.startsWith(last));
+  };
+  const count = new Map<string, AuthorSuggestion & { n: number }>();
+  for (const d of json.docs) {
+    (d.author_name ?? []).forEach((name, i) => {
+      if (!matches(name)) return;
+      const key = d.author_key?.[i] ?? name;
+      const cur = count.get(key);
+      if (cur) cur.n++;
+      else count.set(key, { key, name, topWork: d.title, n: 1 });
+    });
+  }
+  return [...count.values()].sort((a, b) => b.n - a.n).slice(0, 4).map(({ n: _n, ...a }) => a);
+}
+
 export async function suggestBooks(q: string, signal?: AbortSignal) {
-  const params = new URLSearchParams({ q, limit: "5", fields: "key,title,author_name,cover_i,first_publish_year" });
+  const params = new URLSearchParams({ q: prefixQuery(q) || q, limit: "5", fields: "key,title,author_name,cover_i,first_publish_year" });
   const res = await olFetch(`search.json?${params}`, signal);
   if (!res.ok) return [];
   const json = (await res.json()) as { docs: SearchDoc[] };

@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { BookOpenText, BookX, Flame, MapPin, PenLine, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BookCard, BookGridSkeleton } from "@/components/common";
+import { SuggestList, useSuggestBox } from "@/components/SearchSuggest";
 import { LoadMoreSentinel } from "@/components/motion";
 import { PopularSubjects, RankNumber, ShelfRow, TrendingSidebar } from "@/components/Ranking";
 import { Button, Container, EmptyState } from "@/components/ui";
@@ -42,6 +43,15 @@ function Acervo() {
   const navigate = useNavigate({ from: "/acervo" });
   const [input, setInput] = useState(search.q ?? "");
   useEffect(() => setInput(search.q ?? ""), [search.q]);
+  const [focused, setFocused] = useState(false);
+  const suggest = useSuggestBox(input, ["books", "authors"], (s) => {
+    setFocused(false);
+    if (s.type === "book") navigate({ to: "/livro/$id", params: { id: s.book.id } });
+    else {
+      setInput("");
+      navigate({ search: (p: Search) => ({ ...p, pagina: undefined, q: undefined, autor: s.author.name }) });
+    }
+  });
   const { location, ask } = useLocation();
   const nearby = useNearbyLibraries();
 
@@ -95,9 +105,11 @@ function Acervo() {
               <p className="text-sm text-muted-foreground">Mais de 40 milhões de títulos — e onde retirar perto de você.</p>
             </div>
           </div>
+          <div className="relative">
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              setFocused(false);
               set({ q: input.trim() || undefined });
             }}
             className="mt-4 flex flex-col overflow-hidden rounded-2xl border bg-surface shadow-soft focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 md:flex-row md:items-center md:rounded-full"
@@ -124,10 +136,21 @@ function Acervo() {
               <Search className="ml-4 size-5 shrink-0 text-muted-foreground" aria-hidden />
               <input
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  setFocused(true);
+                }}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                onKeyDown={(e) => (e.key === "Escape" ? setFocused(false) : suggest.onKeyDown(e))}
                 placeholder={`Buscar ${tipo.label.toLowerCase()} por título, autor ou assunto…`}
                 className="h-12 min-w-0 flex-1 bg-transparent px-3 outline-none"
                 aria-label="Buscar no acervo"
+                role="combobox"
+                aria-expanded={focused && suggest.visible}
+                aria-controls="acervo-sugestoes"
+                aria-autocomplete="list"
+                autoComplete="off"
               />
               {input && (
                 <button type="button" onClick={() => { setInput(""); set({ q: undefined }); }} className="grid size-9 place-items-center text-muted-foreground" aria-label="Limpar busca">
@@ -139,6 +162,9 @@ function Acervo() {
               </Button>
             </div>
           </form>
+          {/* sugestões ao digitar: autores (aplicam o filtro) e livros (abrem a página do livro) */}
+          {focused && <SuggestList box={suggest} id="acervo-sugestoes" />}
+          </div>
 
           {/* Filtros ANTES dos resultados */}
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -244,6 +270,12 @@ function AuthorFilter({ value, onChange }: { value?: string; onChange: (v: strin
   const [open, setOpen] = useState(false);
   const [text, setText] = useState(value ?? "");
   useEffect(() => setText(value ?? ""), [value]);
+  // sugestões de autores enquanto digita (nome + nº de obras)
+  const suggest = useSuggestBox(open ? text : "", ["authors"], (s) => {
+    if (s.type !== "author") return;
+    setOpen(false);
+    onChange(s.author.name);
+  });
 
   if (value && !open)
     return (
@@ -258,6 +290,7 @@ function AuthorFilter({ value, onChange }: { value?: string; onChange: (v: strin
       </FilterChip>
     );
   return (
+    <div className="relative">
     <form
       role="search"
       aria-label="Filtrar por autor"
@@ -273,16 +306,23 @@ function AuthorFilter({ value, onChange }: { value?: string; onChange: (v: strin
         autoFocus
         value={text}
         onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
+        onKeyDown={(e) => (e.key === "Escape" ? setOpen(false) : suggest.onKeyDown(e))}
         onBlur={() => !text.trim() && setOpen(false)}
         placeholder="Nome do autor"
         aria-label="Nome do autor"
+        role="combobox"
+        aria-expanded={suggest.visible}
+        aria-controls="autor-sugestoes"
+        aria-autocomplete="list"
+        autoComplete="off"
         className="w-36 min-w-0 bg-transparent text-sm outline-none sm:w-44"
       />
       <button type="submit" className="h-7 rounded-full bg-primary px-3 text-xs font-semibold text-primary-foreground">
         Filtrar
       </button>
     </form>
+    <SuggestList box={suggest} id="autor-sugestoes" className="right-auto w-[min(20rem,calc(100vw-2rem))]" />
+    </div>
   );
 }
 

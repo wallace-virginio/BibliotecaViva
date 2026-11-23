@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, BookOpen, CalendarDays, Coffee, GraduationCap, Hammer, Library as LibraryIcon, Loader2, MessagesSquare, Search } from "lucide-react";
+import { ArrowRight, BookOpen, CalendarDays, Coffee, GraduationCap, Hammer, Library as LibraryIcon, Loader2, MessagesSquare, PenLine, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { EVENTS } from "@/data/content";
 import { FEATURED_LIBRARIES } from "@/data/libraries";
-import { coverUrl, suggestBooks, type Book } from "@/lib/api/openlibrary";
+import { coverUrl, suggestAuthors, suggestBooks, type AuthorSuggestion, type Book } from "@/lib/api/openlibrary";
 import { useDebounce } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +16,7 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [books, setBooks] = useState<Book[]>([]);
+  const [authors, setAuthors] = useState<AuthorSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const debounced = useDebounce(q, 280);
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
     const t = debounced.trim();
     if (t.length < 2) {
       setBooks([]);
+      setAuthors([]);
       return;
     }
     const c = new AbortController();
@@ -33,6 +35,10 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
       .then(setBooks)
       .catch(() => {})
       .finally(() => !c.signal.aborted && setLoading(false));
+    // autores em paralelo (aparecem acima dos livros; levam ao acervo filtrado pelo autor)
+    suggestAuthors(t, c.signal)
+      .then((a) => !c.signal.aborted && setAuthors(a.slice(0, 3)))
+      .catch(() => {});
     return () => c.abort();
   }, [debounced]);
 
@@ -115,6 +121,27 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
             </div>
           ) : (
             <div className="space-y-1">
+              <Group title="Autores" icon={<PenLine className="size-4" />}>
+                {authors.map((a) => (
+                  <Link
+                    key={a.key}
+                    to="/acervo"
+                    search={{ autor: a.name }}
+                    onClick={() => setOpen(false)}
+                    className="flex min-h-12 items-center gap-3 rounded-2xl px-3 py-2 hover:bg-surface-2"
+                  >
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
+                      <PenLine className="size-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{a.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        Autor{a.topWork ? ` · ${a.topWork}` : ""}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </Group>
               <Group title="Livros" icon={<BookOpen className="size-4" />} loading={loading && !books.length}>
                 {books.map((b) => (
                   <Link key={b.id} to="/livro/$id" params={{ id: b.id }} onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-2xl px-3 py-2 hover:bg-surface-2">

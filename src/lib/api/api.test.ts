@@ -1,7 +1,17 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { trending } from "./rankings";
 import { sanitize } from "./reader";
-import { cleanDescription } from "./openlibrary";
+import { cleanDescription, prefixQuery } from "./openlibrary";
+
+describe("sugestões enquanto digita", () => {
+  it("a última palavra vira prefixo, sem acento, sem caracteres de busca", () => {
+    expect(prefixQuery("Macha")).toBe("macha*");
+    expect(prefixQuery("dom  Casm")).toBe("dom casm*");
+    expect(prefixQuery("José de Alenc", "author")).toBe("author:jose author:de author:alenc*");
+    expect(prefixQuery('a"b:(c)')).toBe("a b c"); // última palavra com 1 letra não vira prefixo (busca larga demais)
+    expect(prefixQuery("x")).toBe("x");
+  });
+});
 import { sizedImage } from "./commons";
 
 describe("resumo da Open Library", () => {
