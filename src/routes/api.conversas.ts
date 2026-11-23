@@ -20,7 +20,10 @@ export const Route = createFileRoute("/api/conversas")({
           .select("id, title_enc, message_count, updated_at")
           .order("updated_at", { ascending: false })
           .limit(50);
-        if (error) return convJson(request, { error: "não foi possível carregar o histórico" }, 502);
+        if (error) {
+          console.warn("[conversas] listar falhou:", error.code, error.message);
+          return convJson(request, { error: "não foi possível carregar o histórico" }, 502);
+        }
         const conversas = await Promise.all(
           data.map(async (r) => ({
             id: r.id as string,
@@ -54,7 +57,11 @@ export const Route = createFileRoute("/api/conversas")({
           ? ctx.sb.from("assistant_conversations").update(row).eq("id", id).select("id").maybeSingle()
           : ctx.sb.from("assistant_conversations").insert({ ...row, user_id: ctx.userId }).select("id").single();
         const { data, error } = await q;
-        if (error || !data) return convJson(request, { error: "não foi possível salvar" }, 502);
+        if (error || !data) {
+          // só o código do erro (nunca o conteúdo da conversa) — aparece em `wrangler tail`
+          console.warn("[conversas] salvar falhou:", error?.code, error?.message, id ? "(atualizar)" : "(criar)");
+          return convJson(request, { error: "não foi possível salvar" }, 502);
+        }
         return convJson(request, { id: data.id });
       },
     },

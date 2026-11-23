@@ -84,18 +84,32 @@ function AppShell() {
             <Building2 className="size-4" /> Painel da biblioteca
           </Link>
         </nav>
-        <div className="flex items-center gap-3 rounded-2xl border bg-surface p-3">
-          <span className="grid size-9 place-items-center rounded-full bg-gradient-primary text-sm font-semibold text-primary-foreground">{initial}</span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{me.fullName}</p>
-            <p className="text-xs text-muted-foreground">{me.stats.streak ? `🔥 ${me.stats.streak} dias seguidos` : auth.user?.email ?? "Modo demonstração"}</p>
+        {/* cartão da pessoa: nome inteiro e e-mail em cima; tema e sair numa linha própria embaixo */}
+        <div className="rounded-2xl border bg-surface p-3">
+          <div className="flex items-center gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-primary text-sm font-semibold text-primary-foreground">{initial}</span>
+            <div className="min-w-0 flex-1">
+              <p className="line-clamp-2 text-sm leading-snug font-medium break-words">{me.fullName}</p>
+              <p className="truncate text-xs text-muted-foreground" title={auth.user?.email ?? undefined}>
+                {auth.user?.email ?? "Modo demonstração"}
+              </p>
+              {!!me.stats.streak && <p className="mt-0.5 text-xs text-muted-foreground">🔥 {me.stats.streak} dias seguidos</p>}
+            </div>
           </div>
-          <ThemeToggle className="size-8" />
-          {auth.user && (
-            <button onClick={() => auth.signOut()} className="grid size-8 place-items-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-danger" aria-label="Sair">
-              <LogOut className="size-4" />
-            </button>
-          )}
+          <div className="mt-3 flex items-center justify-between border-t pt-2">
+            <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
+              <ThemeToggle className="size-9" />
+              <span>Tema</span>
+            </div>
+            {auth.user && (
+              <button
+                onClick={() => auth.signOut()}
+                className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm text-muted-foreground transition hover:bg-surface-2 hover:text-danger"
+              >
+                <LogOut className="size-4" /> Sair
+              </button>
+            )}
+          </div>
         </div>
       </aside>
 

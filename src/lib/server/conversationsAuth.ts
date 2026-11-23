@@ -39,14 +39,20 @@ export async function authorize(request: Request): Promise<ConvContext | Respons
   // import só aqui dentro (servidor): o build do app nativo, que não tem servidor, nem chega a ver este módulo
   const { env } = await import("cloudflare:workers");
   const master = (env as { CONVERSAS_KEY?: string }).CONVERSAS_KEY;
-  if (!url || !publishable || !master) return convJson(request, { error: "historico-desligado" }, 503);
+  if (!url || !publishable || !master) {
+    console.warn("[conversas] desligado:", { url: !!url, publishable: !!publishable, chave: !!master });
+    return convJson(request, { error: "historico-desligado" }, 503);
+  }
 
   const sb = createClient(url, publishable, {
     global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
   const { data, error } = await sb.auth.getUser(token);
-  if (error || !data.user) return convJson(request, { error: "sessão expirada" }, 401);
+  if (error || !data.user) {
+    console.warn("[conversas] sessão recusada:", error?.status, error?.message);
+    return convJson(request, { error: "sessão expirada" }, 401);
+  }
   return { sb, userId: data.user.id, key: await userKey(master, data.user.id) };
 }
 
