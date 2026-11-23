@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUp, BookHeart, BookOpen, CalendarDays, History, Loader2, Lock, Plus, Trash2 } from "lucide-react";
+import { ArrowUp, CalendarDays, History, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BookCard, LibraryCard } from "@/components/common";
 import { Badge } from "@/components/ui";
@@ -208,11 +208,18 @@ function Assistente() {
 
       {msgs.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center py-10 text-center">
-          <span className="grid size-14 place-items-center rounded-xl bg-primary-soft text-primary">
-            <BookHeart className="size-7" />
-          </span>
-          <h1 className="mt-6 text-3xl md:text-4xl">Peça uma indicação</h1>
-          <p className="mt-2 max-w-md text-muted-foreground">Conte o que você quer aprender, ler ou fazer. A gente sugere livros, bibliotecas e eventos que combinam.</p>
+          <img
+            src="/ori/ori-256.webp"
+            srcSet="/ori/ori-256.webp 1x, /ori/ori-512.webp 2x"
+            alt="Ori, o mascote da Biblioteca Viva: um livro aberto com um broto"
+            width={128}
+            height={128}
+            className="ori-float size-32 rounded-full object-cover shadow-elevated"
+          />
+          <h1 className="mt-6 text-3xl md:text-4xl">Olá, eu sou o Ori!</h1>
+          <p className="mt-2 max-w-md text-muted-foreground">
+            Vamos descobrir algo novo? Me conte o que você quer aprender, ler ou fazer, e eu sugiro livros, bibliotecas e eventos que combinam.
+          </p>
           <div className="mt-8 grid w-full gap-2 sm:grid-cols-2">
             {SUGGESTIONS.map((s) => (
               <button key={s} onClick={() => ask(s)} className="rounded-2xl border bg-surface px-4 py-3.5 text-left text-sm transition hover:border-primary active:scale-[0.98]">
@@ -230,7 +237,7 @@ function Assistente() {
               </div>
             ) : (
               <div key={i} className="flex gap-3">
-                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-soft-foreground"><BookOpen className="size-4" /></span>
+                <img src="/ori/ori-128.webp" alt="Ori" width={36} height={36} className="size-9 shrink-0 rounded-full object-cover" />
                 <div className="min-w-0 flex-1 space-y-4">
                   {!m.answer ? (
                     <div className="flex gap-1 py-3">

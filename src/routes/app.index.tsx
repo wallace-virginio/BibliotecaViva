@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Flame, MessageCircleQuestion } from "lucide-react";
+import { ArrowRight, Flame } from "lucide-react";
+import { OriFab } from "@/components/OriFab";
 import { BookCard, BookCover, BookGridSkeleton, EventCard } from "@/components/common";
 import { ProgressRing } from "@/components/motion";
 import { BadgeGrid, DashHeader, FreeClassics, SavedBookRow } from "@/components/dashboard";
@@ -34,11 +35,6 @@ function Home() {
       <DashHeader
         title={<>{mounted ? greeting() : "Olá"}, {me.name}.</>}
         description="Que bom te ver por aqui. Separamos algumas coisas para hoje."
-        action={
-          <Link to="/assistente" className="inline-flex h-10 items-center gap-2 self-start rounded-lg border bg-surface px-4 text-sm font-medium hover:border-primary">
-            <MessageCircleQuestion className="size-4 text-primary" /> Não sabe o que ler?
-          </Link>
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -109,6 +105,9 @@ function Home() {
       <Section title="Conquistas" link={{ to: "/app/perfil", label: "Ver perfil" }}>
         <BadgeGrid compact badges={me.badges} />
       </Section>
+
+      {/* Ori, o assistente, flutuando no canto (no lugar do antigo "Não sabe o que ler?") */}
+      <OriFab />
     </>
   );
 }

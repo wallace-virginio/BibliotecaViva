@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { BookOpenText, CalendarDays, ChevronRight, Clock, Map, MapPin, Monitor, Navigation } from "lucide-react";
 import { BookCover, LibraryImage } from "@/components/common";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { OriFab } from "@/components/OriFab";
 import { EVENTS, FREE_CLASSICS } from "@/data/content";
 import { FEATURED_LIBRARIES } from "@/data/libraries";
 import { useAuth } from "@/lib/auth";
@@ -37,6 +38,7 @@ export function AppHome() {
       <NearestOpen />
       <ContinueReading />
       <ThisWeek />
+      <OriFab />
     </div>
   );
 }
