@@ -8,5 +8,5 @@
         android:width="240dp"
         android:height="240dp"
         android:gravity="center"
-        android:drawable="@mipmap/ic_launcher_foreground" />
+        android:drawable="@mipmap/splash_cover" />
 </layer-list>

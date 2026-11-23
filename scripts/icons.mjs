@@ -33,6 +33,14 @@ const MARK = `
   <path d="M50.6 36.5c4.6-3.4 8.6-8.2 11.2-13.4" stroke="#4E8C2C" stroke-width="1.3" stroke-linecap="round" fill="none" opacity=".7"/>
   <circle cx="72" cy="17" r="2.6" fill="#F2C14E"/>`;
 
+/** Livro fechado: primeiro quadro da animação de abertura (src/components/app/AppIntro.tsx). */
+const COVER = `
+  <rect x="35" y="56" width="30" height="34" rx="2.6" fill="#A86E3C"/>
+  <rect x="35" y="56" width="4.5" height="34" rx="1.6" fill="#8A5530"/>
+  <rect x="63.4" y="57.6" width="1.6" height="30.8" rx=".8" fill="#FBF3E2"/>
+  <rect x="43" y="64" width="16" height="2.2" rx="1.1" fill="#F2C14E"/>
+  <rect x="43" y="68.4" width="10" height="1.6" rx=".8" fill="#F2C14E" opacity=".6"/>`;
+
 const defs = `<defs><radialGradient id="bg" cx="50%" cy="38%" r="75%">
   <stop offset="0" stop-color="${LEATHER_LIGHT}"/><stop offset=".6" stop-color="${LEATHER}"/><stop offset="1" stop-color="${LEATHER_DARK}"/>
 </radialGradient></defs>`;
@@ -47,10 +55,10 @@ const fullIcon = (size, { markScale = 0.8, radius = 0.22 } = {}) => {
 };
 
 /** Camada da frente do ícone adaptativo (fundo transparente; o sistema recorta em círculo/gota/quadrado). */
-const foreground = (size) => {
+const foreground = (size, art = MARK) => {
   const m = size * 0.72; // dentro da área segura (66%) do ícone adaptativo
   const off = (size - m) / 2;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}"><g transform="translate(${off} ${off}) scale(${m / 100})">${MARK}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}"><g transform="translate(${off} ${off}) scale(${m / 100})">${art}</g></svg>`;
 };
 
 const png = (svg, w, h, file) => sharp(Buffer.from(svg)).resize(w, h ?? w).png().toFile(file);
@@ -74,6 +82,8 @@ if (existsSync(RES)) {
     await png(fullIcon(512, { radius: 0.22 }), 48 * k, 48 * k, join(dir, "ic_launcher.png")); // Android 7 e anteriores
     await png(fullIcon(512, { radius: 0.5, markScale: 0.74 }), 48 * k, 48 * k, join(dir, "ic_launcher_round.png"));
     await png(foreground(432), 108 * k, 108 * k, join(dir, "ic_launcher_foreground.png")); // adaptativo (108dp)
+    // abertura nativa (240dp): o livro fechado, igual ao 1º quadro da animação — emenda sem pulo
+    await png(foreground(960, COVER), 240 * k, 240 * k, join(dir, "splash_cover.png"));
   }
   // abertura (aparelhos sem a SplashScreen API e fundo do plugin): marrom + símbolo no centro, mesmo tamanho de cada arquivo
   for (const dir of readdirSync(RES).filter((d) => d.startsWith("drawable"))) {
@@ -82,7 +92,7 @@ if (existsSync(RES)) {
     const { width, height } = await sharp(file).metadata();
     const m = Math.min(width, height) * 0.36;
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}"><rect width="${width}" height="${height}" fill="${LEATHER}"/>
-<g transform="translate(${(width - m) / 2} ${(height - m) / 2}) scale(${m / 100})">${MARK}</g></svg>`;
+<g transform="translate(${(width - m) / 2} ${(height - m) / 2}) scale(${m / 100})">${COVER}</g></svg>`;
     await png(svg, width, height, file + ".tmp.png");
     renameSync(file + ".tmp.png", file);
   }

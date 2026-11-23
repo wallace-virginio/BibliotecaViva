@@ -20,7 +20,8 @@
     <!-- Abertura (Android 12+ SplashScreen API): fundo marrom + ícone; depois a animação web (AppIntro) continua daí -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <!-- livro fechado = 1º quadro da animação web; ela continua dali (o livro abre) sem pulo -->
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/splash_cover</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
         <item name="android:background">@drawable/splash</item>
     </style>
