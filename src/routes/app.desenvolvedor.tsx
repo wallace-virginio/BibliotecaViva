@@ -225,7 +225,7 @@ function Playground() {
 
 function Marketplace() {
   const [filter, setFilter] = useState<"Todos" | "Provider" | "Utilitário">("Todos");
-  const [installed, setInstalled] = useState<string[]>([]);
+  const installed = useStore((s) => s.devConnectors); // salvo de verdade (aparelho + conta)
   return (
     <>
       <Tabs value={filter} onChange={setFilter} options={[{ value: "Todos", label: "Todos" }, { value: "Provider", label: "Providers" }, { value: "Utilitário", label: "Utilitários" }]} />
@@ -240,7 +240,7 @@ function Marketplace() {
             <p className="mt-1 flex-1 text-sm text-muted-foreground">{c.description}</p>
             <div className="mt-4 flex items-center justify-between">
               <Badge>{c.kind}</Badge>
-              <Button size="sm" variant={installed.includes(c.name) ? "soft" : "outline"} onClick={() => setInstalled((x) => (x.includes(c.name) ? x.filter((n) => n !== c.name) : [...x, c.name]))}>
+              <Button size="sm" variant={installed.includes(c.name) ? "soft" : "outline"} onClick={() => actions.toggleConnector(c.name)}>
                 {installed.includes(c.name) ? "Instalado ✓" : "Instalar"}
               </Button>
             </div>

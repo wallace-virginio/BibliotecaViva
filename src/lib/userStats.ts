@@ -1,5 +1,6 @@
-import { BADGES, USER } from "@/data/content";
+import { USER } from "@/data/content";
 import { useAuth } from "./auth";
+import { computeBadges, DEMO_BADGES, readingStreak } from "./badges";
 import { useStore } from "./store";
 
 /**
@@ -8,39 +9,18 @@ import { useStore } from "./store";
  */
 export function useUserStats() {
   const auth = useAuth();
-  const reading = useStore((s) => s.reading);
-  const reservations = useStore((s) => s.reservations);
-  const followed = useStore((s) => s.followedLibraries);
+  const state = useStore((s) => s);
 
   if (!auth.configured) {
-    return { name: USER.name, fullName: USER.fullName, city: USER.city, memberSince: USER.memberSince, stats: USER.stats, badges: BADGES, demo: true as const };
+    return { name: USER.name, fullName: USER.fullName, city: USER.city, memberSince: USER.memberSince, stats: USER.stats, badges: DEMO_BADGES, demo: true as const };
   }
 
-  const progress = Object.values(reading);
+  const progress = Object.values(state.reading);
   const finished = progress.filter((p) => p.percent >= 95).length;
-  const events = reservations.filter((r) => r.kind === "evento");
-  const books = reservations.filter((r) => r.kind === "livro").length;
-
-  // sequência: dias seguidos (até hoje) com alguma leitura registrada
-  const days = new Set(progress.map((p) => new Date(p.updatedAt).toDateString()));
-  let streak = 0;
-  const d = new Date();
-  while (days.has(d.toDateString())) {
-    streak++;
-    d.setDate(d.getDate() - 1);
-  }
-
-  const earned: Record<string, boolean> = {
-    "primeiro-livro": finished >= 1,
-    "primeira-visita": reservations.some((r) => r.kind === "sala" || r.kind === "computador"),
-    "primeiro-evento": events.length >= 1,
-    "5-bibliotecas": followed.length >= 5,
-    "10-livros": finished >= 10,
-    clube: events.some((e) => /clube/i.test(e.title)),
-    voluntario: reservations.some((r) => r.id.startsWith("vol-")),
-    conector: false,
-    "open-source": false,
-  };
+  const events = state.reservations.filter((r) => r.kind === "evento");
+  const books = state.reservations.filter((r) => r.kind === "livro").length;
+  const followed = state.followedLibraries;
+  const streak = readingStreak(state);
 
   const meta = (auth.user?.user_metadata ?? {}) as { full_name?: string; name?: string };
   const fullName = auth.profile?.full_name || meta.full_name || meta.name || auth.user?.email?.split("@")[0] || "";
@@ -61,7 +41,7 @@ export function useUserStats() {
       streak,
       rank: 0,
     },
-    badges: BADGES.map((b) => ({ ...b, earned: !!earned[b.key] })),
+    badges: computeBadges(state),
     demo: false as const,
   };
 }

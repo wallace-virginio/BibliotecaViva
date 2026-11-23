@@ -10,6 +10,7 @@ import { installRipple } from "@/lib/motion";
 import { AuthProvider } from "@/lib/auth";
 import { LocationProvider } from "@/lib/location";
 import { LocationSheet } from "@/components/LocationSheet";
+import { BadgeToaster } from "@/components/BadgeToaster";
 import appCss from "@/styles.css?url";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -58,6 +59,7 @@ function RootLayout() {
       <LocationProvider>
         <AppFrame />
         <LocationSheet />
+        <BadgeToaster />
       </LocationProvider>
     </AuthProvider>
   );

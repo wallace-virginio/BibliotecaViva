@@ -161,17 +161,7 @@ export const USER = {
   ],
 };
 
-export const BADGES = [
-  { key: "primeiro-livro", emoji: "📖", title: "Primeiro livro", description: "Leu o primeiro livro na plataforma", earned: true },
-  { key: "primeira-visita", emoji: "🚪", title: "Primeira visita", description: "Fez check-in em uma biblioteca", earned: true },
-  { key: "primeiro-evento", emoji: "🎟", title: "Primeiro evento", description: "Participou do primeiro evento", earned: true },
-  { key: "5-bibliotecas", emoji: "🗺", title: "Visitou 5 bibliotecas", description: "Explorador urbano", earned: true },
-  { key: "10-livros", emoji: "🔟", title: "Leu 10 livros", description: "Leitor dedicado", earned: true },
-  { key: "clube", emoji: "💬", title: "Clube de leitura", description: "Participou de um clube de leitura", earned: true },
-  { key: "voluntario", emoji: "🤝", title: "Voluntário", description: "Doou horas para uma biblioteca", earned: false },
-  { key: "conector", emoji: "🔌", title: "Criou um conector", description: "Publicou um Provider", earned: false },
-  { key: "open-source", emoji: "🌱", title: "Contribuidor Open Source", description: "Teve um PR aceito", earned: false },
-];
+// As conquistas ficam em src/lib/badges.ts (todas reais, calculadas da atividade da pessoa).
 
 export const RANKING = [
   { name: "Marina Alves", points: 9820 },

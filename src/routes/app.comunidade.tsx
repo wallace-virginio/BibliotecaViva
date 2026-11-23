@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Heart, MessageCircle, Share2, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { actions, useStore } from "@/lib/store";
+
+/** Identificador estável de um post (quem + o quê), para a curtida continuar salva. */
+const postId = (f: { who: string; what: string; target: string }) => `${f.who}|${f.what}|${f.target}`;
 import { DashHeader } from "@/components/dashboard";
 import { Button, Card } from "@/components/ui";
 import { STUDY_GROUPS } from "@/data/content";
@@ -21,8 +24,9 @@ const FEED = [
 const PEOPLE = ["Ana Ribeiro", "Lucas Mendes", "Sofía García", "Amara Okafor"];
 
 function Comunidade() {
-  const [liked, setLiked] = useState<number[]>([]);
-  const [following, setFollowing] = useState<string[]>([]);
+  // curtidas e "seguir" salvos de verdade (aparelho + conta)
+  const liked = useStore((s) => s.community.liked);
+  const following = useStore((s) => s.community.following);
   return (
     <>
       <DashHeader title="Comunidade" description="O que as pessoas que você segue estão lendo e fazendo." />
@@ -43,8 +47,8 @@ function Comunidade() {
               </div>
               <p className="mt-3 text-[15px]">{f.note}</p>
               <div className="mt-4 flex gap-1 text-sm text-muted-foreground">
-                <button onClick={() => setLiked((l) => (l.includes(i) ? l.filter((x) => x !== i) : [...l, i]))} className={cn("flex h-9 items-center gap-1.5 rounded-full px-3 hover:bg-surface-2", liked.includes(i) && "text-danger")}>
-                  <Heart className={cn("size-4", liked.includes(i) && "fill-current")} /> {f.likes + (liked.includes(i) ? 1 : 0)}
+                <button onClick={() => actions.toggleLike(postId(f))} className={cn("flex h-9 items-center gap-1.5 rounded-full px-3 hover:bg-surface-2", liked.includes(postId(f)) && "text-danger")}>
+                  <Heart className={cn("size-4", liked.includes(postId(f)) && "fill-current")} /> {f.likes + (liked.includes(postId(f)) ? 1 : 0)}
                 </button>
                 <button className="flex h-9 items-center gap-1.5 rounded-full px-3 hover:bg-surface-2"><MessageCircle className="size-4" /> {f.comments}</button>
                 <button className="flex h-9 items-center gap-1.5 rounded-full px-3 hover:bg-surface-2"><Share2 className="size-4" /></button>
@@ -59,7 +63,7 @@ function Comunidade() {
               {PEOPLE.map((p) => (
                 <li key={p} className="flex items-center justify-between gap-2 text-sm">
                   <span>{p}</span>
-                  <Button size="sm" variant={following.includes(p) ? "soft" : "outline"} onClick={() => setFollowing((f) => (f.includes(p) ? f.filter((x) => x !== p) : [...f, p]))}>
+                  <Button size="sm" variant={following.includes(p) ? "soft" : "outline"} onClick={() => actions.toggleFollowMember(p)}>
                     {following.includes(p) ? "Seguindo" : <><UserPlus className="size-3.5" /> Seguir</>}
                   </Button>
                 </li>

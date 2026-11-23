@@ -101,6 +101,18 @@ describe("store local", () => {
     expect(getState().shelf.OL1).toBeUndefined();
   });
 
+  it("configurações ficam salvas: gravadas no armazenamento e de volta ao reabrir", () => {
+    actions.setNotification("clubes", false);
+    actions.setPreciseLocation(true);
+    actions.toggleLike("ana|avaliou|Dom Casmurro");
+    actions.toggleConnector("Pergamum");
+    const saved = JSON.parse(localStorage.getItem("bv-state-v1")!);
+    expect(saved.settings).toEqual({ notificacoes: { eventos: true, reservas: true, clubes: false }, localizacaoPrecisa: true });
+    expect(saved.community.liked).toEqual(["ana|avaliou|Dom Casmurro"]);
+    expect(saved.devConnectors).toEqual(["Pergamum"]);
+    expect(getState().settings.notificacoes.clubes).toBe(false);
+  });
+
   it("ao sair da conta, limpa os dados mas mantém as preferências de leitura", () => {
     actions.setReaderPrefs({ fontSize: 24 });
     actions.toggleFavorite({ id: "OL9", title: "Fav" });

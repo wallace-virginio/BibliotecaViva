@@ -3,6 +3,8 @@
  *  - Geolocation API do navegador
  *  - Nominatim / OpenStreetMap (busca e reverse)    https://nominatim.org
  */
+import { getState } from "../store";
+
 export type GeoPoint = {
   lat: number;
   lon: number;
@@ -29,7 +31,8 @@ export async function browserLocation(timeout = 8000): Promise<GeoPoint> {
     navigator.geolocation.getCurrentPosition(
       (p) => resolve({ lat: p.coords.latitude, lon: p.coords.longitude, source: "gps" }),
       (e) => reject(e),
-      { enableHighAccuracy: false, timeout, maximumAge: 600_000 },
+      // Configurações → "Usar localização precisa": GPS em alta precisão e posição nova (não a guardada)
+      { enableHighAccuracy: getState().settings.localizacaoPrecisa, timeout, maximumAge: getState().settings.localizacaoPrecisa ? 0 : 600_000 },
     );
   });
 }

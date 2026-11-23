@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { BADGES, FREE_CLASSICS } from "@/data/content";
+import { FREE_CLASSICS } from "@/data/content";
+import { DEMO_BADGES, type BadgeView } from "@/lib/badges";
 import type { SavedBook } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { BookCover } from "./common";
@@ -33,7 +34,7 @@ export function SavedBookRow({ books, empty }: { books: SavedBook[]; empty?: Rea
   );
 }
 
-export function BadgeGrid({ compact = false, badges = BADGES }: { compact?: boolean; badges?: { key: string; emoji: string; title: string; description: string; earned: boolean }[] }) {
+export function BadgeGrid({ compact = false, badges = DEMO_BADGES }: { compact?: boolean; badges?: BadgeView[] }) {
   return (
     <div className={cn("grid gap-3", compact ? "grid-cols-3 sm:grid-cols-5 lg:grid-cols-9" : "grid-cols-2 sm:grid-cols-3")}>
       {badges.map((b) => (
@@ -52,10 +53,23 @@ export function BadgeGrid({ compact = false, badges = BADGES }: { compact?: bool
               <span className={cn("grid place-items-center rounded-2xl text-2xl", compact ? "size-12" : "size-14", b.earned ? "bg-primary-soft" : "bg-surface-2")}>{b.emoji}</span>
               <p className="mt-2 text-xs leading-tight font-semibold">{b.title}</p>
               {!compact && <p className="mt-1 text-[11px] text-muted-foreground">{b.description}</p>}
+              {/* progresso das que têm meta (ex.: estante 2 de 5) */}
+              {!b.earned && b.goal > 1 && (
+                <div className="mt-2 w-full">
+                  <div className="h-1 overflow-hidden rounded-full bg-surface-2">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${(b.progress / b.goal) * 100}%` }} />
+                  </div>
+                  <p className="mt-1 text-[10px] text-muted-foreground tabular-nums">
+                    {b.progress} de {b.goal}
+                  </p>
+                </div>
+              )}
             </Card>
             <Card className="flip-face flip-back flex flex-col items-center justify-center bg-primary-soft p-3 text-center">
               <p className="text-[11px] leading-snug font-medium text-primary-soft-foreground">{b.description}</p>
-              <p className="mt-1.5 text-[10px] font-semibold tracking-wide text-primary uppercase">{b.earned ? "Conquistada" : "Em aberto"}</p>
+              <p className="mt-1.5 text-[10px] font-semibold tracking-wide text-primary uppercase">
+                {b.earned ? (b.earnedAt ? `Conquistada em ${new Date(b.earnedAt).toLocaleDateString("pt-BR")}` : "Conquistada") : `Falta${b.goal - b.progress === 1 ? "" : "m"} ${b.goal - b.progress}`}
+              </p>
             </Card>
           </div>
         </button>

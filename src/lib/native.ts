@@ -131,6 +131,8 @@ export function haptic(kind: "light" | "success" = "light") {
 export async function nativeLocation(): Promise<{ lat: number; lon: number } | undefined> {
   if (!isNative()) return undefined;
   const { Geolocation } = await import("@capacitor/geolocation");
-  const p = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 8000 });
+  const { getState } = await import("./store");
+  // Configurações → "Usar localização precisa"
+  const p = await Geolocation.getCurrentPosition({ enableHighAccuracy: getState().settings.localizacaoPrecisa, timeout: 8000 });
   return { lat: p.coords.latitude, lon: p.coords.longitude };
 }

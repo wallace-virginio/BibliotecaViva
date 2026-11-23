@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Check, Code2, KeyRound, Loader2, LogOut, Plug, Terminal } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DashHeader } from "@/components/dashboard";
 import { PrivacyTab } from "@/components/PrivacyTab";
 import { Button, buttonClass, Card, Input, Tabs } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { USER } from "@/data/content";
-import { actions, useStore } from "@/lib/store";
+import { actions, useStore, type NotificationKey } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 type Aba = "conta" | "notificacoes" | "privacidade" | "desenvolvedor";
@@ -21,19 +21,20 @@ export const Route = createFileRoute("/app/configuracoes")({
   component: Config,
 });
 
-const PREFS = [
+// Salvas de verdade: store (aparelho) + conta (sincronização com o Supabase). "Perfil público" saiu: o app
+// ainda não tem perfis públicos, então a opção não fazia nada.
+const PREFS: { key: NotificationKey; label: string; desc: string }[] = [
   { key: "eventos", label: "Eventos perto de mim", desc: "Avisar sobre eventos em bibliotecas que você segue." },
-  { key: "reservas", label: "Lembretes de reserva", desc: "Notificar 1 hora antes de uma sala ou retirada." },
+  { key: "reservas", label: "Lembretes de reserva", desc: "Lembrar antes do horário de uma sala ou da retirada de um livro." },
   { key: "clubes", label: "Clubes de leitura", desc: "Novas discussões nos seus grupos." },
-  { key: "perfil", label: "Perfil público", desc: "Outras pessoas podem ver seus livros lidos e conquistas." },
-  { key: "localizacao", label: "Usar localização precisa", desc: "Mostrar distância exata no mapa (GPS)." },
 ];
 
 function Config() {
   const { aba = "conta" } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const [on, setOn] = useState<string[]>(["eventos", "reservas", "clubes"]);
+  const settings = useStore((s) => s.settings);
   const devMode = useStore((s) => s.developerMode);
+  const auth = useAuth();
 
   return (
     <>
@@ -55,11 +56,24 @@ function Config() {
         {aba === "privacidade" && <PrivacyTab />}
 
         {aba === "notificacoes" && (
-          <Card className="divide-y">
-            {PREFS.map((p) => (
-              <Toggle key={p.key} label={p.label} desc={p.desc} checked={on.includes(p.key)} onChange={(c) => setOn((o) => (c ? [...o, p.key] : o.filter((x) => x !== p.key)))} />
-            ))}
-          </Card>
+          <div className="space-y-4">
+            <Card className="divide-y">
+              {PREFS.map((p) => (
+                <Toggle key={p.key} label={p.label} desc={p.desc} checked={settings.notificacoes[p.key]} onChange={(c) => actions.setNotification(p.key, c)} />
+              ))}
+            </Card>
+            <Card className="divide-y">
+              <Toggle
+                label="Usar localização precisa"
+                desc="Com o GPS em alta precisão, a distância até as bibliotecas fica exata (gasta um pouco mais de bateria)."
+                checked={settings.localizacaoPrecisa}
+                onChange={actions.setPreciseLocation}
+              />
+            </Card>
+            <p className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
+              <Check className="size-3.5 text-success" /> Salvo automaticamente neste aparelho{auth.user ? " e na sua conta" : ""}.
+            </p>
+          </div>
         )}
 
         {aba === "desenvolvedor" && (
@@ -127,17 +141,27 @@ function AccountTab() {
   const auth = useAuth();
   const meta = (auth.user?.user_metadata ?? {}) as { full_name?: string };
   const [name, setName] = useState(auth.profile?.full_name ?? meta.full_name ?? (auth.configured ? "" : USER.fullName));
-  const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
+  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  // quando o perfil chega do servidor depois de a tela abrir, mostra o nome salvo
+  useEffect(() => {
+    if (auth.profile?.full_name) setName(auth.profile.full_name);
+  }, [auth.profile?.full_name]);
 
   const save = async () => {
     const sb = getSupabase();
-    if (!sb || !auth.user) return;
+    const clean = name.trim().slice(0, 80);
+    if (!sb || !auth.user || !clean) return;
     setState("saving");
-    await sb.from("profiles").update({ full_name: name.trim(), updated_at: new Date().toISOString() }).eq("id", auth.user.id);
-    await sb.auth.updateUser({ data: { full_name: name.trim() } });
+    // só mostra "Salvo" se o banco confirmar; antes um erro passava em silêncio
+    const { error } = await sb.from("profiles").update({ full_name: clean, updated_at: new Date().toISOString() }).eq("id", auth.user.id);
+    const { error: metaError } = await sb.auth.updateUser({ data: { full_name: clean } });
+    if (error || metaError) {
+      setState("error");
+      return;
+    }
     await auth.refreshProfile();
     setState("saved");
-    setTimeout(() => setState("idle"), 1800);
+    setTimeout(() => setState("idle"), 2200);
   };
 
   return (
@@ -155,6 +179,7 @@ function AccountTab() {
               {state === "saved" ? "Salvo" : "Salvar"}
             </Button>
             <Link to="/recuperar-senha" search={{ email: auth.user.email }} className={buttonClass("ghost", "sm")}>Alterar senha</Link>
+            {state === "error" && <p className="w-full text-sm text-danger">Não deu para salvar agora. Confira a internet e tente de novo.</p>}
           </div>
         )}
       </Card>

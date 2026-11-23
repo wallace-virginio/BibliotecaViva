@@ -10,6 +10,7 @@ import { openStatus } from "@/lib/hours";
 import { askAssistant, type AssistantPlan, type ChatTurn } from "@/lib/api/assistant";
 import { deleteConversation, getConversation, listConversations, saveConversation, type ConversationSummary, type StoredMessage } from "@/lib/api/conversations";
 import { useAuth } from "@/lib/auth";
+import { actions } from "@/lib/store";
 import { useLocation } from "@/lib/location";
 import { cn } from "@/lib/utils";
 
@@ -171,6 +172,7 @@ function Assistente() {
       a = { text: "Tive um problema para consultar o acervo agora. Tente novamente em instantes." };
     }
     setMsgs((m) => [...m.slice(0, -1), { role: "bot", answer: a }]);
+    actions.countOriChat(); // conquista "Oi, Ori!"
     setBusy(false);
 
     // guarda no histórico da pessoa (criptografado no servidor; só ela lê)
