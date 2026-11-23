@@ -5,7 +5,7 @@ import { initAppShell } from "@/lib/native";
 import { installBackButton } from "@/lib/backButton";
 import { IS_APP } from "@/lib/platform";
 import { AppHeader } from "@/components/app/AppHeader";
-import { AppIntro } from "@/components/app/AppIntro";
+import { AppIntro, introSkipScript } from "@/components/app/AppIntro";
 import { installRipple } from "@/lib/motion";
 import { AuthProvider } from "@/lib/auth";
 import { LocationProvider } from "@/lib/location";
@@ -44,7 +44,8 @@ export const Route = createRootRoute({
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/icons/icon-192.png" },
     ],
-    scripts: [{ children: themeScript }, { children: a11yScript }],
+    // no site, decide antes da primeira pintura se a abertura aparece (1ª página da visita / PWA instalado)
+    scripts: [{ children: themeScript }, { children: a11yScript }, ...(IS_APP ? [] : [{ children: introSkipScript }])],
   }),
   shellComponent: RootDocument,
   component: RootLayout,
@@ -121,7 +122,7 @@ function RootDocument({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {IS_APP && <AppIntro />}
+        <AppIntro variant={IS_APP ? "app" : "site"} />
         {children}
         <Scripts />
       </body>

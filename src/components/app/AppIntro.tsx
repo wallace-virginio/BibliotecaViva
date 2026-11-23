@@ -8,14 +8,27 @@ import { useEffect, useState } from "react";
  * O livro se abre, o broto cresce da lombada, as folhas abrem e o nome aparece; depois tudo some no Início.
  * O desenho é o mesmo do ícone (scripts/icons.mjs).
  */
-export function AppIntro() {
+/**
+ * Site: a abertura aparece só na primeira página de cada visita (sessionStorage), sempre quando o site foi
+ * instalado na tela inicial (PWA, como um app) e nunca para quem pediu menos movimento. Roda no <head>,
+ * antes da primeira pintura, para a camada nem chegar a aparecer quando é para pular.
+ */
+export const introSkipScript = `(function(){try{var d=document.documentElement;var pwa=window.matchMedia('(display-mode: standalone)').matches;var calm=window.matchMedia('(prefers-reduced-motion: reduce)').matches;if(!pwa&&(calm||sessionStorage.getItem('bv-intro-seen')))d.classList.add('bv-intro-skip');sessionStorage.setItem('bv-intro-seen','1');}catch(e){}})();`;
+
+export function AppIntro({ variant = "app" }: { variant?: "app" | "site" }) {
   const [phase, setPhase] = useState<"in" | "out" | "gone">("in");
 
   useEffect(() => {
+    if (document.documentElement.classList.contains("bv-intro-skip")) {
+      setPhase("gone");
+      return;
+    }
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // a abertura nativa já mostrou o ícone: a parte animada é curta (~1,5s) para não atrasar quem quer usar o app
-    const t1 = setTimeout(() => setPhase("out"), reduced ? 400 : 1500);
-    const t2 = setTimeout(() => setPhase("gone"), reduced ? 700 : 1900);
+    // app: a abertura nativa já mostrou o ícone, a parte animada é curta (~1,5s);
+    // site: ainda mais curta (~1,1s), para não atrasar quem chegou por um link
+    const outAt = reduced ? 400 : variant === "site" ? 1100 : 1500;
+    const t1 = setTimeout(() => setPhase("out"), outAt);
+    const t2 = setTimeout(() => setPhase("gone"), outAt + 400);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -84,6 +97,7 @@ const CSS = `
 #bv-intro::before{content:"";position:absolute;inset:0;opacity:0;animation:bvi-fade .9s .1s ease-out forwards;
   background:radial-gradient(120% 80% at 50% 45%,#8A5530 0%,#6B3D20 55%,#4E2A14 100%)}
 #bv-intro.is-out{opacity:0;transform:scale(1.04);pointer-events:none}
+html.bv-intro-skip #bv-intro{display:none!important}
 /* enquanto a abertura está na tela, cabeçalho e abas não "furam" a camada (efeito de transição de página) */
 html:has(#bv-intro) .vt-static-header,html:has(#bv-intro) .vt-static-tabbar{view-transition-name:none!important}
 #bv-intro .bvi-mark{position:absolute;left:50%;top:50%;width:172.8px;height:172.8px;margin:-86.4px 0 0 -86.4px;overflow:visible}
