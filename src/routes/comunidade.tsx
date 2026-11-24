@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { EmDesenvolvimento } from "@/components/EmDesenvolvimento";
+import { FEATURES } from "@/lib/features";
 import { BookHeart, CalendarDays, MessagesSquare, Plus, Trophy, Users } from "lucide-react";
 import { useState } from "react";
 import { BookCard, BookGridSkeleton, PageHero } from "@/components/common";
@@ -15,7 +17,8 @@ export const Route = createFileRoute("/comunidade")({
       { name: "description", content: "Clubes de leitura, grupos de estudo, listas de livros e eventos culturais criados pela comunidade." },
     ],
   }),
-  component: Comunidade,
+  // função ainda sem dados reais: tela "Em desenvolvimento" com o Ori (ligar em src/lib/features.ts)
+  component: FEATURES.comunidade ? Comunidade : () => <EmDesenvolvimento feature="comunidade" />,
 });
 
 const LISTS = [

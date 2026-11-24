@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { EmDesenvolvimento } from "@/components/EmDesenvolvimento";
+import { FEATURES } from "@/lib/features";
 import { Heart, MessageCircle, Share2, UserPlus } from "lucide-react";
 import { actions, useStore } from "@/lib/store";
 
@@ -11,7 +13,9 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/comunidade")({
   head: () => ({ meta: [{ title: "Comunidade — Biblioteca Viva" }, { name: "description", content: "Pessoas que você segue, grupos e atividades." }] }),
-  component: Comunidade,
+  // função ainda sem dados reais: tela "Em desenvolvimento" com o Ori (ligar em src/lib/features.ts)
+
+  component: FEATURES.comunidade ? Comunidade : () => <EmDesenvolvimento feature="comunidade" inShell />,
 });
 
 const FEED = [

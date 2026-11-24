@@ -10,6 +10,8 @@ import { ShelfMenuButton } from "@/components/ShelfButton";
 import { confetti } from "@/lib/motion";
 import { haptic, shareLink } from "@/lib/native";
 import { IS_APP } from "@/lib/platform";
+import { FEATURES } from "@/lib/features";
+import { EmDesenvolvimentoNota } from "@/components/EmDesenvolvimento";
 import { useAskLocationOnce, useLocation, useNearbyLibraries } from "@/lib/location";
 import { formatDistance } from "@/lib/utils";
 import { useAsync } from "@/lib/hooks";
@@ -32,6 +34,7 @@ function BookPage() {
   const fav = useStore((s) => s.favorites.some((b) => b.id === id));
   const reserved = useStore((s) => s.reservations.some((r) => r.id === `livro-${id}`));
   const [toast, setToast] = useState<string>();
+  const [reserveInfo, setReserveInfo] = useState(false);
   useAskLocationOnce();
   const nearby = useNearbyLibraries();
   const { ask } = useLocation();
@@ -129,9 +132,14 @@ function BookPage() {
               )}
               {readable.loading && <span className="inline-flex h-11 items-center gap-2 px-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Procurando edição digital…</span>}
               <Button
-                disabled={!best && !reserved}
+                disabled={FEATURES.reservas && !best && !reserved}
                 variant={reserved ? "soft" : readable.data ? "outline" : "primary"}
                 onClick={() => {
+                  // reserva de livro físico ainda sem biblioteca conectada: mostra o aviso do Ori
+                  if (!FEATURES.reservas) {
+                    setReserveInfo((v) => !v);
+                    return;
+                  }
                   if (reserved) {
                     actions.cancelReservation(`livro-${id}`);
                     setToast("Reserva cancelada.");
@@ -144,7 +152,7 @@ function BookPage() {
                 }}
               >
                 {reserved ? <BookmarkCheck className="size-4" /> : <BookmarkPlus className="size-4" />}
-                {reserved ? "Reservado" : best ? "Reservar" : "Indisponível"}
+                {!FEATURES.reservas ? "Reservar" : reserved ? "Reservado" : best ? "Reservar" : "Indisponível"}
               </Button>
               <ShelfMenuButton book={{ id: book.id, title: book.title, author: book.authors[0], coverId: book.coverId }} />
               <Button variant="outline" onClick={() => actions.toggleFavorite(saved)}>
@@ -162,6 +170,7 @@ function BookPage() {
                 Open Library <ExternalLink className="size-3.5" />
               </a>
             </div>
+            {reserveInfo && <EmDesenvolvimentoNota feature="reservas" className="mt-3 max-w-xl animate-fade-up" />}
 
             <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_340px]">
               <div>
@@ -177,7 +186,9 @@ function BookPage() {
               </div>
 
               <Card className="h-fit p-5">
-                <h2 className="flex items-center gap-2 font-sans text-base font-semibold"><MapPin className="size-4 text-primary" /> Onde retirar</h2>
+                <h2 className="flex items-center gap-2 font-sans text-base font-semibold">
+                  <MapPin className="size-4 text-primary" /> {FEATURES.reservas ? "Onde retirar" : "Bibliotecas perto de você"}
+                </h2>
                 {nearby.location ? (
                   <p className="mt-1 text-xs text-muted-foreground">
                     Mais perto de <strong className="text-foreground">{nearby.location.label}</strong> ·{" "}
@@ -194,21 +205,28 @@ function BookPage() {
                     <li key={h.library.slug} className={cn("rounded-2xl border p-3.5", i === 0 && h.km !== undefined && "border-primary/40 bg-primary-soft/40")}>
                       <div className="flex items-start justify-between gap-2">
                         <Link to="/biblioteca/$slug" params={{ slug: h.library.slug }} className="text-sm font-medium hover:text-primary">{h.library.name}</Link>
-                        <Badge tone={h.available ? "success" : "warning"}>{h.available ? `${h.available}/${h.copies} livres` : "Emprestado"}</Badge>
+                        {/* disponibilidade, andar e estante só com a biblioteca conectada (hoje seriam inventados) */}
+                        {FEATURES.reservas && <Badge tone={h.available ? "success" : "warning"}>{h.available ? `${h.available}/${h.copies} livres` : "Emprestado"}</Badge>}
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {h.km !== undefined ? <strong className="text-foreground">{formatDistance(h.km)}</strong> : h.library.city}
                         {i === 0 && h.km !== undefined && <span className="ml-1.5 font-medium text-primary">· Mais perto</span>}
                       </p>
-                      <div className="mt-2.5 flex flex-wrap gap-1.5 text-[11px]">
-                        <span className="rounded-md bg-surface-2 px-2 py-1 font-medium">{h.floor}</span>
-                        <span className="rounded-md bg-surface-2 px-2 py-1 font-medium">{h.shelf}</span>
-                        <span className="rounded-md bg-surface-2 px-2 py-1 font-mono">{h.callNumber}</span>
-                      </div>
+                      {FEATURES.reservas && (
+                        <div className="mt-2.5 flex flex-wrap gap-1.5 text-[11px]">
+                          <span className="rounded-md bg-surface-2 px-2 py-1 font-medium">{h.floor}</span>
+                          <span className="rounded-md bg-surface-2 px-2 py-1 font-medium">{h.shelf}</span>
+                          <span className="rounded-md bg-surface-2 px-2 py-1 font-mono">{h.callNumber}</span>
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>
-                <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground"><Navigation className="size-3" /> Localização física via Providers das bibliotecas.</p>
+                {FEATURES.reservas ? (
+                  <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground"><Navigation className="size-3" /> Localização física via Providers das bibliotecas.</p>
+                ) : (
+                  <EmDesenvolvimentoNota feature="reservas" className="mt-4" />
+                )}
               </Card>
             </div>
           </div>

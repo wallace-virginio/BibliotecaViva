@@ -3,6 +3,7 @@
  * e sincronizado com a conta). Simples de conquistar no começo, com algumas metas para quem continua.
  * Conquistas de presença (visitar biblioteca, ir a evento) voltam quando houver check-in nas bibliotecas.
  */
+import { FEATURES } from "./features";
 import type { State } from "./store";
 
 export type BadgeDef = {
@@ -36,8 +37,13 @@ export const BADGE_DEFS: BadgeDef[] = [
   { key: "conversa-ori", emoji: "🌱", title: "Oi, Ori!", description: "Converse com o Ori, o assistente", goal: 1, count: (s) => s.oriChats },
   { key: "primeiro-favorito", emoji: "❤️", title: "Coração de leitor", description: "Favorite um livro", goal: 1, count: (s) => s.favorites.length },
   { key: "biblioteca-do-coracao", emoji: "🏛️", title: "Biblioteca do coração", description: "Siga uma biblioteca", goal: 1, count: (s) => s.followedLibraries.length },
-  { key: "primeira-reserva", emoji: "🔖", title: "Primeira reserva", description: "Reserve um livro numa biblioteca", goal: 1, count: (s) => s.reservations.filter((r) => r.kind === "livro").length },
-  { key: "na-agenda", emoji: "🎟️", title: "Na agenda", description: "Inscreva-se em um evento", goal: 1, count: (s) => s.reservations.filter((r) => r.kind === "evento").length },
+  // dependem de funções ainda em desenvolvimento: só aparecem quando forem ligadas em lib/features.ts
+  ...(FEATURES.reservas
+    ? [{ key: "primeira-reserva", emoji: "🔖", title: "Primeira reserva", description: "Reserve um livro numa biblioteca", goal: 1, count: (s: State) => s.reservations.filter((r) => r.kind === "livro").length }]
+    : []),
+  ...(FEATURES.eventos
+    ? [{ key: "na-agenda", emoji: "🎟️", title: "Na agenda", description: "Inscreva-se em um evento", goal: 1, count: (s: State) => s.reservations.filter((r) => r.kind === "evento").length }]
+    : []),
   { key: "estante-montada", emoji: "📚", title: "Estante montada", description: "Coloque 5 livros na sua estante", goal: 5, count: (s) => Object.keys(s.shelf).length },
   { key: "primeiro-livro", emoji: "✅", title: "Livro terminado", description: "Leia um livro até o fim no app", goal: 1, count: finished },
   { key: "tres-dias", emoji: "🔥", title: "Três dias seguidos", description: "Leia no app 3 dias seguidos", goal: 3, count: (s) => readingStreak(s) },

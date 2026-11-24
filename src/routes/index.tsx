@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { BookCover, LibraryImage, Reveal } from "@/components/common";
 import { AppHome } from "@/components/app/AppHome";
 import { IS_APP } from "@/lib/platform";
+import { FEATURES } from "@/lib/features";
 import { CoverWall } from "@/components/CoverWall";
 import { CurationGrid } from "@/components/CurationGrid";
 import { GlobalSearch } from "@/components/GlobalSearch";
@@ -46,7 +47,7 @@ function Home() {
       <OnTheShelf />
       <PickOfTheWeek />
       <Manifesto />
-      <Agenda />
+      {FEATURES.eventos && <Agenda />}
       <Collections />
       <ForLibraries />
     </>

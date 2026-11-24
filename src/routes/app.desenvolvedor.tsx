@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { EmDesenvolvimento } from "@/components/EmDesenvolvimento";
+import { FEATURES } from "@/lib/features";
 import { BadgeCheck, Check, Copy, Download, Loader2, Lock, Play, Plug, Star, Trophy } from "lucide-react";
 import { useState } from "react";
 import { GithubIcon } from "@/components/BrandIcons";
@@ -17,7 +19,9 @@ export const Route = createFileRoute("/app/desenvolvedor")({
       { name: "description", content: "SDKs, API Playground, marketplace de conectores e open source. Integre a biblioteca da sua cidade criando um Provider." },
     ],
   }),
-  component: Devs,
+  // função ainda sem dados reais: tela "Em desenvolvimento" com o Ori (ligar em src/lib/features.ts)
+
+  component: FEATURES.desenvolvedor ? Devs : () => <EmDesenvolvimento feature="desenvolvedor" inShell />,
 });
 
 const ENDPOINTS = {

@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { EmDesenvolvimentoNota } from "@/components/EmDesenvolvimento";
+import { FEATURES } from "@/lib/features";
 import {
   ArrowLeft,
   BookOpen,
@@ -157,8 +159,8 @@ function LibraryProfile({ lib }: { lib: Library }) {
             </div>
             <h1 className="text-3xl font-semibold tracking-tight md:text-5xl">{lib.name}</h1>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-              <Stars value={rating} className="text-foreground" />
-              <span>{formatNumber(lib.reviews)} avaliações</span>
+              {FEATURES.comunidade && <Stars value={rating} className="text-foreground" />}
+              {FEATURES.comunidade && <span>{formatNumber(lib.reviews)} avaliações</span>}
               <span className="flex items-center gap-1"><MapPin className="size-4" />{[lib.address, lib.city, lib.country].filter(Boolean).join(" · ") || "Endereço não informado"}</span>
               <OpenBadge lib={lib} />
             </div>
@@ -234,6 +236,7 @@ function LibraryProfile({ lib }: { lib: Library }) {
             </section>
 
             {/* Agenda */}
+            {FEATURES.eventos ? (
             <section id="agenda" className="scroll-mt-32">
               <h2 className="text-2xl font-semibold tracking-tight">Agenda de eventos</h2>
               <div className="mt-5 space-y-3">
@@ -256,8 +259,12 @@ function LibraryProfile({ lib }: { lib: Library }) {
                 ))}
               </div>
             </section>
+            ) : (
+              <section className="scroll-mt-32"><EmDesenvolvimentoNota feature="eventos" /></section>
+            )}
 
             {/* Salas e computadores */}
+            {FEATURES.salas ? (
             <section id="salas" className="scroll-mt-32">
               <h2 className="text-2xl font-semibold tracking-tight">Salas e computadores</h2>
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -285,8 +292,12 @@ function LibraryProfile({ lib }: { lib: Library }) {
                 </div>
               </Card>
             </section>
+            ) : (
+              <section className="scroll-mt-32"><EmDesenvolvimentoNota feature="salas" /></section>
+            )}
 
             {/* Avaliações */}
+            {FEATURES.comunidade ? (
             <section id="avaliações" className="scroll-mt-32">
               <h2 className="flex items-center gap-2 text-2xl font-semibold tracking-tight"><Star className="size-6 fill-star text-star" /> {rating.toFixed(1).replace(".", ",")} · {formatNumber(lib.reviews)} avaliações</h2>
               <div className="mt-6 grid gap-x-10 gap-y-3 sm:grid-cols-2">
@@ -318,6 +329,9 @@ function LibraryProfile({ lib }: { lib: Library }) {
                 ))}
               </div>
             </section>
+            ) : (
+              <section className="scroll-mt-32"><EmDesenvolvimentoNota feature="comunidade" /></section>
+            )}
 
             {/* Serviços + horários */}
             <section id="serviços" className="scroll-mt-32">

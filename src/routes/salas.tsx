@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { EmDesenvolvimento } from "@/components/EmDesenvolvimento";
+import { FEATURES } from "@/lib/features";
 import { Check, DoorOpen, Monitor, Users, Wifi } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PageHero } from "@/components/common";
@@ -21,7 +23,9 @@ export const Route = createFileRoute("/salas")({
       { name: "description", content: "Reserve salas de estudo e computadores nas bibliotecas da rede." },
     ],
   }),
-  component: Salas,
+  // função ainda sem dados reais: tela "Em desenvolvimento" com o Ori (ligar em src/lib/features.ts)
+
+  component: FEATURES.salas ? Salas : () => <EmDesenvolvimento feature="salas" />,
 });
 
 const SLOTS = ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"];

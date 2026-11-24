@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { EmDesenvolvimento } from "@/components/EmDesenvolvimento";
+import { FEATURES } from "@/lib/features";
 import { useState } from "react";
 import { DashHeader } from "@/components/dashboard";
 import { ReservationList } from "@/components/ReservationList";
@@ -7,7 +9,8 @@ import type { Reservation } from "@/lib/store";
 
 export const Route = createFileRoute("/app/reservas")({
   head: () => ({ meta: [{ title: "Reservas — Biblioteca Viva" }, { name: "description", content: "Livros, salas, computadores e eventos reservados." }] }),
-  component: Reservas,
+  // função ainda sem dados reais: tela "Em desenvolvimento" com o Ori (ligar em src/lib/features.ts)
+  component: FEATURES.reservas ? Reservas : () => <EmDesenvolvimento feature="reservas" inShell />,
 });
 
 function Reservas() {

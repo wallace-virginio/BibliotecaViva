@@ -10,6 +10,7 @@ import { openStatus } from "@/lib/hours";
 import { askAssistant, type AssistantPlan, type ChatTurn } from "@/lib/api/assistant";
 import { deleteConversation, getConversation, listConversations, saveConversation, type ConversationSummary, type StoredMessage } from "@/lib/api/conversations";
 import { useAuth } from "@/lib/auth";
+import { FEATURES } from "@/lib/features";
 import { actions } from "@/lib/store";
 import { useLocation } from "@/lib/location";
 import { cn } from "@/lib/utils";
@@ -98,7 +99,8 @@ async function fromPlan(plan: AssistantPlan): Promise<Answer> {
   if (plan.books?.query) books = (await searchBooks(plan.books.query, { limit: 6 }).catch(() => ({ books: [] as Book[] }))).books;
   if (!books?.length && plan.books?.subject) books = await booksBySubject(plan.books.subject, 6).catch(() => []);
   const libraries = plan.libraries ? (plan.libraries === "estudar" ? studySpots() : FEATURED_LIBRARIES.filter((l) => l.curations.includes(plan.libraries!)).slice(0, 3)) : undefined;
-  const events = plan.events ? EVENTS.filter((e) => (plan.events as string[]).includes(e.category)) : undefined;
+  // eventos ainda são de exemplo: não aparecem como card enquanto a agenda real não estiver conectada
+  const events = FEATURES.eventos && plan.events ? EVENTS.filter((e) => (plan.events as string[]).includes(e.category)) : undefined;
   return { text: plan.reply, books, libraries, events, ai: true, plan };
 }
 

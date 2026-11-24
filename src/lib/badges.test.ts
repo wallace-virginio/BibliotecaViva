@@ -22,7 +22,9 @@ describe("conquistas reais", () => {
       { id: "evento-1", kind: "evento", title: "Clube", when: "", createdAt: 1 },
     ];
     const b = byKey(s);
-    for (const k of ["primeira-pagina", "conversa-ori", "primeiro-favorito", "biblioteca-do-coracao", "primeira-reserva", "na-agenda"]) {
+    // ("primeira-reserva" e "na-agenda" voltam quando reservas/eventos forem ligados em lib/features.ts)
+    expect(b["primeira-reserva"]).toBeUndefined();
+    for (const k of ["primeira-pagina", "conversa-ori", "primeiro-favorito", "biblioteca-do-coracao"]) {
       expect(b[k].earned, k).toBe(true);
     }
     expect(b["primeiro-livro"].earned).toBe(false); // só 12% lido

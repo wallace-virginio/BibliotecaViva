@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpenText, CalendarDays, ChevronRight, Clock, Map, MapPin, Monitor, Navigation } from "lucide-react";
+import { BookOpenText, CalendarDays, ChevronRight, Clock, LibraryBig, Map, MapPin, Monitor, Navigation, Trophy } from "lucide-react";
+import { FEATURES } from "@/lib/features";
 import { BookCover, LibraryImage } from "@/components/common";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { OriFab } from "@/components/OriFab";
@@ -37,7 +38,7 @@ export function AppHome() {
       <QuickActions />
       <NearestOpen />
       <ContinueReading />
-      <ThisWeek />
+      {FEATURES.eventos && <ThisWeek />}
       <OriFab />
     </div>
   );
@@ -47,8 +48,9 @@ function QuickActions() {
   const items = [
     { to: "/mapa", label: "Mapa", icon: Map },
     { to: "/acervo", label: "Ler grátis", icon: BookOpenText, search: { ebook: true } },
-    { to: "/eventos", label: "Eventos", icon: CalendarDays },
-    { to: "/salas", label: "Salas", icon: Monitor },
+    // enquanto eventos e salas estão em desenvolvimento, os atalhos levam ao que já funciona
+    ...(FEATURES.eventos ? [{ to: "/eventos", label: "Eventos", icon: CalendarDays } as const] : [{ to: "/ranking", label: "Ranking", icon: Trophy } as const]),
+    ...(FEATURES.salas ? [{ to: "/salas", label: "Salas", icon: Monitor } as const] : [{ to: "/app/livros", label: "Estante", icon: LibraryBig } as const]),
   ] as const;
   return (
     <ul className="mt-5 grid grid-cols-4 gap-2">

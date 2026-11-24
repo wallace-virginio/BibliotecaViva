@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { EmDesenvolvimento } from "@/components/EmDesenvolvimento";
+import { FEATURES } from "@/lib/features";
 import { BookOpen, CalendarDays, DoorOpen, GraduationCap, Plus, TrendingUp, Users, UsersRound } from "lucide-react";
 import { useState } from "react";
 import { DashHeader } from "@/components/dashboard";
@@ -10,7 +12,9 @@ import { cn, compactNumber, formatNumber } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/admin")({
   head: () => ({ meta: [{ title: "Painel da biblioteca — Biblioteca Viva" }, { name: "description", content: "Gerencie eventos, cursos, acervo, salas, reservas, equipe, indicadores e comunidade." }] }),
-  component: Admin,
+  // função ainda sem dados reais: tela "Em desenvolvimento" com o Ori (ligar em src/lib/features.ts)
+
+  component: FEATURES.painelBiblioteca ? Admin : () => <EmDesenvolvimento feature="painelBiblioteca" inShell />,
 });
 
 const TABS = ["indicadores", "eventos", "cursos", "acervo", "salas", "reservas", "equipe", "comunidade"] as const;

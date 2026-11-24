@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { EmDesenvolvimento } from "@/components/EmDesenvolvimento";
+import { FEATURES } from "@/lib/features";
 import { useMemo, useState } from "react";
 import { EventCard, PageHero } from "@/components/common";
 import { Container, EmptyState, Tabs } from "@/components/ui";
@@ -19,7 +21,9 @@ export const Route = createFileRoute("/eventos")({
       { name: "description", content: "Clubes de leitura, oficinas, cursos, saraus e exposições desta semana em bibliotecas do mundo todo." },
     ],
   }),
-  component: Eventos,
+  // função ainda sem dados reais: tela "Em desenvolvimento" com o Ori (ligar em src/lib/features.ts)
+
+  component: FEATURES.eventos ? Eventos : () => <EmDesenvolvimento feature="eventos" />,
 });
 
 const CATS = ["Todos", "Clube de leitura", "Oficina", "Curso", "Cultura", "Crianças", "Exposição", "Hackathon"] as const;
