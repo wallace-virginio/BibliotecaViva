@@ -2,6 +2,29 @@
 
 Plataforma aberta e colaborativa de descoberta de conhecimento — **app mobile-first** (PWA + iOS/Android via Capacitor) com versão desktop.
 
+## Como fica
+
+### App (celular)
+
+<p align="center">
+  <img src="docs/screenshots/app-inicio.webp" width="200" alt="Início do app: saudação, busca, atalhos e bibliotecas abertas agora perto de você" />
+  <img src="docs/screenshots/app-mapa.webp" width="200" alt="Mapa em tela cheia com as bibliotecas de São Paulo" />
+  <img src="docs/screenshots/app-livro.webp" width="200" alt="Página do livro Dom Casmurro com Ler agora grátis, Reservar e Minha estante" />
+  <img src="docs/screenshots/app-ori.webp" width="200" alt="Ori, o assistente, com sugestões de perguntas" />
+</p>
+<p align="center"><sub>Início · Mapa · Livro · Ori, o assistente</sub></p>
+
+### Site (desktop)
+
+<p align="center">
+  <img src="docs/screenshots/site-inicio.webp" width="820" alt="Página inicial do site com busca e fotos de bibliotecas" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/site-acervo.webp" width="405" alt="Acervo com filtros, livros em alta e ranking da semana" />
+  <img src="docs/screenshots/site-mapa.webp" width="405" alt="Mapa com a lista de bibliotecas perto e horário de hoje" />
+</p>
+<p align="center"><sub>Início · Acervo · Mapa</sub></p>
+
 ## Stack
 
 - Hospedagem: **Cloudflare Workers** (plano grátis) — no ar em https://biblioteca-viva.biblioteca-viva.workers.dev — [docs/DEPLOY.md](docs/DEPLOY.md)
@@ -28,7 +51,7 @@ Dados que nenhuma API aberta fornece (salas e computadores livres, eventos, aval
 
 ## Estrutura de app mobile
 
-- Barra de abas inferior (Início · Mapa · Acervo · Eventos · Perfil) e app bar compacta abaixo de `lg`
+- Barra de abas inferior (Início · Mapa · Acervo · Estante · Perfil) e app bar compacta abaixo de `lg`
 - `/mapa` em tela cheia com bottom sheets (lista e painel da biblioteca)
 - Safe areas (`env(safe-area-inset-*)`), alvos de toque ≥ 44px, sem zoom automático em inputs no iOS
 - PWA: `public/manifest.webmanifest`, ícones em `public/icons`, service worker `public/sw.js` (offline básico)
