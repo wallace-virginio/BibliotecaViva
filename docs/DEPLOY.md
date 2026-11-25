@@ -36,7 +36,11 @@ Para atualizar o site depois, basta rodar `npm run deploy` de novo.
 3. Configuração do build:
    - **Build command:** `npm run build`
    - **Deploy command:** `npx wrangler deploy`
-4. Não é preciso cadastrar variáveis: a URL e a publishable key do Supabase (públicas por natureza) estão em `.env.production`, versionado no repositório.
+4. Cadastre as variáveis do Supabase em **Settings → Build → Variables and secrets** (são variáveis *de build*, não as do Worker):
+   - `VITE_SUPABASE_URL` — `https://<id-do-projeto>.supabase.co`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY` — a *publishable key* (Supabase → Project Settings → API Keys). **Nunca** a secret key.
+
+   Elas não ficam no repositório: no seu PC estão no `.env.production` (fora do git, modelo em `.env.example`). Se faltarem, o build **para com um erro** em vez de publicar o site sem login. Para gerar de propósito a versão demonstração, use `BV_DEMO=1`.
 5. Salve e rode o primeiro deploy. Cada push na branch principal publica de novo; outras branches geram URLs de prévia.
 
 > Nunca cadastre a **secret key** do Supabase na Cloudflare nem em lugar nenhum do app.

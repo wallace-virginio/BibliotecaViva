@@ -17,6 +17,8 @@ ios/App/Pods
 # Variáveis locais (nunca commitar)
 .env.local
 .env.*.local
+# URL e publishable key do Supabase: ficam no PC e nas variáveis de build da Cloudflare (docs/DEPLOY.md)
+.env.production
 
 # Cloudflare
 .wrangler
