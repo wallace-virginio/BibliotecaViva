@@ -9,6 +9,7 @@ import { Button, Container, EmptyState } from "@/components/ui";
 import { FREE_CLASSICS } from "@/data/content";
 import { booksBySubject, searchBooks, type Book } from "@/lib/api/openlibrary";
 import { POPULAR_SUBJECTS, trending } from "@/lib/api/rankings";
+import { FEATURES } from "@/lib/features";
 import { CATEGORIES, COMIC_CATEGORIES, hasLatinTitle, isAvailable, MATERIAL_TYPES } from "@/lib/catalog";
 import { useAsync } from "@/lib/hooks";
 import { useLocation, useNearbyLibraries } from "@/lib/location";
@@ -29,7 +30,7 @@ export const Route = createFileRoute("/acervo")({
   head: () => ({
     meta: [
       { title: "Acervo — Biblioteca Viva" },
-      { name: "description", content: "Busque livros, revistas, jornais e documentos históricos — e veja onde retirar perto de você." },
+      { name: "description", content: "Busque livros, revistas, jornais e documentos históricos — leia de graça os de domínio público ou veja onde comprar." },
     ],
   }),
   component: Acervo,
@@ -57,7 +58,9 @@ function Acervo() {
 
   const tipo = MATERIAL_TYPES.find((t) => t.value === (search.tipo ?? "livros")) ?? MATERIAL_TYPES[0];
   const subject = search.categoria || tipo.subject || undefined;
-  const browsing = !search.q && !search.autor && !search.categoria && !search.tipo && !search.ebook && !search.disponivel;
+  // filtro de retirada só vale com bibliotecas conectadas; links antigos com ?disponivel= são ignorados
+  const disponivel = FEATURES.reservas && !!search.disponivel;
+  const browsing = !search.q && !search.autor && !search.categoria && !search.tipo && !search.ebook && !disponivel;
   // com autor escolhido e sem categoria, não restringe ao assunto padrão do tipo (senão some parte da obra do autor)
   const subjectFor = search.autor && !search.categoria ? undefined : subject;
 
@@ -88,7 +91,7 @@ function Acervo() {
   const near = nearby.data;
   const comics = COMIC_CATEGORIES.has(search.categoria ?? "");
   const books = [...(results.data?.books ?? []), ...extra.books]
-    .filter((b) => !search.disponivel || isAvailable(b.id, near))
+    .filter((b) => !disponivel || isAvailable(b.id, near))
     // em quadrinhos, esconde títulos só em japonês/chinês (ilegíveis para quem busca aqui)
     .filter((b) => !comics || hasLatinTitle(b.title));
   const set = (patch: Partial<Search>) => navigate({ search: (s: Search) => ({ ...s, pagina: undefined, ...patch }) });
@@ -106,7 +109,7 @@ function Acervo() {
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div>
               <h1 className="text-2xl md:text-3xl">Acervo</h1>
-              <p className="text-sm text-muted-foreground">Mais de 40 milhões de títulos — e onde retirar perto de você.</p>
+              <p className="text-sm text-muted-foreground">Mais de 40 milhões de títulos — para ler de graça ou saber onde comprar.</p>
             </div>
           </div>
           <div className="relative">
@@ -172,9 +175,12 @@ function Acervo() {
 
           {/* Filtros ANTES dos resultados */}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <FilterChip active={!!search.disponivel} onClick={toggleNearMe} icon={<MapPin className="size-3.5" />}>
-              Disponível para retirada{location ? ` perto de ${location.label}` : " perto de mim"}
-            </FilterChip>
+            {/* disponibilidade física só existe com bibliotecas conectadas (lib/features.ts) */}
+            {FEATURES.reservas && (
+              <FilterChip active={!!search.disponivel} onClick={toggleNearMe} icon={<MapPin className="size-3.5" />}>
+                Disponível para retirada{location ? ` perto de ${location.label}` : " perto de mim"}
+              </FilterChip>
+            )}
             <FilterChip active={!!search.ebook} onClick={() => set({ ebook: search.ebook ? undefined : true })} icon={<BookOpenText className="size-3.5" />}>
               Grátis para ler no app
             </FilterChip>
@@ -202,7 +208,7 @@ function Acervo() {
                   {results.data ? (
                     <>
                       <strong className="text-foreground">{formatNumber(results.data.total)}</strong> resultados
-                      {search.disponivel && ` · ${books.length} disponíveis perto${location ? ` de ${location.label}` : ""} entre os carregados`}
+                      {disponivel && ` · ${books.length} disponíveis perto${location ? ` de ${location.label}` : ""} entre os carregados`}
                     </>
                   ) : (
                     "Buscando…"
@@ -219,24 +225,25 @@ function Acervo() {
               ) : books.length === 0 ? (
                 <EmptyState
                   icon={<BookX className="size-6" />}
-                  title={search.disponivel ? "Nada disponível perto de você nesta página" : "Nada encontrado"}
-                  description={search.disponivel ? "Tente a próxima página ou desligue o filtro de retirada." : "Tente outros termos ou remova alguns filtros."}
+                  title={disponivel ? "Nada disponível perto de você nesta página" : "Nada encontrado"}
+                  description={disponivel ? "Tente a próxima página ou desligue o filtro de retirada." : "Tente outros termos ou remova alguns filtros."}
                 />
               ) : (
                 <div className="grid grid-cols-3 gap-x-3.5 gap-y-6 sm:grid-cols-4 md:grid-cols-5">
                   {books.map((b) => {
-                    const ok = isAvailable(b.id, near);
-                    return (
-                      <BookCard
-                        key={b.id}
-                        book={b}
-                        badge={
-                          <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-soft", ok ? "bg-success-soft text-success" : "bg-surface/90 text-muted-foreground")}>
-                            {ok ? (location ? "Perto de você" : "Disponível") : "Emprestado"}
-                          </span>
-                        }
-                      />
-                    );
+                    // com o filtro "Grátis para ler" ligado, todos são grátis: o selo seria repetição
+                    const free = b.ebook && !search.ebook;
+                    const ok = FEATURES.reservas && isAvailable(b.id, near);
+                    const badge = free ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[10px] font-semibold text-success shadow-soft">
+                        <BookOpenText className="size-3" aria-hidden /> Ler grátis
+                      </span>
+                    ) : FEATURES.reservas ? (
+                      <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-soft", ok ? "bg-success-soft text-success" : "bg-surface/90 text-muted-foreground")}>
+                        {ok ? (location ? "Perto de você" : "Disponível") : "Emprestado"}
+                      </span>
+                    ) : undefined;
+                    return <BookCard key={b.id} book={b} badge={badge} />;
                   })}
                 </div>
               )}

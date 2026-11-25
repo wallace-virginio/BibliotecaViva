@@ -54,7 +54,9 @@ const toBook = (d: SearchDoc): Book => ({
   subjects: (d.subject ?? []).slice(0, 8),
   editions: d.edition_count,
   pages: d.number_of_pages_median,
-  ebook: d.ebook_access === "public" || d.ebook_access === "borrowable",
+  // só domínio público: é o que o leitor do app abre (e o mesmo critério do filtro "Grátis para ler no app").
+  // "borrowable" exige empréstimo com conta no Internet Archive — não é "ler grátis" aqui.
+  ebook: d.ebook_access === "public",
   languages: d.language,
 });
 
