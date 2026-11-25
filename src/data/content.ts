@@ -61,7 +61,7 @@ export const OPEN_SOURCE_STATS = [
 export type RoadmapItem = {
   version: string;
   title: string;
-  /** ano e trimestre do ano ("2026 · T3" = jul–set). Para o que não saiu ainda, é previsão. */
+  /** mês e ano ("Novembro 2026"). Para o que não saiu ainda, é previsão. */
   period?: string;
   status: "lançado" | "em desenvolvimento" | "planejado";
   items: string[];
@@ -72,15 +72,15 @@ export type RoadmapItem = {
  * (e mostra a tela do Ori); quando a flag for ligada, mova o item para "lançado".
  */
 export const ROADMAP: RoadmapItem[] = [
-  { version: "Início", title: "Nasce a Biblioteca Viva", period: "2026 · T3", status: "lançado", items: ["Projeto iniciado em 21 de julho de 2026", "Planejamento e desenvolvimento da primeira versão"] },
-  { version: "Mapa", title: "Bibliotecas reais perto de você", period: "2026 · T4", status: "lançado", items: ["Bibliotecas reais do OpenStreetMap, no Brasil e no mundo", "Horário de hoje, distância e fotos de cada biblioteca", "Localização só quando você pede, sem rastrear"] },
-  { version: "Acervo", title: "Livros para buscar e ler de graça", period: "2026 · T4", status: "lançado", items: ["Busca em mais de 40 milhões de títulos, com filtro por gênero e por autor", "Sugestões enquanto você digita e ranking da semana", "Clássicos em domínio público para ler no próprio app"] },
-  { version: "Conta", title: "Sua estante e suas conquistas", period: "2026 · T4", status: "lançado", items: ["Cadastro com e-mail e senha", "Minha estante, favoritos e progresso de leitura salvos na conta", "Conquistas de leitura e configurações que ficam salvas", "Baixar meus dados e excluir a conta, como manda a LGPD"] },
-  { version: "Ori", title: "Ori, o assistente com IA", period: "2026 · T4", status: "lançado", items: ["Indicações de livros e bibliotecas conversando normalmente", "Histórico das suas conversas, criptografado"] },
-  { version: "App", title: "Aplicativo para celular", period: "2027 · T1", status: "em desenvolvimento", items: ["Versão Android em testes", "Publicação na Play Store", "Versão para iPhone"] },
-  { version: "Bibliotecas", title: "Agenda, salas e reservas", period: "2027 · T1", status: "em desenvolvimento", items: ["Agenda real de eventos, clubes de leitura e oficinas", "Salas de estudo e computadores livres", "Reserva de livros na biblioteca", "Painel para a biblioteca cuidar de tudo isso"] },
-  { version: "Comunidade", title: "Leitores conversando", period: "2027 · T2", status: "em desenvolvimento", items: ["Avaliações de bibliotecas e livros", "Perfis e clubes de leitores"] },
-  { version: "Depois", title: "O que vem em seguida", period: "2027 · T3", status: "planejado", items: ["Entrar com Google e Apple", "Notificações de eventos e reservas", "Versões em inglês e espanhol", "Check-in por QR Code e modo offline", "Integração com os sistemas das bibliotecas (Providers e SDKs)", "Digitalização colaborativa de acervos"] },
+  { version: "Início", title: "Nasce a Biblioteca Viva", period: "Julho 2026", status: "lançado", items: ["Projeto iniciado em 21 de julho de 2026", "Planejamento e desenvolvimento da primeira versão"] },
+  { version: "Mapa", title: "Bibliotecas reais perto de você", period: "Novembro 2026", status: "lançado", items: ["Bibliotecas reais do OpenStreetMap, no Brasil e no mundo", "Horário de hoje, distância e fotos de cada biblioteca", "Localização só quando você pede, sem rastrear"] },
+  { version: "Acervo", title: "Livros para buscar e ler de graça", period: "Novembro 2026", status: "lançado", items: ["Busca em mais de 40 milhões de títulos, com filtro por gênero e por autor", "Sugestões enquanto você digita e ranking da semana", "Clássicos em domínio público para ler no próprio app"] },
+  { version: "Conta", title: "Sua estante e suas conquistas", period: "Novembro 2026", status: "lançado", items: ["Cadastro com e-mail e senha", "Minha estante, favoritos e progresso de leitura salvos na conta", "Conquistas de leitura e configurações que ficam salvas", "Baixar meus dados e excluir a conta, como manda a LGPD"] },
+  { version: "Ori", title: "Ori, o assistente com IA", period: "Novembro 2026", status: "lançado", items: ["Indicações de livros e bibliotecas conversando normalmente", "Histórico das suas conversas, criptografado"] },
+  { version: "App", title: "Aplicativo para celular", period: "Fevereiro 2027", status: "em desenvolvimento", items: ["Versão Android em testes", "Publicação na Play Store", "Versão para iPhone"] },
+  { version: "Bibliotecas", title: "Agenda, salas e reservas", period: "Março 2027", status: "em desenvolvimento", items: ["Agenda real de eventos, clubes de leitura e oficinas", "Salas de estudo e computadores livres", "Reserva de livros na biblioteca", "Painel para a biblioteca cuidar de tudo isso"] },
+  { version: "Comunidade", title: "Leitores conversando", period: "Maio 2027", status: "em desenvolvimento", items: ["Avaliações de bibliotecas e livros", "Perfis e clubes de leitores"] },
+  { version: "Depois", title: "O que vem em seguida", period: "Agosto 2027", status: "planejado", items: ["Entrar com Google e Apple", "Notificações de eventos e reservas", "Versões em inglês e espanhol", "Check-in por QR Code e modo offline", "Integração com os sistemas das bibliotecas (Providers e SDKs)", "Digitalização colaborativa de acervos"] },
 ];
 
 /* ---------------- Funcionalidades futuras ---------------- */
