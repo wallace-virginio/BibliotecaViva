@@ -1,0 +1,27 @@
+Biblioteca Viva — Licença proprietária
+Copyright (c) 2026 os titulares do projeto Biblioteca Viva. Todos os direitos reservados.
+
+Este software, incluindo o código-fonte, o design, os textos, as imagens, o
+mascote "Ori", os ícones e a marca "Biblioteca Viva", é propriedade exclusiva
+dos seus titulares e é protegido pela Lei nº 9.609/1998 (Lei do Software),
+pela Lei nº 9.610/1998 (Direitos Autorais) e pela Lei nº 9.279/1996
+(Propriedade Industrial).
+
+O fato de o código estar ou ter estado visível em algum lugar NÃO concede
+nenhuma licença. Sem autorização prévia e por escrito dos titulares, é
+proibido:
+
+  1. copiar, reproduzir, clonar ou baixar o código para uso próprio;
+  2. modificar, adaptar, traduzir ou criar obras derivadas;
+  3. distribuir, publicar, sublicenciar, vender, alugar ou ceder;
+  4. usar, hospedar ou oferecer o software, no todo ou em parte, como produto
+     ou serviço, com ou sem fins lucrativos;
+  5. usar o nome, a marca, o mascote ou a identidade visual.
+
+Bibliotecas de terceiros usadas pelo projeto continuam sob as suas próprias
+licenças (veja package.json); esta licença não as altera.
+
+O SOFTWARE É FORNECIDO "NO ESTADO EM QUE SE ENCONTRA", SEM GARANTIAS DE
+QUALQUER TIPO.
+
+Pedidos de licenciamento: entre em contato com os titulares pelo repositório.

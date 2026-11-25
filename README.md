@@ -99,3 +99,7 @@ Passo a passo (SQL, URLs de redirecionamento, Google e Apple): [docs/SUPABASE.md
 - **Direitos do titular:** *Configurações → Privacidade* tem "Baixar meus dados" (JSON) e "Excluir minha conta".
 - **Minimização:** localização só sob demanda, fontes locais (sem Google Fonts), sem analytics nem publicidade; dados de uso sem login não são misturados à conta.
 - **Documentos:** [/privacidade](src/routes/privacidade.tsx) e [/termos](src/routes/termos.tsx) — minutas para revisão jurídica. Preencha os dados do controlador e do encarregado em `src/lib/legal.ts`.
+
+## Licença
+
+**Software proprietário — todos os direitos reservados.** Este código não é open source: copiar, modificar, distribuir ou usar o projeto (no todo ou em parte) sem autorização por escrito dos titulares é proibido. Veja [LICENSE](LICENSE).
