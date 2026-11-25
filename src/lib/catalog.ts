@@ -67,6 +67,11 @@ export const CATEGORIES = [
   { value: "", label: "Todas" },
   { value: "fiction", label: "Ficção" },
   { value: "science_fiction", label: "Ficção científica" },
+  // quadrinhos: os assuntos da Open Library que trazem mais obras com capa (graphic_novels ~63 mil,
+  // superheroes ~8,6 mil com Marvel e DC, manga ~15 mil)
+  { value: "graphic_novels", label: "Quadrinhos" },
+  { value: "superheroes", label: "Super-heróis" },
+  { value: "manga", label: "Mangá" },
   { value: "history", label: "História" },
   { value: "computers", label: "Tecnologia" },
   { value: "artificial_intelligence", label: "Inteligência Artificial" },
@@ -77,6 +82,17 @@ export const CATEGORIES = [
   { value: "biography", label: "Biografias" },
   { value: "art", label: "Arte" },
 ] as const;
+
+/** Categorias de quadrinhos, onde muitos títulos vêm só em japonês ou chinês na Open Library. */
+export const COMIC_CATEGORIES: ReadonlySet<string> = new Set(["graphic_novels", "superheroes", "manga"]);
+
+/**
+ * O título tem letras do nosso alfabeto? "鬼滅の刃 1" não (some da lista de quadrinhos); "BLEACH―ブリーチ― 1"
+ * e "Jujutsu Kaisen (呪術廻戦)" sim — dá para a pessoa ler e buscar na loja.
+ */
+export function hasLatinTitle(title: string) {
+  return /[A-Za-zÀ-ÖØ-öø-ÿ]/.test(title);
+}
 
 export const MATERIAL_TYPES = [
   { value: "livros", label: "Livros", subject: "" },

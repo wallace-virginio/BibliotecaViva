@@ -9,7 +9,7 @@ import { Button, Container, EmptyState } from "@/components/ui";
 import { FREE_CLASSICS } from "@/data/content";
 import { booksBySubject, searchBooks, type Book } from "@/lib/api/openlibrary";
 import { POPULAR_SUBJECTS, trending } from "@/lib/api/rankings";
-import { CATEGORIES, isAvailable, MATERIAL_TYPES } from "@/lib/catalog";
+import { CATEGORIES, COMIC_CATEGORIES, hasLatinTitle, isAvailable, MATERIAL_TYPES } from "@/lib/catalog";
 import { useAsync } from "@/lib/hooks";
 import { useLocation, useNearbyLibraries } from "@/lib/location";
 import { cn, formatNumber } from "@/lib/utils";
@@ -86,7 +86,11 @@ function Acervo() {
   };
 
   const near = nearby.data;
-  const books = [...(results.data?.books ?? []), ...extra.books].filter((b) => !search.disponivel || isAvailable(b.id, near));
+  const comics = COMIC_CATEGORIES.has(search.categoria ?? "");
+  const books = [...(results.data?.books ?? []), ...extra.books]
+    .filter((b) => !search.disponivel || isAvailable(b.id, near))
+    // em quadrinhos, esconde títulos só em japonês/chinês (ilegíveis para quem busca aqui)
+    .filter((b) => !comics || hasLatinTitle(b.title));
   const set = (patch: Partial<Search>) => navigate({ search: (s: Search) => ({ ...s, pagina: undefined, ...patch }) });
 
   const toggleNearMe = () => {

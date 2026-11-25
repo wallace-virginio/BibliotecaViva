@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FEATURED_LIBRARIES } from "@/data/libraries";
-import { holdingsFor, isAvailable, type NearbyLibrary } from "./catalog";
+import { CATEGORIES, hasLatinTitle, holdingsFor, isAvailable, type NearbyLibrary } from "./catalog";
 import { formatRanges, openStatus, parseOpeningHours } from "./hours";
 import { actions, emptyState, getState } from "./store";
 import { formatDistance, haversineKm, seeded, slugify } from "./utils";
@@ -120,5 +120,20 @@ describe("store local", () => {
     expect(getState().favorites).toEqual([]);
     expect(getState().readerPrefs.fontSize).toBe(24);
     expect(getState().shelf).toEqual(emptyState.shelf);
+  });
+});
+
+describe("acervo: quadrinhos", () => {
+  it("tem os filtros de Quadrinhos, Super-heróis e Mangá", () => {
+    const labels = CATEGORIES.map((c) => c.label);
+    for (const l of ["Quadrinhos", "Super-heróis", "Mangá"]) expect(labels).toContain(l);
+  });
+
+  it("esconde só os títulos sem nenhuma letra do nosso alfabeto", () => {
+    expect(hasLatinTitle("鬼滅の刃 1")).toBe(false);
+    expect(hasLatinTitle("呪術廻戦 0")).toBe(false);
+    expect(hasLatinTitle("BLEACH―ブリーチ― 1")).toBe(true);
+    expect(hasLatinTitle("Jujutsu Kaisen, Vol. 2 (呪術廻戦)")).toBe(true);
+    expect(hasLatinTitle("Mônica e Cebolinha")).toBe(true);
   });
 });
