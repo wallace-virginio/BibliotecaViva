@@ -10,7 +10,7 @@ export const Route = createFileRoute("/roadmap")({
   head: () => ({
     meta: [
       { title: "Roadmap — Biblioteca Viva" },
-      { name: "description", content: "Timeline pública: MVP, v1, v2, v3, IA, app mobile, marketplace e digitalização de acervos." },
+      { name: "description", content: "O que já está no ar na Biblioteca Viva, o que estamos desenvolvendo e o que vem depois." },
     ],
   }),
   component: Roadmap,
@@ -19,18 +19,21 @@ export const Route = createFileRoute("/roadmap")({
 function Roadmap() {
   return (
     <>
-      <PageHero eyebrow="Roadmap público" title="Construindo em público" description="O que já lançamos, o que estamos construindo e o que vem por aí. Sugestões são bem-vindas no GitHub." />
+      <PageHero eyebrow="Roadmap público" title="Construindo em público" description="O que já está no ar, o que estamos desenvolvendo e o que vem por aí." />
       <Container className="max-w-3xl pb-16">
         <DrawTimeline
           items={ROADMAP.map((r) => {
-            const Icon = r.status === "lançado" ? CheckCircle2 : r.status === "em construção" ? Loader : Circle;
+            const Icon = r.status === "lançado" ? CheckCircle2 : r.status === "em desenvolvimento" ? Loader : Circle;
             return {
               key: r.version,
-              marker: <Icon className={cn("size-4", r.status === "em construção" && "animate-spin [animation-duration:3s]")} />,
+              marker: <Icon className={cn("size-4", r.status === "em desenvolvimento" && "animate-spin [animation-duration:3s]")} />,
               content: (
                 <Card className="p-5 md:p-6">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-primary">{r.version} · {r.period}</span>
+                    <span className="text-sm font-semibold text-primary">
+                      {r.version}
+                      {r.period ? ` · ${r.period}` : ""}
+                    </span>
                     <Badge tone={STATUS_TONE[r.status]}>{r.status}</Badge>
                   </div>
                   <h2 className="mt-2 text-lg font-semibold">{r.title}</h2>

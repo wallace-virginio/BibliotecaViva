@@ -61,20 +61,25 @@ export const OPEN_SOURCE_STATS = [
 export type RoadmapItem = {
   version: string;
   title: string;
-  period: string;
-  status: "lançado" | "em construção" | "planejado";
+  /** só quando houver data combinada; o roadmap não promete prazo que ainda não existe */
+  period?: string;
+  status: "lançado" | "em desenvolvimento" | "planejado";
   items: string[];
 };
 
+/**
+ * Mantenha em dia com o que está no ar: o que está desligado em lib/features.ts é "em desenvolvimento"
+ * (e mostra a tela do Ori); quando a flag for ligada, mova o item para "lançado".
+ */
 export const ROADMAP: RoadmapItem[] = [
-  { version: "MVP", title: "Mapa aberto de bibliotecas", period: "2025 · T4", status: "lançado", items: ["Mapa mundial com dados do OpenStreetMap", "Busca global de livros", "Perfis públicos de bibliotecas"] },
-  { version: "v1", title: "Contas e comunidade", period: "2026 · T1", status: "lançado", items: ["Login e dashboard do leitor", "Favoritos, reservas e histórico", "Avaliações de bibliotecas e eventos"] },
-  { version: "v2", title: "Providers e SDKs", period: "2026 · T3", status: "em construção", items: ["SDKs .NET, Java, Node.js, Python, Go e Rust", "Marketplace de conectores", "Dashboard administrativo da biblioteca"] },
-  { version: "IA", title: "Biblioteca Viva AI", period: "2026 · T4", status: "em construção", items: ["Assistente em linguagem natural", "Recomendações personalizadas", "Resumo de acervos"] },
-  { version: "v3", title: "Experiência no espaço físico", period: "2027 · T1", status: "planejado", items: ["Indoor maps", "Reserva automática de salas", "Carteira digital da biblioteca"] },
-  { version: "Mobile", title: "Aplicativo iOS e Android", period: "2027 · T2", status: "planejado", items: ["Check-in por QR Code", "Notificações de eventos", "Modo offline"] },
-  { version: "Marketplace", title: "Ecossistema aberto", period: "2027 · T3", status: "planejado", items: ["Plugins de terceiros", "Integração com escolas e museus", "Programa de parceiros"] },
-  { version: "Acervos", title: "Digitalização de acervos", period: "2027 · T4", status: "planejado", items: ["OCR de documentos antigos", "Digitalização colaborativa", "Preservação de obras raras"] },
+  { version: "Mapa", title: "Bibliotecas reais perto de você", status: "lançado", items: ["Bibliotecas reais do OpenStreetMap, no Brasil e no mundo", "Horário de hoje, distância e fotos de cada biblioteca", "Localização só quando você pede, sem rastrear"] },
+  { version: "Acervo", title: "Livros para buscar e ler de graça", status: "lançado", items: ["Busca em mais de 40 milhões de títulos, com filtro por gênero e por autor", "Sugestões enquanto você digita e ranking da semana", "Clássicos em domínio público para ler no próprio app"] },
+  { version: "Conta", title: "Sua estante e suas conquistas", status: "lançado", items: ["Cadastro com e-mail e senha", "Minha estante, favoritos e progresso de leitura salvos na conta", "Conquistas de leitura e configurações que ficam salvas", "Baixar meus dados e excluir a conta, como manda a LGPD"] },
+  { version: "Ori", title: "Ori, o assistente com IA", status: "lançado", items: ["Indicações de livros e bibliotecas conversando normalmente", "Histórico das suas conversas, criptografado"] },
+  { version: "App", title: "Aplicativo para celular", status: "em desenvolvimento", items: ["Versão Android em testes", "Publicação na Play Store", "Versão para iPhone"] },
+  { version: "Bibliotecas", title: "Agenda, salas e reservas", status: "em desenvolvimento", items: ["Agenda real de eventos, clubes de leitura e oficinas", "Salas de estudo e computadores livres", "Reserva de livros na biblioteca", "Painel para a biblioteca cuidar de tudo isso"] },
+  { version: "Comunidade", title: "Leitores conversando", status: "em desenvolvimento", items: ["Avaliações de bibliotecas e livros", "Perfis e clubes de leitores"] },
+  { version: "Depois", title: "O que vem em seguida", status: "planejado", items: ["Entrar com Google e Apple", "Notificações de eventos e reservas", "Versões em inglês e espanhol", "Check-in por QR Code e modo offline", "Integração com os sistemas das bibliotecas (Providers e SDKs)", "Digitalização colaborativa de acervos"] },
 ];
 
 /* ---------------- Funcionalidades futuras ---------------- */
@@ -91,7 +96,7 @@ export const FUTURE_FEATURES = [
   { icon: Landmark, title: "Integração com museus", description: "Coleções, exposições e acervos conectados." },
 ];
 
-export const STATUS_TONE = { lançado: "success", "em construção": "primary", planejado: "neutral" } as const;
+export const STATUS_TONE = { lançado: "success", "em desenvolvimento": "primary", planejado: "neutral" } as const;
 
 /* ---------------- Desenvolvedores ---------------- */
 export const SDKS = [
