@@ -13,6 +13,8 @@ const OL_RULES: { re: RegExp; ttl: number }[] = [
   { re: /^search\.json$/, ttl: 6 * 60 * 60 }, // 6 h
   { re: /^subjects\/[a-z0-9_]{1,60}\.json$/, ttl: 24 * 60 * 60 },
   { re: /^works\/OL\d{1,12}W(\.json|\/ratings\.json)$/, ttl: 24 * 60 * 60 },
+  // edições de uma obra (para achar a edição brasileira em "Onde comprar"): muda pouco e a origem é lenta
+  { re: /^works\/OL\d{1,12}W\/editions\.json$/, ttl: 7 * 24 * 60 * 60 },
   { re: /^authors\/OL\d{1,12}A\.json$/, ttl: 7 * 24 * 60 * 60 },
 ];
 

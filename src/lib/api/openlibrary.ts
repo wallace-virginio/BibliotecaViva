@@ -194,6 +194,53 @@ export async function getBook(requestedId: string, signal?: AbortSignal): Promis
   };
 }
 
+/* ---------------- Edição brasileira (para "Onde comprar") ---------------- */
+
+export type Edition = { title: string; isbn?: string; publisher?: string; year?: number };
+
+type EditionDoc = {
+  title?: string;
+  isbn_13?: string[];
+  isbn_10?: string[];
+  publishers?: string[];
+  languages?: { key: string }[];
+  publish_date?: string;
+};
+
+/** ISBN registrado no Brasil: 978-85… / 978-65… (ISBN-13) ou 85… / 65… (ISBN-10). */
+const BR_ISBN13 = /^978(85|65)\d{8}$/;
+const BR_ISBN10 = /^(85|65)\d{7}[\dX]$/;
+
+/**
+ * Escolhe a edição brasileira mais útil para buscar nas lojas: ISBN do Brasil, de preferência em
+ * português e a mais recente. Edições "em português" com ISBN de fora (gráficas sob demanda dos EUA)
+ * não contam — nas lojas brasileiras elas raramente aparecem.
+ */
+export function pickBrazilianEdition(entries: EditionDoc[]): Edition | undefined {
+  const year = (e: EditionDoc) => Number(e.publish_date?.match(/\d{4}/)?.[0] ?? 0);
+  const candidates = entries
+    .map((e) => {
+      const isbn = e.isbn_13?.find((i) => BR_ISBN13.test(i)) ?? e.isbn_10?.find((i) => BR_ISBN10.test(i));
+      return isbn && e.title ? { e, isbn } : undefined;
+    })
+    .filter((x): x is { e: EditionDoc; isbn: string } => !!x)
+    .sort((a, b) => {
+      const pt = (x: EditionDoc) => ((x.languages ?? []).some((l) => l.key === "/languages/por") ? 1 : 0);
+      return pt(b.e) - pt(a.e) || year(b.e) - year(a.e);
+    });
+  const best = candidates[0];
+  if (!best) return undefined;
+  return { title: best.e.title!, isbn: best.isbn, publisher: best.e.publishers?.[0], year: year(best.e) || undefined };
+}
+
+/** Edição brasileira de uma obra (ou undefined se a Open Library não conhecer nenhuma). Pode demorar alguns segundos. */
+export async function getBrazilianEdition(workId: string, signal?: AbortSignal): Promise<Edition | undefined> {
+  const res = await olFetch(`works/${workId}/editions.json?limit=200`, signal);
+  if (!res.ok) return undefined;
+  const data = (await res.json()) as { entries?: EditionDoc[] };
+  return pickBrazilianEdition(data.entries ?? []);
+}
+
 /** Busca rápida para autocompletar. */
 export type AuthorSuggestion = { key: string; name: string; topWork?: string };
 

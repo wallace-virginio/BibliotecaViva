@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, BookmarkCheck, BookmarkPlus, BookOpenText, ExternalLink, Heart, Loader2, MapPin, Navigation, RefreshCw, Share2, Star } from "lucide-react";
+import { ArrowLeft, BookmarkCheck, BookmarkPlus, BookOpenText, ExternalLink, Heart, Loader2, MapPin, Navigation, RefreshCw, Share2, ShoppingBag, Star } from "lucide-react";
+import { OndeComprar } from "@/components/OndeComprar";
 import { useEffect, useState } from "react";
 import { BookCard, BookCover, BookGridSkeleton } from "@/components/common";
 import { Badge, Button, buttonClass, Card, Container, EmptyState } from "@/components/ui";
@@ -35,6 +36,7 @@ function BookPage() {
   const reserved = useStore((s) => s.reservations.some((r) => r.id === `livro-${id}`));
   const [toast, setToast] = useState<string>();
   const [reserveInfo, setReserveInfo] = useState(false);
+  const [buyOpen, setBuyOpen] = useState(false);
   useAskLocationOnce();
   const nearby = useNearbyLibraries();
   const { ask } = useLocation();
@@ -154,6 +156,9 @@ function BookPage() {
                 {reserved ? <BookmarkCheck className="size-4" /> : <BookmarkPlus className="size-4" />}
                 {!FEATURES.reservas ? "Reservar" : reserved ? "Reservado" : best ? "Reservar" : "Indisponível"}
               </Button>
+              <Button variant={buyOpen ? "soft" : "outline"} aria-expanded={buyOpen} aria-controls="painel-comprar" onClick={() => setBuyOpen((v) => !v)}>
+                <ShoppingBag className="size-4" /> Onde comprar
+              </Button>
               <ShelfMenuButton book={{ id: book.id, title: book.title, author: book.authors[0], coverId: book.coverId }} />
               <Button variant="outline" onClick={() => actions.toggleFavorite(saved)}>
                 <Heart className={cn("size-4", fav && "fill-danger text-danger")} /> {fav ? "Favoritado" : "Favoritar"}
@@ -171,6 +176,11 @@ function BookPage() {
               </a>
             </div>
             {reserveInfo && <EmDesenvolvimentoNota feature="reservas" className="mt-3 max-w-xl animate-fade-up" />}
+            {buyOpen && (
+              <div id="painel-comprar">
+                <OndeComprar workId={book.id} title={book.title} author={book.authors[0]} className="mt-3 max-w-2xl animate-fade-up" />
+              </div>
+            )}
 
             <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_340px]">
               <div>

@@ -8,6 +8,7 @@ describe("proxy da Open Library: só caminhos que o app usa", () => {
     expect(resolveOpenLibrary("subjects/science_fiction.json", "?limit=12")).not.toBeNull();
     expect(resolveOpenLibrary("works/OL1003040W.json", "")).not.toBeNull();
     expect(resolveOpenLibrary("works/OL1003040W/ratings.json", "")).not.toBeNull();
+    expect(resolveOpenLibrary("works/OL1003040W/editions.json", "?limit=100")).not.toBeNull();
     expect(resolveOpenLibrary("authors/OL7422948A.json", "")).not.toBeNull();  });
 
   it("recusa qualquer outra coisa (não é um proxy aberto)", () => {
