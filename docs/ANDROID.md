@@ -48,7 +48,7 @@ A Play Store só aceita o AAB assinado com a **sua chave de envio**. Ela é a id
 1. Conta de desenvolvedor no [Play Console](https://play.google.com/console) (taxa única de US$ 25).
 2. Criar app → nome "Biblioteca Viva", idioma pt-BR, app gratuito.
 3. **Testes → Teste interno** → criar versão → enviar o `app-release.aab` → adicionar e-mails dos testadores.
-4. Preencher o mínimo pedido: política de privacidade (`https://biblioteca-viva.biblioteca-viva.workers.dev/privacidade`),
+4. Preencher o mínimo pedido: política de privacidade (`https://<seu-site>/privacidade`),
    classificação de conteúdo, público-alvo, "segurança dos dados" (localização aproximada usada só no aparelho;
    e-mail e nome da conta no Supabase).
 5. A cada nova versão: aumentar `versionCode` (e `versionName`) em `android/app/build.gradle`.

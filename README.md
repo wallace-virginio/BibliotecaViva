@@ -27,7 +27,7 @@ Plataforma aberta e colaborativa de descoberta de conhecimento — **app mobile-
 
 ## Stack
 
-- Hospedagem: **Cloudflare Workers** (plano grátis) — no ar em https://biblioteca-viva.biblioteca-viva.workers.dev — [docs/DEPLOY.md](docs/DEPLOY.md)
+- Hospedagem: **Cloudflare Workers** (plano grátis) — [docs/DEPLOY.md](docs/DEPLOY.md)
 
 - **TanStack Start v1** (React 19 + Vite 8 + Tailwind CSS v4) — rotas em arquivo em `src/routes/`
   - A versão atual do TanStack Start exige Vite 8 (o Vite 7 não é mais suportado).

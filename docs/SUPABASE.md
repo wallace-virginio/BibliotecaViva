@@ -1,6 +1,6 @@
 # Configurando o Supabase (login e sincronização)
 
-Projeto: `iwacrxrgfxnvmjopzqwb` — https://supabase.com/dashboard/project/iwacrxrgfxnvmjopzqwb
+Projeto: o seu, em https://supabase.com/dashboard (troque `<id-do-projeto>` abaixo pelo ID dele).
 
 > **Segurança:** o app usa só a **publishable key** (`.env.local`). A **secret key** nunca vai para o código, para o app ou para o repositório. Se ela foi compartilhada em algum lugar, revogue-a e gere outra em *Project Settings → API Keys*.
 
@@ -9,7 +9,7 @@ Projeto: `iwacrxrgfxnvmjopzqwb` — https://supabase.com/dashboard/project/iwacr
 `.env.local` (já criado, fora do git):
 
 ```
-VITE_SUPABASE_URL=https://iwacrxrgfxnvmjopzqwb.supabase.co
+VITE_SUPABASE_URL=https://<id-do-projeto>.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
@@ -46,7 +46,7 @@ Depois rode também [`supabase/migrations/002_lgpd_seguranca.sql`](../supabase/m
   - `http://localhost:3000/redefinir-senha`
   - `http://192.168.15.7:3000/**` (teste no celular pela rede local)
   - `org.bibliotecaviva.app://login-callback` (app nativo iOS/Android)
-  - o site publicado na Cloudflare: `https://biblioteca-viva.biblioteca-viva.workers.dev/**` (veja [DEPLOY.md](DEPLOY.md))
+  - o site publicado na Cloudflare: `https://<seu-site>/**` (veja [DEPLOY.md](DEPLOY.md))
   - um domínio próprio, se tiver: `https://bibliotecaviva.org/**`
 
 ## 4. E-mail e senha
@@ -60,7 +60,7 @@ O servidor de e-mail padrão do Supabase envia poucas mensagens por hora. Para p
 1. Em https://console.cloud.google.com crie um projeto → *APIs & Services → OAuth consent screen* (tipo External, preencha nome e e-mail).
 2. *Credentials → Create credentials → OAuth client ID* → tipo **Web application**.
    - **Authorized JavaScript origins:** `http://localhost:3000`
-   - **Authorized redirect URIs:** `https://iwacrxrgfxnvmjopzqwb.supabase.co/auth/v1/callback`
+   - **Authorized redirect URIs:** `https://<id-do-projeto>.supabase.co/auth/v1/callback`
 3. Copie *Client ID* e *Client secret* para *Supabase → Authentication → Sign In / Providers → Google* e ative.
 
 ## 6. Apple
@@ -70,8 +70,8 @@ Exige conta **Apple Developer** (US$ 99/ano).
 1. https://developer.apple.com/account → *Identifiers*:
    - **App ID** `org.bibliotecaviva.app` com a capability *Sign in with Apple*.
    - **Services ID** (ex.: `org.bibliotecaviva.web`) com *Sign in with Apple* → *Configure*:
-     - Domains: `iwacrxrgfxnvmjopzqwb.supabase.co`
-     - Return URL: `https://iwacrxrgfxnvmjopzqwb.supabase.co/auth/v1/callback`
+     - Domains: `<id-do-projeto>.supabase.co`
+     - Return URL: `https://<id-do-projeto>.supabase.co/auth/v1/callback`
 2. *Keys* → crie uma chave com *Sign in with Apple* e baixe o `.p8`.
 3. *Supabase → Authentication → Sign In / Providers → Apple*: informe o Services ID, Team ID, Key ID e o conteúdo do `.p8` (o painel gera o client secret). Ative.
 

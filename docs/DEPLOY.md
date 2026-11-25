@@ -6,7 +6,7 @@ O site roda como um **Cloudflare Worker** (SSR do TanStack Start) e os arquivos 
 - arquivos estáticos (JS, CSS, imagens, ícones) ilimitados e sem custo;
 - HTTPS automático e CDN global (inclusive São Paulo).
 
-Endereço gerado: `https://biblioteca-viva.biblioteca-viva.workers.dev`. O subdomínio é escolhido no primeiro deploy e o domínio próprio pode ser ligado depois.
+Endereço gerado: `https://biblioteca-viva.<sua-conta>.workers.dev`. O subdomínio é escolhido no primeiro deploy e o domínio próprio pode ser ligado depois.
 
 Bundle atual: ~500 KB comprimidos (o limite do plano grátis é 3 MB).
 
@@ -47,8 +47,8 @@ Para atualizar o site depois, basta rodar `npm run deploy` de novo.
 
 **Supabase** (*Authentication → URL Configuration*):
 
-- **Site URL:** `https://biblioteca-viva.biblioteca-viva.workers.dev`
-- **Redirect URLs:** adicione `https://biblioteca-viva.biblioteca-viva.workers.dev/**` (mantenha as de `localhost` para desenvolver)
+- **Site URL:** `https://<seu-site>`
+- **Redirect URLs:** adicione `https://<seu-site>/**` (mantenha as de `localhost` para desenvolver)
 
 **Google OAuth** (se for ativar): em *Authorized JavaScript origins*, adicione o mesmo endereço `https://…workers.dev`.
 
