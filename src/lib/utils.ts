@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { activeTag } from "./locale";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -38,18 +39,19 @@ export function haversineKm(a: { lat: number; lon: number }, b: { lat: number; l
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
+// Formatadores seguem o idioma da tela (lib/locale.ts): "1,5 km" em português, "1.5 km" em inglês.
 export function formatDistance(km: number) {
   if (km < 1) return `${Math.round(km * 1000)} m`;
-  if (km < 100) return `${km.toFixed(1).replace(".", ",")} km`;
-  return `${Math.round(km).toLocaleString("pt-BR")} km`;
+  if (km < 100) return `${km.toLocaleString(activeTag(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
+  return `${Math.round(km).toLocaleString(activeTag())} km`;
 }
 
 export function formatNumber(n: number) {
-  return n.toLocaleString("pt-BR");
+  return n.toLocaleString(activeTag());
 }
 
 export function compactNumber(n: number) {
-  return new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+  return new Intl.NumberFormat(activeTag(), { notation: "compact", maximumFractionDigits: 1 }).format(n);
 }
 
 export function slugify(s: string) {
@@ -61,9 +63,14 @@ export function slugify(s: string) {
     .replace(/(^-|-$)/g, "");
 }
 
-export function greeting(date = new Date()) {
+/** Parte do dia, para a saudação no idioma da tela: t.greeting[greetingKey()]. */
+export function greetingKey(date = new Date()): "morning" | "afternoon" | "evening" {
   const h = date.getHours();
-  if (h < 12) return "Bom dia";
-  if (h < 18) return "Boa tarde";
-  return "Boa noite";
+  if (h < 12) return "morning";
+  if (h < 18) return "afternoon";
+  return "evening";
+}
+
+export function greeting(date = new Date()) {
+  return { morning: "Bom dia", afternoon: "Boa tarde", evening: "Boa noite" }[greetingKey(date)];
 }

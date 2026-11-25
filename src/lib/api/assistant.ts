@@ -9,13 +9,13 @@ import { canUseProxy } from "./http";
 
 export type { AssistantPlan, ChatTurn };
 
-export async function askAssistant(messages: ChatTurn[], city?: string): Promise<{ plan: AssistantPlan } | { error: "limite" | "indisponivel" }> {
+export async function askAssistant(messages: ChatTurn[], city?: string, lang: "pt" | "en" | "es" = "pt"): Promise<{ plan: AssistantPlan } | { error: "limite" | "indisponivel" }> {
   const url = canUseProxy() ? "/api/assistente" : `${PUBLIC_SITE_URL}/api/assistente`;
   try {
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, city }),
+      body: JSON.stringify({ messages, city, lang }),
       signal: AbortSignal.timeout(20_000),
     });
     if (res.status === 429) return { error: "limite" };

@@ -6,10 +6,10 @@ import { FEATURED_LIBRARIES } from "@/data/libraries";
 import { coverUrl, suggestAll, type AuthorSuggestion, type Book } from "@/lib/api/openlibrary";
 import { localAuthorSuggestions } from "@/components/SearchSuggest";
 import { useDebounce } from "@/lib/hooks";
+import { FEATURES } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
-const TOPICS = ["Arquitetura de Dados", "História do Brasil", "Programação", "Inteligência Artificial", "Machado de Assis"];
-const TYPES = ["Livros", "Eventos", "Bibliotecas", "Cursos", "Oficinas", "Clubes de leitura", "Espaços de estudo"];
 
 const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
@@ -22,6 +22,7 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
   const debounced = useDebounce(q, 180);
   const navigate = useNavigate();
   const box = useRef<HTMLDivElement>(null);
+  const t = useT();
 
   useEffect(() => {
     const t = debounced.trim();
@@ -63,14 +64,15 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
     const words = t.split(/\s+/);
     const match = (s: string) => words.every((w) => norm(s).includes(w));
     const libs = FEATURED_LIBRARIES.filter((l) => match(`${l.name} ${l.city} ${l.country} ${l.kind}`)).slice(0, 4);
-    const evs = EVENTS.filter((e) => match(`${e.title} ${e.category} ${e.description}`));
+    // agenda e salas ainda são de exemplo: ficam fora da busca enquanto estão em desenvolvimento
+    const evs = FEATURES.eventos ? EVENTS.filter((e) => match(`${e.title} ${e.category} ${e.description}`)) : [];
     return {
       libs,
       events: evs.filter((e) => !["Curso", "Oficina", "Clube de leitura"].includes(e.category)).slice(0, 3),
       courses: evs.filter((e) => e.category === "Curso").slice(0, 3),
       workshops: evs.filter((e) => e.category === "Oficina").slice(0, 3),
       clubs: evs.filter((e) => e.category === "Clube de leitura").slice(0, 3),
-      spaces: FEATURED_LIBRARIES.filter((l) => l.curations.includes("estudar") && match(`${l.name} ${l.city} estudo estudar silencio ${l.country}`)).slice(0, 3),
+      spaces: !FEATURES.salas ? [] : FEATURED_LIBRARIES.filter((l) => l.curations.includes("estudar") && match(`${l.name} ${l.city} estudo estudar silencio ${l.country}`)).slice(0, 3),
     };
   }, [q]);
 
@@ -103,12 +105,12 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
             setQ(e.target.value);
             setOpen(true);
           }}
-          placeholder="O que você deseja aprender hoje?"
+          placeholder={t.search.placeholder}
           className="h-16 min-w-0 flex-1 bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground md:h-[72px] md:text-lg"
-          aria-label="Busca global"
+          aria-label={t.search.label}
         />
         {loading && <Loader2 className="mr-2 size-5 animate-spin text-primary" />}
-        <button type="submit" className="mr-2 grid size-12 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover md:size-14" aria-label="Buscar">
+        <button type="submit" className="mr-2 grid size-12 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover md:size-14" aria-label={t.common.search}>
           <ArrowRight className="size-5" />
         </button>
       </form>
@@ -117,20 +119,20 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
         <div className="absolute inset-x-0 top-[calc(100%+10px)] z-50 max-h-[70vh] animate-fade-up overflow-y-auto rounded-3xl border bg-surface p-3 text-left shadow-elevated">
           {!hasQuery ? (
             <div className="p-3">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sugestões</p>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t.search.suggestions}</p>
               <div className="flex flex-wrap gap-2">
-                {TOPICS.map((t) => (
-                  <button key={t} onClick={() => setQ(t)} className="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition hover:border-primary hover:text-primary">
-                    <Search className="size-3.5 text-muted-foreground" /> {t}
+                {t.search.topics.map((topic) => (
+                  <button key={topic} onClick={() => setQ(topic)} className="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition hover:border-primary hover:text-primary">
+                    <Search className="size-3.5 text-muted-foreground" /> {topic}
                   </button>
                 ))}
               </div>
-              <p className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pesquisa simultaneamente em</p>
-              <p className="text-sm text-muted-foreground">{TYPES.join(" · ")}</p>
+              <p className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t.search.searchesIn}</p>
+              <p className="text-sm text-muted-foreground">{t.search.types.join(" · ")}</p>
             </div>
           ) : (
             <div className="space-y-1">
-              <Group title="Autores" icon={<PenLine className="size-4" />}>
+              <Group title={t.search.authors} icon={<PenLine className="size-4" />}>
                 {authors.map((a) => (
                   <Link
                     key={a.key}
@@ -145,13 +147,14 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{a.name}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        Autor{a.topWork ? ` · ${a.topWork}` : ""}
+                        {t.common.author}
+                        {a.topWork ? ` · ${a.topWork}` : ""}
                       </p>
                     </div>
                   </Link>
                 ))}
               </Group>
-              <Group title="Livros" icon={<BookOpen className="size-4" />} loading={loading && !books.length}>
+              <Group title={t.search.books} icon={<BookOpen className="size-4" />} loading={loading && !books.length}>
                 {books.map((b) => (
                   <Link key={b.id} to="/livro/$id" params={{ id: b.id }} onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-2xl px-3 py-2 hover:bg-surface-2">
                     <div className="h-12 w-8 shrink-0 overflow-hidden rounded bg-surface-3">
@@ -164,7 +167,7 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
                   </Link>
                 ))}
               </Group>
-              <Group title="Bibliotecas" icon={<LibraryIcon className="size-4" />}>
+              <Group title={t.search.libraries} icon={<LibraryIcon className="size-4" />}>
                 {local.libs.map((l) => (
                   <Row key={l.slug} to={`/biblioteca/${l.slug}`} title={l.name} sub={`${l.city}, ${l.country}`} onClick={() => setOpen(false)} />
                 ))}
@@ -185,7 +188,7 @@ export function GlobalSearch({ className, autoFocus }: { className?: string; aut
                 {local.spaces.map((l) => <Row key={l.slug} to="/salas" title={l.name} sub={`${l.rooms.available} salas livres`} onClick={() => setOpen(false)} />)}
               </Group>
               <button onClick={() => submit()} className="mt-1 flex w-full items-center justify-between rounded-2xl bg-surface-2 px-4 py-3 text-sm font-medium hover:bg-surface-3">
-                Ver todos os resultados para “{q}” <ArrowRight className="size-4" />
+                {t.search.seeAllFor(q)} <ArrowRight className="size-4" />
               </button>
             </div>
           )}

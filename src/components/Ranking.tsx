@@ -7,22 +7,24 @@ import { useAsync } from "@/lib/hooks";
 import { cn, compactNumber } from "@/lib/utils";
 import { useDragScroll } from "@/lib/motion";
 import { BookCard, BookCover } from "./common";
+import { useT } from "@/lib/i18n";
 
 /** Lista numerada compacta (sidebar): "Em alta esta semana". */
 export function TrendingSidebar({ className }: { className?: string }) {
   const { data, loading, error } = useAsync((s) => trending("weekly", 10, s), []);
+  const t = useT();
   return (
     <section className={cn("rounded-3xl border bg-surface p-5", className)} aria-labelledby="em-alta">
       <div className="mb-3 flex items-center justify-between">
         <h2 id="em-alta" className="flex items-center gap-2 text-lg">
-          <Flame className="size-4 text-deep" /> Em alta esta semana
+          <Flame className="size-4 text-deep" /> {t.ranking.trending}
         </h2>
-        <Link to="/ranking" className="text-xs font-medium text-primary">Ver ranking</Link>
+        <Link to="/ranking" className="text-xs font-medium text-primary">{t.ranking.seeRanking}</Link>
       </div>
       {loading ? (
         <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="skeleton h-14 rounded-xl" />)}</div>
       ) : error ? (
-        <p className="text-sm text-muted-foreground">Ranking indisponível agora.</p>
+        <p className="text-sm text-muted-foreground">{t.ranking.unavailable}</p>
       ) : (
         <ol className="space-y-1">
           {(data ?? []).map((b, i) => (
@@ -46,9 +48,10 @@ export function TrendingSidebar({ className }: { className?: string }) {
 /** Chips de temas populares com o tamanho do acervo de cada um. */
 export function PopularSubjects({ onPick, active, className }: { onPick: (slug: string) => void; active?: string; className?: string }) {
   const counts = useAsync(async (s) => Promise.all(POPULAR_SUBJECTS.map((t) => subjectCount(t.slug, s).catch(() => 0))), []);
+  const tr = useT();
   return (
     <section className={cn("rounded-3xl border bg-surface p-5", className)} aria-labelledby="temas">
-      <h2 id="temas" className="mb-3 text-lg">Temas populares</h2>
+      <h2 id="temas" className="mb-3 text-lg">{tr.ranking.popular}</h2>
       <div className="flex flex-wrap gap-2">
         {POPULAR_SUBJECTS.map((t, i) => (
           <button
@@ -57,7 +60,7 @@ export function PopularSubjects({ onPick, active, className }: { onPick: (slug: 
             aria-pressed={active === t.slug}
             className={cn("rounded-full border px-3 py-1.5 text-sm transition hover:border-primary", active === t.slug && "border-primary bg-primary-soft text-primary-soft-foreground")}
           >
-            {t.label}
+            {tr.subjects[t.slug]}
             {counts.data?.[i] ? <span className="ml-1.5 text-xs text-muted-foreground">{compactNumber(counts.data[i])}</span> : null}
           </button>
         ))}

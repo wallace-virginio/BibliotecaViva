@@ -1,6 +1,7 @@
 import L from "leaflet";
 import { useEffect, useRef } from "react";
 import type { Library } from "@/data/libraries";
+import { useT } from "@/lib/i18n";
 
 export type MapView = { lat: number; lon: number; zoom: number };
 
@@ -95,6 +96,7 @@ export default function LibraryMap({ libraries, activeSlug, user, view, onSelect
   }, [libraries, activeSlug]);
 
   // user marker
+  const here = useT().map.youAreHere;
   useEffect(() => {
     const m = map.current;
     if (!m) return;
@@ -104,10 +106,10 @@ export default function LibraryMap({ libraries, activeSlug, user, view, onSelect
         icon: L.divIcon({ className: "", html: '<div class="bv-user"></div>', iconSize: [20, 20], iconAnchor: [10, 10] }),
         zIndexOffset: 1000,
       })
-        .bindTooltip("Você está aqui", { className: "bv-tip", direction: "top", offset: [0, -10] })
+        .bindTooltip(here, { className: "bv-tip", direction: "top", offset: [0, -10] })
         .addTo(m);
     }
-  }, [user?.lat, user?.lon]);
+  }, [user?.lat, user?.lon, here]);
 
   return <div ref={el} className={className} />;
 }

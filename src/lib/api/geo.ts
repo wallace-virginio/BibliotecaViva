@@ -4,6 +4,7 @@
  *  - Nominatim / OpenStreetMap (busca e reverse)    https://nominatim.org
  */
 import { getState } from "../store";
+import { activeTag } from "../locale";
 
 export type GeoPoint = {
   lat: number;
@@ -40,7 +41,7 @@ export async function browserLocation(timeout = 8000): Promise<GeoPoint> {
 export type Place = { name: string; displayName: string; lat: number; lon: number; type: string };
 
 export async function geocode(q: string, signal?: AbortSignal): Promise<Place[]> {
-  const params = new URLSearchParams({ q, format: "jsonv2", limit: "5", "accept-language": "pt-BR" });
+  const params = new URLSearchParams({ q, format: "jsonv2", limit: "5", "accept-language": activeTag() });
   const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, { signal });
   if (!res.ok) return [];
   const json = (await res.json()) as { name: string; display_name: string; lat: string; lon: string; type: string }[];
@@ -59,7 +60,7 @@ export async function reverseGeocode(lat: number, lon: number, signal?: AbortSig
     lon: String(lon),
     format: "jsonv2",
     zoom: "10",
-    "accept-language": "pt-BR",
+    "accept-language": activeTag(),
   });
   const res = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`, { signal });
   if (!res.ok) return undefined;

@@ -6,6 +6,7 @@ import type { SavedBook } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { BookCover } from "./common";
 import { Card } from "./ui";
+import { useT } from "@/lib/i18n";
 
 export function DashHeader({ title, description, action }: { title: ReactNode; description?: ReactNode; action?: ReactNode }) {
   return (
@@ -79,9 +80,10 @@ export function BadgeGrid({ compact = false, badges = DEMO_BADGES }: { compact?:
 }
 
 export function FreeClassics() {
+  const t = useT();
   return (
     <div>
-      <p className="mb-4 text-sm text-muted-foreground">Você ainda não começou nenhuma leitura. Que tal um clássico gratuito?</p>
+      <p className="mb-4 text-sm text-muted-foreground">{t.estante.freeClassics}</p>
       <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-4 sm:px-0 lg:grid-cols-6">
         {FREE_CLASSICS.map((b) => (
           <Link key={b.id} to="/ler/$id" params={{ id: b.id }} className="group w-28 shrink-0 sm:w-auto">

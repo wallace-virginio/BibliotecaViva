@@ -20,6 +20,7 @@ type Element = {
 };
 
 import { overpassViaProxy, withOfflineJson } from "./http";
+import { activeTag } from "../locale";
 
 const ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
@@ -137,7 +138,7 @@ async function nominatimLibraries(lat: number, lon: number, radiusM: number, sig
     limit: "40",
     extratags: "1",
     addressdetails: "1",
-    "accept-language": "pt-BR",
+    "accept-language": activeTag(),
   });
   const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, { signal });
   if (!res.ok) throw new Error(`Nominatim ${res.status}`);

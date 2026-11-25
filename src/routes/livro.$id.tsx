@@ -18,6 +18,7 @@ import { formatDistance } from "@/lib/utils";
 import { useAsync } from "@/lib/hooks";
 import { actions, useStore } from "@/lib/store";
 import { cn, slugify } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/livro/$id")({
   head: () => ({
@@ -37,6 +38,7 @@ function BookPage() {
   const [toast, setToast] = useState<string>();
   const [reserveInfo, setReserveInfo] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
+  const t = useT();
   useAskLocationOnce();
   const nearby = useNearbyLibraries();
   const { ask } = useLocation();
@@ -70,12 +72,12 @@ function BookPage() {
         {error && !(error instanceof BookNotFoundError) ? (
           <EmptyState
             icon={<RefreshCw className="size-6" />}
-            title="Não deu para carregar este livro agora"
-            description="A Open Library, de onde vêm os dados, está lenta ou fora do ar. Tente de novo em alguns segundos."
-            action={<Button onClick={retry}><RefreshCw className="size-4" /> Tentar de novo</Button>}
+            title={t.book.loadErrorTitle}
+            description={t.book.loadErrorText}
+            action={<Button onClick={retry}><RefreshCw className="size-4" /> {t.common.tryAgain}</Button>}
           />
         ) : (
-          <EmptyState icon={<BookmarkPlus className="size-6" />} title="Livro não encontrado" description="Não encontramos este título na Open Library." />
+          <EmptyState icon={<BookmarkPlus className="size-6" />} title={t.book.notFoundTitle} description={t.book.notFoundText} />
         )}
       </Container>
     );
@@ -90,7 +92,7 @@ function BookPage() {
         {/* no app o "Voltar" fica no cabeçalho */}
         {!IS_APP && (
           <Link to="/acervo" className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="size-4" /> Acervo
+            <ArrowLeft className="size-4" /> {t.nav.acervo}
           </Link>
         )}
         <div className="grid gap-10 md:grid-cols-[300px_1fr] lg:gap-16">
@@ -108,12 +110,12 @@ function BookPage() {
                 ? book.authors.map((a, i) => (
                     <span key={a}>
                       {i > 0 && ", "}
-                      <Link to="/acervo" search={{ autor: a }} className="underline-offset-4 hover:text-primary hover:underline" title={`Mais livros de ${a}`}>
+                      <Link to="/acervo" search={{ autor: a }} className="underline-offset-4 hover:text-primary hover:underline" title={t.book.moreBy(a)}>
                         {a}
                       </Link>
                     </span>
                   ))
-                : "Autor desconhecido"}
+                : t.common.unknownAuthor}
               {book.year ? ` · ${book.year}` : ""}
             </p>
             {book.rating?.average && (
@@ -122,17 +124,17 @@ function BookPage() {
                   {[1, 2, 3, 4, 5].map((i) => <Star key={i} className={cn("size-4", i <= Math.round(book.rating!.average!) && "fill-current")} />)}
                 </div>
                 <span className="font-medium">{book.rating.average.toFixed(1)}</span>
-                <span className="text-muted-foreground">({book.rating.count} avaliações na Open Library)</span>
+                <span className="text-muted-foreground">{t.book.ratings(book.rating.count ?? 0)}</span>
               </div>
             )}
 
             <div className="mt-7 flex flex-wrap gap-2">
               {readable.data && (
                 <Link to="/ler/$id" params={{ id: book.id }} className={buttonClass("primary", "md")}>
-                  <BookOpenText className="size-4" /> {progress ? `Continuar lendo · ${progress.percent}%` : "Ler agora · grátis"}
+                  <BookOpenText className="size-4" /> {progress ? t.book.continueReading(progress.percent) : t.book.readFree}
                 </Link>
               )}
-              {readable.loading && <span className="inline-flex h-11 items-center gap-2 px-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Procurando edição digital…</span>}
+              {readable.loading && <span className="inline-flex h-11 items-center gap-2 px-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> {t.book.lookingDigital}</span>}
               <Button
                 disabled={FEATURES.reservas && !best && !reserved}
                 variant={reserved ? "soft" : readable.data ? "outline" : "primary"}
@@ -144,32 +146,32 @@ function BookPage() {
                   }
                   if (reserved) {
                     actions.cancelReservation(`livro-${id}`);
-                    setToast("Reserva cancelada.");
+                    setToast(t.book.reservationCanceled);
                     return;
                   }
-                  actions.reserve({ id: `livro-${id}`, kind: "livro", title: book.title, subtitle: best?.library.name, when: "Retirar em até 3 dias", bookId: book.id, author: book.authors[0], coverId: book.coverId });
-                  setToast(`Reservado em ${best?.library.name}. Veja em Minhas reservas.`);
+                  actions.reserve({ id: `livro-${id}`, kind: "livro", title: book.title, subtitle: best?.library.name, when: t.book.pickupWithin, bookId: book.id, author: book.authors[0], coverId: book.coverId });
+                  setToast(t.book.reservedAt(best?.library.name));
                   haptic("success");
                   confetti();
                 }}
               >
                 {reserved ? <BookmarkCheck className="size-4" /> : <BookmarkPlus className="size-4" />}
-                {!FEATURES.reservas ? "Reservar" : reserved ? "Reservado" : best ? "Reservar" : "Indisponível"}
+                {!FEATURES.reservas ? t.book.reserve : reserved ? t.book.reserved : best ? t.book.reserve : t.book.unavailable}
               </Button>
               <Button variant={buyOpen ? "soft" : "outline"} aria-expanded={buyOpen} aria-controls="painel-comprar" onClick={() => setBuyOpen((v) => !v)}>
-                <ShoppingBag className="size-4" /> Onde comprar
+                <ShoppingBag className="size-4" /> {t.book.whereToBuy}
               </Button>
               <ShelfMenuButton book={{ id: book.id, title: book.title, author: book.authors[0], coverId: book.coverId }} />
               <Button variant="outline" onClick={() => actions.toggleFavorite(saved)}>
-                <Heart className={cn("size-4", fav && "fill-danger text-danger")} /> {fav ? "Favoritado" : "Favoritar"}
+                <Heart className={cn("size-4", fav && "fill-danger text-danger")} /> {fav ? t.book.favorited : t.book.favorite}
               </Button>
               <Button
                 variant="outline"
                 onClick={async () => {
-                  if ((await shareLink(book.title, `/livro/${book.id}`)) === "copied") setToast("Link copiado!");
+                  if ((await shareLink(book.title, `/livro/${book.id}`)) === "copied") setToast(t.common.linkCopied);
                 }}
               >
-                <Share2 className="size-4" /> Compartilhar
+                <Share2 className="size-4" /> {t.common.share}
               </Button>
               <a href={`https://openlibrary.org/works/${id}`} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center gap-1.5 px-3 text-sm text-muted-foreground hover:text-primary">
                 Open Library <ExternalLink className="size-3.5" />
@@ -184,9 +186,9 @@ function BookPage() {
 
             <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_340px]">
               <div>
-                <h2 className="text-lg font-semibold">Resumo</h2>
+                <h2 className="text-lg font-semibold">{t.book.summary}</h2>
                 <p className="mt-3 leading-relaxed whitespace-pre-line text-muted-foreground">
-                  {book.description || book.firstSentence || "Este título ainda não tem resumo. Que tal contribuir com um na Open Library?"}
+                  {book.description || book.firstSentence || t.book.noSummary}
                 </p>
                 {book.subjects.length > 3 && (
                   <div className="mt-6 flex flex-wrap gap-1.5">
@@ -197,16 +199,16 @@ function BookPage() {
 
               <Card className="h-fit p-5">
                 <h2 className="flex items-center gap-2 font-sans text-base font-semibold">
-                  <MapPin className="size-4 text-primary" /> {FEATURES.reservas ? "Onde retirar" : "Bibliotecas perto de você"}
+                  <MapPin className="size-4 text-primary" /> {FEATURES.reservas ? t.book.wherePickup : t.book.librariesNear}
                 </h2>
                 {nearby.location ? (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Mais perto de <strong className="text-foreground">{nearby.location.label}</strong> ·{" "}
-                    <button onClick={ask} className="text-primary underline-offset-2 hover:underline">trocar</button>
+                    {t.book.closestTo} <strong className="text-foreground">{nearby.location.label}</strong> ·{" "}
+                    <button onClick={ask} className="text-primary underline-offset-2 hover:underline">{t.book.change}</button>
                   </p>
                 ) : (
                   <button onClick={ask} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary-soft px-3 py-2.5 text-sm font-medium text-primary-soft-foreground">
-                    <Navigation className="size-4" /> Ver a biblioteca mais perto de mim
+                    <Navigation className="size-4" /> {t.book.showNearest}
                   </button>
                 )}
                 {nearby.loading && nearby.location && <div className="skeleton mt-4 h-24 rounded-2xl" />}
@@ -216,11 +218,11 @@ function BookPage() {
                       <div className="flex items-start justify-between gap-2">
                         <Link to="/biblioteca/$slug" params={{ slug: h.library.slug }} className="text-sm font-medium hover:text-primary">{h.library.name}</Link>
                         {/* disponibilidade, andar e estante só com a biblioteca conectada (hoje seriam inventados) */}
-                        {FEATURES.reservas && <Badge tone={h.available ? "success" : "warning"}>{h.available ? `${h.available}/${h.copies} livres` : "Emprestado"}</Badge>}
+                        {FEATURES.reservas && <Badge tone={h.available ? "success" : "warning"}>{h.available ? t.book.free(h.available, h.copies) : t.acervo.lent}</Badge>}
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {h.km !== undefined ? <strong className="text-foreground">{formatDistance(h.km)}</strong> : h.library.city}
-                        {i === 0 && h.km !== undefined && <span className="ml-1.5 font-medium text-primary">· Mais perto</span>}
+                        {i === 0 && h.km !== undefined && <span className="ml-1.5 font-medium text-primary">{t.book.closest}</span>}
                       </p>
                       {FEATURES.reservas && (
                         <div className="mt-2.5 flex flex-wrap gap-1.5 text-[11px]">
@@ -233,7 +235,7 @@ function BookPage() {
                   ))}
                 </ul>
                 {FEATURES.reservas ? (
-                  <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground"><Navigation className="size-3" /> Localização física via Providers das bibliotecas.</p>
+                  <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground"><Navigation className="size-3" /> {t.book.physicalVia}</p>
                 ) : (
                   <EmDesenvolvimentoNota feature="reservas" className="mt-4" />
                 )}
@@ -243,7 +245,7 @@ function BookPage() {
         </div>
 
         <section className="mt-20">
-          <h2 className="text-2xl font-semibold tracking-tight">Livros relacionados</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">{t.book.related}</h2>
           <div className="mt-6">
             {related.loading ? (
               <BookGridSkeleton count={6} />
@@ -252,7 +254,7 @@ function BookPage() {
                 {(related.data ?? []).filter((b) => b.id !== id).slice(0, 12).map((b) => <BookCard key={b.id} book={b} />)}
               </div>
             )}
-            {!related.loading && !related.data?.length && <p className="text-sm text-muted-foreground">Sem recomendações para este título ainda.</p>}
+            {!related.loading && !related.data?.length && <p className="text-sm text-muted-foreground">{t.book.noRelated}</p>}
           </div>
         </section>
       </Container>

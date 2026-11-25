@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MapExplorer } from "@/components/map/MapExplorer";
+import { usePageTitle, useT } from "@/lib/i18n";
 
 type Search = { foco?: string };
 
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/mapa")({
 /** Tela principal do app: mapa em tela cheia, como um app de mapas nativo. */
 function MapaPage() {
   const { foco } = Route.useSearch();
+  usePageTitle(useT().map.metaTitle);
   return (
     <div className="h-[calc(100dvh-4rem-env(safe-area-inset-bottom))] lg:h-[100dvh] lg:pt-20">
       <MapExplorer fullscreen initialFocus={foco} className="lg:border-t" />

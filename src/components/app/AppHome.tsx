@@ -11,7 +11,8 @@ import { openStatus } from "@/lib/hours";
 import { useMounted } from "@/lib/hooks";
 import { useAskLocationOnce, useLocation, useNearbyLibraries } from "@/lib/location";
 import { useStore } from "@/lib/store";
-import { cn, formatDistance, greeting, haversineKm } from "@/lib/utils";
+import { cn, formatDistance, greetingKey, haversineKm } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 /**
  * Tela Início do app (celular). Responde, nesta ordem, ao que a pessoa quer ao abrir o app:
@@ -22,14 +23,15 @@ export function AppHome() {
   const mounted = useMounted();
   const auth = useAuth();
   const name = auth.displayName?.split(" ")[0];
+  const t = useT();
 
   return (
     <div className="px-4 pt-[calc(3.5rem+env(safe-area-inset-top)+1.25rem)] pb-8">
       <h1 className="font-serif text-[1.75rem] leading-tight font-semibold">
-        {mounted ? greeting() : "Olá"}
+        {mounted ? t.greeting[greetingKey()] : t.greeting.hello}
         {name ? `, ${name}` : ""}.
       </h1>
-      <p className="mt-1 text-[15px] text-muted-foreground">O que você quer fazer hoje?</p>
+      <p className="mt-1 text-[15px] text-muted-foreground">{t.appHome.question}</p>
 
       <div className="mt-4">
         <GlobalSearch className="!mx-0 !max-w-none" />
@@ -45,13 +47,15 @@ export function AppHome() {
 }
 
 function QuickActions() {
+  const t = useT();
+  const q = t.appHome.quick;
   const items = [
-    { to: "/mapa", label: "Mapa", icon: Map },
-    { to: "/acervo", label: "Ler grátis", icon: BookOpenText, search: { ebook: true } },
+    { to: "/mapa", label: q.mapa, icon: Map },
+    { to: "/acervo", label: q.free, icon: BookOpenText, search: { ebook: true } },
     // enquanto eventos e salas estão em desenvolvimento, os atalhos levam ao que já funciona
-    ...(FEATURES.eventos ? [{ to: "/eventos", label: "Eventos", icon: CalendarDays } as const] : [{ to: "/ranking", label: "Ranking", icon: Trophy } as const]),
-    ...(FEATURES.salas ? [{ to: "/salas", label: "Salas", icon: Monitor } as const] : [{ to: "/app/livros", label: "Estante", icon: LibraryBig } as const]),
-  ] as const;
+    ...(FEATURES.eventos ? [{ to: "/eventos", label: q.eventos, icon: CalendarDays } as const] : [{ to: "/ranking", label: q.ranking, icon: Trophy } as const]),
+    ...(FEATURES.salas ? [{ to: "/salas", label: q.salas, icon: Monitor } as const] : [{ to: "/app/livros", label: q.estante, icon: LibraryBig } as const]),
+  ];
   return (
     <ul className="mt-5 grid grid-cols-4 gap-2">
       {items.map(({ to, label, icon: Icon, ...rest }) => (
@@ -70,13 +74,14 @@ function QuickActions() {
   );
 }
 
-function SectionTitle({ title, to, label = "Ver tudo" }: { title: string; to?: string; label?: string }) {
+function SectionTitle({ title, to, label }: { title: string; to?: string; label?: string }) {
+  const t = useT();
   return (
     <div className="mt-8 mb-3 flex items-end justify-between">
       <h2 className="font-serif text-xl font-semibold">{title}</h2>
       {to && (
         <Link to={to} className="flex h-11 items-center gap-0.5 text-sm font-medium text-primary">
-          {label} <ChevronRight className="size-4" />
+          {label ?? t.common.seeAll} <ChevronRight className="size-4" />
         </Link>
       )}
     </div>
@@ -87,17 +92,18 @@ function SectionTitle({ title, to, label = "Ver tudo" }: { title: string; to?: s
 function NearestOpen() {
   const { location, ask } = useLocation();
   const nearby = useNearbyLibraries();
+  const t = useT();
   if (!location)
     return (
       <>
-        <SectionTitle title="Perto de você" />
+        <SectionTitle title={t.appHome.nearYou} />
         <button onClick={ask} className="flex w-full items-center gap-3 rounded-xl border border-dashed bg-surface p-4 text-left active:bg-surface-2">
           <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
             <Navigation className="size-5" />
           </span>
           <span>
-            <span className="block font-medium">Mostrar a biblioteca mais perto</span>
-            <span className="block text-sm text-muted-foreground">Usamos sua localização só nesta sessão.</span>
+            <span className="block font-medium">{t.appHome.showNearest}</span>
+            <span className="block text-sm text-muted-foreground">{t.appHome.sessionOnly}</span>
           </span>
         </button>
       </>
@@ -109,12 +115,12 @@ function NearestOpen() {
 
   return (
     <>
-      <SectionTitle title={openNow.length ? "Abertas agora perto de você" : "Perto de você"} to="/mapa" label="Mapa" />
+      <SectionTitle title={openNow.length ? t.appHome.openNear : t.appHome.nearYou} to="/mapa" label={t.appHome.quick.mapa} />
       {nearby.loading && !nearby.data ? (
         <div className="skeleton h-28 rounded-xl" />
       ) : picks.length === 0 ? (
         <p className="rounded-xl border bg-surface p-4 text-sm text-muted-foreground">
-          Não achamos bibliotecas num raio de 8 km de {location.label}. <Link to="/mapa" className="font-medium text-primary">Abrir o mapa</Link>
+          {t.appHome.noneNear(location.label)} <Link to="/mapa" className="font-medium text-primary">{t.appHome.openMap}</Link>
         </p>
       ) : (
         <ul className="space-y-2.5">
@@ -130,7 +136,7 @@ function NearestOpen() {
                   {status.known && (
                     <p className={cn("mt-0.5 flex items-center gap-1 text-sm font-medium", status.open ? "text-success" : "text-muted-foreground")}>
                       <Clock className="size-3.5" />
-                      {status.open ? `Aberta até ${status.until}` : status.opensAt ? `Abre às ${status.opensAt}` : "Fechada hoje"}
+                      {status.open ? t.appHome.openUntil(status.until ?? "") : status.opensAt ? t.appHome.opensAt(status.opensAt) : t.appHome.closedToday}
                     </p>
                   )}
                 </div>
@@ -151,10 +157,11 @@ function ContinueReading() {
     ? reading.map((r) => ({ id: r.id, title: r.title, author: r.author ?? "", coverId: r.coverId, percent: r.percent as number | undefined }))
     : FREE_CLASSICS.map((b) => ({ id: b.id, title: b.title, author: b.author, coverId: b.coverId, percent: undefined }));
   const resuming = mounted && reading.length > 0;
+  const t = useT();
 
   return (
     <>
-      <SectionTitle title={resuming ? "Continue lendo" : "Para ler agora, de graça"} to="/app/livros" label="Estante" />
+      <SectionTitle title={resuming ? t.appHome.continueReading : t.appHome.freeNow} to="/app/livros" label={t.appHome.quick.estante} />
       <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-none">
         {items.map((b) => (
           <Link key={b.id} to="/ler/$id" params={{ id: b.id }} className="w-[6.5rem] shrink-0 active:opacity-80">

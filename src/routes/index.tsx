@@ -19,6 +19,8 @@ import { useAsync } from "@/lib/hooks";
 import { useLocation } from "@/lib/location";
 import { actions, useStore } from "@/lib/store";
 import { cn, formatDistance, haversineKm } from "@/lib/utils";
+import { useI18n, usePageTitle, useT } from "@/lib/i18n";
+import { localeTag } from "@/lib/locale";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -40,6 +42,7 @@ export const Route = createFileRoute("/")({
  * Letterboxd (pôsteres numerados), Spotify (estantes de conteúdo) e jornais como The Guardian (fios, serifa, hierarquia).
  */
 function Home() {
+  usePageTitle(useT().home.metaTitle);
   return (
     <>
       <Masthead />
@@ -59,8 +62,9 @@ const FREE_BOOKS = FREE_CLASSICS.map((b) => ({ id: b.id, title: b.title, authors
 /* ============ ABERTURA: frase humana + busca + fotos reais ============ */
 function Masthead() {
   const { location, ask } = useLocation();
+  const { t, locale } = useI18n();
   const [today, setToday] = useState("");
-  useEffect(() => setToday(new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })), []);
+  useEffect(() => setToday(new Date().toLocaleDateString(localeTag(locale), { weekday: "long", day: "numeric", month: "long" })), [locale]);
   const photos = ["real-gabinete-portugues-de-leitura", "biblioteca-mario-de-andrade", "state-library-victoria"].map((s) => getFeaturedLibrary(s)!);
 
   return (
@@ -69,17 +73,19 @@ function Masthead() {
         <div className="rule-thin mb-6 flex flex-wrap items-center justify-between gap-2 pt-3 text-xs text-muted-foreground">
           <span className="first-letter:uppercase">{today || " "}</span>
           <button onClick={ask} className="flex items-center gap-1 hover:text-foreground">
-            <MapPin className="size-3.5" /> {location ? `Edição de ${location.label}` : "Escolha sua cidade"}
+            <MapPin className="size-3.5" /> {location ? t.home.edition(location.label) : t.home.chooseCity}
           </button>
         </div>
 
         <div className="grid items-start gap-10 lg:grid-cols-[1.15fr_1fr] lg:gap-14">
           <div className="animate-fade-up">
             <h1 className="text-[2.35rem] leading-[1.08] text-balance sm:text-5xl md:text-[3.6rem]">
-              Descubra o que a biblioteca do seu bairro tem para você.
+              {t.home.title}
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-pretty text-muted-foreground">
-              Livros para emprestar, salas para estudar, clubes de leitura e oficinas — <span className="highlight text-foreground">quase tudo de graça</span>. A gente mostra onde fica, quando abre e o que está disponível agora.
+              {t.home.leadA}
+              <span className="highlight text-foreground">{t.home.leadHighlight}</span>
+              {t.home.leadB}
             </p>
 
             <div className="mt-7">
@@ -87,9 +93,9 @@ function Masthead() {
             </div>
 
             <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
-              <li><Link to="/mapa" className="font-medium text-primary underline-offset-4 hover:underline">Abertas agora perto de mim</Link></li>
-              <li><Link to="/acervo" search={{ ebook: true }} className="font-medium text-primary underline-offset-4 hover:underline">Livros para ler de graça</Link></li>
-              <li><Link to="/eventos" className="font-medium text-primary underline-offset-4 hover:underline">O que tem esta semana</Link></li>
+              <li><Link to="/mapa" className="font-medium text-primary underline-offset-4 hover:underline">{t.home.linkOpen}</Link></li>
+              <li><Link to="/acervo" search={{ ebook: true }} className="font-medium text-primary underline-offset-4 hover:underline">{t.home.linkFree}</Link></li>
+              {FEATURES.eventos && <li><Link to="/eventos" className="font-medium text-primary underline-offset-4 hover:underline">{t.home.linkWeek}</Link></li>}
             </ul>
           </div>
 
@@ -115,13 +121,14 @@ function Masthead() {
 /* ============ PERTO DE VOCÊ (mapa) ============ */
 function NearYou() {
   const { location } = useLocation();
+  const t = useT();
   return (
     <section id="mapa" className="scroll-mt-24 pb-16">
       <Container>
         <SectionHeader
-          eyebrow="No mapa"
-          title={location ? `Bibliotecas perto de ${location.label}` : "Bibliotecas perto de você"}
-          description="Horário de hoje, salas e computadores livres, e o que está acontecendo lá dentro. Toque em uma para ver."
+          eyebrow={t.home.mapEyebrow}
+          title={location ? t.home.mapTitleNear(location.label) : t.home.mapTitle}
+          description={t.home.mapDesc}
         />
         <MapExplorer />
       </Container>
@@ -132,19 +139,20 @@ function NearYou() {
 /* ============ NA ESTANTE: o que estão lendo (pôsteres numerados) ============ */
 function OnTheShelf() {
   const hot = useAsync((sig) => trending("weekly", 10, sig), []);
+  const t = useT();
   return (
     <section className="bg-surface-2/60 py-14 md:py-16">
       <Container className="space-y-12">
         <div>
           <SectionHeader
-            eyebrow="Na estante"
-            title="O que mais procuraram esta semana"
-            action={<Link to="/ranking" className="flex items-center gap-1 text-sm font-medium text-primary">Ver o ranking <ArrowRight className="size-4" /></Link>}
+            eyebrow={t.home.shelfEyebrow}
+            title={t.home.shelfTitle}
+            action={<Link to="/ranking" className="flex items-center gap-1 text-sm font-medium text-primary">{t.home.seeRanking} <ArrowRight className="size-4" /></Link>}
           />
           <ShelfRow title="" books={hot.data} loading={hot.loading} badge={(_, i) => <RankNumber n={i + 1} />} />
         </div>
         <div>
-          <SectionHeader eyebrow="Domínio público" title="Para ler agora, sem pagar nada" description="Clássicos completos que você abre aqui mesmo, no celular ou no computador." />
+          <SectionHeader eyebrow={t.home.freeEyebrow} title={t.home.freeTitle} description={t.home.freeDesc} />
           <ShelfRow title="" books={FREE_BOOKS} />
         </div>
       </Container>
@@ -156,6 +164,7 @@ function OnTheShelf() {
 function PickOfTheWeek() {
   const pick = FREE_CLASSICS[0]; // Dom Casmurro
   const progress = useStore((s) => s.reading[pick.id]);
+  const t = useT();
   return (
     <section className="py-16 md:py-24">
       <Container>
@@ -166,23 +175,18 @@ function PickOfTheWeek() {
             </Link>
           </Reveal>
           <div className="max-w-2xl">
-            <p className="kicker">Escolha da semana</p>
+            <p className="kicker">{t.home.pickEyebrow}</p>
             <h2 className="mt-2 text-4xl md:text-5xl">{pick.title}</h2>
             <p className="mt-1 text-muted-foreground">{pick.author} · 1899</p>
             <div className="mt-6 space-y-4 font-serif text-lg leading-relaxed md:text-xl">
-              <p>
-                Um narrador em quem não dá para confiar, um Rio de Janeiro que ainda era capital do Império e uma pergunta que atravessa gerações de
-                leitores: Capitu traiu Bentinho?
-              </p>
-              <p className="text-muted-foreground">
-                Dá para ler inteirinho aqui, de graça. Se preferir o livro na mão, a gente mostra qual biblioteca perto de você tem um exemplar livre.
-              </p>
+              <p>{t.home.pickP1}</p>
+              <p className="text-muted-foreground">{t.home.pickP2}</p>
             </div>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/ler/$id" params={{ id: pick.id }} className={buttonClass("primary", "lg")}>
-                <BookOpenText className="size-5" /> {progress ? `Continuar (${progress.percent}%)` : "Ler agora"}
+                <BookOpenText className="size-5" /> {progress ? t.home.continueAt(progress.percent) : t.home.readNow}
               </Link>
-              <Link to="/livro/$id" params={{ id: pick.id }} className={buttonClass("outline", "lg")}>Onde retirar</Link>
+              <Link to="/livro/$id" params={{ id: pick.id }} className={buttonClass("outline", "lg")}>{t.home.seeBook}</Link>
             </div>
           </div>
         </div>
@@ -193,13 +197,15 @@ function PickOfTheWeek() {
 
 /* ============ MANIFESTO (texto que se preenche com a rolagem) ============ */
 function Manifesto() {
+  const t = useT();
   return (
     <section className="bg-foreground py-20 text-background md:py-28">
       <Container className="max-w-4xl">
-        <p className="mb-6 text-xs font-bold tracking-[0.12em] uppercase opacity-70">Por que fazemos isso</p>
+        <p className="mb-6 text-xs font-bold tracking-[0.12em] uppercase opacity-70">{t.home.manifestoEyebrow}</p>
         <TextFill
           className="font-serif text-3xl leading-snug md:text-5xl md:leading-tight"
-          text="Toda cidade tem uma biblioteca. Lá dentro há livros, cursos, salas silenciosas, computadores e gente que gosta de ensinar — quase sempre de graça. A gente quer que ninguém mais passe na frente dela sem saber disso."
+          key={t.home.manifesto}
+          text={t.home.manifesto}
         />
       </Container>
     </section>
@@ -274,18 +280,19 @@ function Agenda() {
 
 /* ============ COLEÇÕES (fotos reais) + parede de capas ============ */
 function Collections() {
+  const t = useT();
   return (
     <section className="bg-surface-2/60 py-16 md:py-24">
       <Container>
         <SectionHeader
-          eyebrow="Para descobrir"
-          title="Bibliotecas que valem a visita"
-          action={<Link to="/descobrir" className="flex items-center gap-1 text-sm font-medium text-primary">Todas as coleções <ArrowRight className="size-4" /></Link>}
+          eyebrow={t.home.collectionsEyebrow}
+          title={t.home.collectionsTitle}
+          action={<Link to="/descobrir" className="flex items-center gap-1 text-sm font-medium text-primary">{t.home.allCollections} <ArrowRight className="size-4" /></Link>}
         />
         <CurationGrid />
       </Container>
       <div className="mt-16">
-        <Container><p className="kicker mb-4">Do acervo</p></Container>
+        <Container><p className="kicker mb-4">{t.home.fromCollection}</p></Container>
         <CoverWall rows={2} className="h-[22rem]" />
       </div>
     </section>
@@ -294,20 +301,18 @@ function Collections() {
 
 /* ============ PARA BIBLIOTECAS (bloco honesto, sem marketing) ============ */
 function ForLibraries() {
+  const t = useT();
   return (
     <section className="py-16 md:py-20">
       <Container>
         <div className="rule-top grid gap-6 pt-6 md:grid-cols-[1fr_auto] md:items-end">
           <div className="max-w-2xl">
-            <p className="kicker">Para quem trabalha em biblioteca</p>
-            <h2 className="mt-2 text-3xl md:text-4xl">Sua biblioteca merece ser encontrada.</h2>
-            <p className="mt-3 text-muted-foreground">
-              Cadastre de graça: horários, agenda, salas e acervo num só lugar, e um perfil público para a vizinhança achar vocês. Bibliotecas públicas,
-              comunitárias e escolares nunca pagam.
-            </p>
+            <p className="kicker">{t.home.libsEyebrow}</p>
+            <h2 className="mt-2 text-3xl md:text-4xl">{t.home.libsTitle}</h2>
+            <p className="mt-3 text-muted-foreground">{t.home.libsText}</p>
           </div>
           <Link to="/entrar" search={{ modo: "biblioteca" }} className={buttonClass("secondary", "lg")}>
-            Cadastrar minha biblioteca
+            {t.home.libsCta}
           </Link>
         </div>
       </Container>

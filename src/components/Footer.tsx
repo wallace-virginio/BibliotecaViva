@@ -3,54 +3,57 @@ import { Mail } from "lucide-react";
 import { GithubIcon as Github, InstagramIcon as Instagram, LinkedinIcon as Linkedin, YoutubeIcon as Youtube } from "./BrandIcons";
 import { Logo } from "./Logo";
 import { Container } from "./ui";
+import { useT } from "@/lib/i18n";
+import type { Messages } from "@/i18n/pt";
 
-const COLS = [
+const cols = (t: Messages) => [
   {
-    title: "Plataforma",
+    title: t.footer.plataforma,
     links: [
-      { to: "/descobrir", label: "Descobrir" },
-      { to: "/acervo", label: "Acervo" },
-      { to: "/eventos", label: "Eventos" },
-      { to: "/salas", label: "Salas de estudo" },
-      { to: "/assistente", label: "Peça uma indicação" },
+      { to: "/descobrir", label: t.nav.descobrir },
+      { to: "/acervo", label: t.nav.acervo },
+      { to: "/eventos", label: t.nav.eventos },
+      { to: "/salas", label: t.footer.salasDeEstudo },
+      { to: "/assistente", label: t.nav.assistente },
     ],
   },
   {
-    title: "Comunidade",
+    title: t.footer.comunidade,
     links: [
-      { to: "/comunidade", label: "Clubes e grupos" },
-      { to: "/roadmap", label: "Roadmap" },
-      { to: "/sobre", label: "Manifesto" },
+      { to: "/comunidade", label: t.footer.clubes },
+      { to: "/roadmap", label: t.nav.roadmap },
+      { to: "/sobre", label: t.footer.manifesto },
     ],
   },
   {
-    title: "Para bibliotecas",
+    title: t.footer.paraBibliotecas,
     links: [
-      { to: "/entrar", label: "Cadastrar biblioteca" },
-      { to: "/app/admin", label: "Painel da biblioteca" },
+      { to: "/entrar", label: t.footer.cadastrar },
+      { to: "/app/admin", label: t.footer.painel },
     ],
   },
-] as const;
+];
 
 export function Footer() {
+  const t = useT();
   return (
     <footer className="border-t bg-surface-2/60">
       <Container className="grid gap-12 py-16 md:grid-cols-[1.4fr_repeat(3,1fr)]">
         <div className="flex flex-col gap-4">
           <Logo />
-          <p className="max-w-xs text-sm text-muted-foreground">Transformando bibliotecas em centros de conhecimento.</p>
+          <p className="max-w-xs text-sm text-muted-foreground">{t.footer.tagline}</p>
           <a href="mailto:ola@bibliotecaviva.org" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
             <Mail className="size-4" /> ola@bibliotecaviva.org
           </a>
           <div className="flex gap-2">
             {[Github, Linkedin, Instagram, Youtube].map((Icon, i) => (
-              <a key={i} href="#" aria-label="Rede social" className="grid size-9 place-items-center rounded-full border bg-surface text-muted-foreground transition hover:border-primary hover:text-primary">
+              <a key={i} href="#" aria-label={t.footer.social} className="grid size-9 place-items-center rounded-full border bg-surface text-muted-foreground transition hover:border-primary hover:text-primary">
                 <Icon className="size-4" />
               </a>
             ))}
           </div>
         </div>
-        {COLS.map((c) => (
+        {cols(t).map((c) => (
           <div key={c.title}>
             <h4 className="mb-4 text-sm font-semibold">{c.title}</h4>
             <ul className="space-y-2.5">
@@ -67,12 +70,12 @@ export function Footer() {
       </Container>
       <Container className="flex flex-col items-start justify-between gap-3 border-t py-6 text-xs text-muted-foreground sm:flex-row sm:items-center">
         <p>
-          © {new Date().getFullYear()} Biblioteca Viva · Projeto open source sob licença MIT ·{" "}
-          <Link to="/privacidade" className="hover:text-foreground">Privacidade</Link> ·{" "}
-          <Link to="/termos" className="hover:text-foreground">Termos de Uso</Link>
+          © {new Date().getFullYear()} Biblioteca Viva · {t.footer.rights} ·{" "}
+          <Link to="/privacidade" className="hover:text-foreground">{t.footer.privacidade}</Link> ·{" "}
+          <Link to="/termos" className="hover:text-foreground">{t.footer.termos}</Link>
         </p>
         <p>
-          Dados: OpenStreetMap, Open Library, Wikimedia Commons, Nominatim.
+          {t.footer.dados}
         </p>
       </Container>
     </footer>

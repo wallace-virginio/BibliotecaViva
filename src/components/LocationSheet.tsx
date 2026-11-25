@@ -6,6 +6,7 @@ import { useDebounce } from "@/lib/hooks";
 import { useLocation } from "@/lib/location";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui";
+import { useT } from "@/lib/i18n";
 
 const QUICK = [
   { label: "São Paulo", lat: -23.5505, lon: -46.6333 },
@@ -20,6 +21,7 @@ const QUICK = [
 export function LocationSheet() {
   const { sheetOpen, closeSheet, setLocation, locateWithGps, location } = useLocation();
   useBackHandler(sheetOpen, closeSheet); // botão voltar do Android fecha a folha
+  const t = useT();
   const [q, setQ] = useState("");
   const [places, setPlaces] = useState<Place[]>([]);
   const [gps, setGps] = useState<"idle" | "loading" | "denied">("idle");
@@ -54,10 +56,10 @@ export function LocationSheet() {
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 id="loc-title" className="text-xl">Onde você está?</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Mostramos bibliotecas, livros disponíveis e eventos perto de você — não do outro lado do mundo.</p>
+            <h2 id="loc-title" className="text-xl">{t.location.title}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t.location.text}</p>
           </div>
-          <button onClick={closeSheet} className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-2" aria-label="Fechar">
+          <button onClick={closeSheet} className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-2" aria-label={t.common.close}>
             <X className="size-4" />
           </button>
         </div>
@@ -76,20 +78,20 @@ export function LocationSheet() {
             }
           }}
         >
-          {gps === "loading" ? <Loader2 className="size-4 animate-spin" /> : <LocateFixed className="size-4" />} Usar minha localização
+          {gps === "loading" ? <Loader2 className="size-4 animate-spin" /> : <LocateFixed className="size-4" />} {t.location.useGps}
         </Button>
-        {gps === "denied" && <p className="mt-2 text-xs text-danger">Não foi possível obter a localização. Escolha a cidade abaixo.</p>}
+        {gps === "denied" && <p className="mt-2 text-xs text-danger">{t.location.gpsFailed}</p>}
 
-        <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" /> ou escolha a cidade <span className="h-px flex-1 bg-border" /></div>
+        <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" /> {t.location.orCity} <span className="h-px flex-1 bg-border" /></div>
 
         <div className="relative">
           <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar cidade ou bairro…"
+            placeholder={t.location.searchPlaceholder}
             className="h-11 w-full rounded-xl border bg-surface pr-4 pl-10 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15"
-            aria-label="Buscar cidade"
+            aria-label={t.location.searchLabel}
           />
         </div>
         {places.length > 0 ? (
@@ -116,7 +118,7 @@ export function LocationSheet() {
             ))}
           </div>
         )}
-        <p className="mt-5 text-[11px] leading-snug text-muted-foreground">Fica salvo só neste aparelho, enquanto o app estiver aberto. Você pode trocar a qualquer momento no topo da tela.</p>
+        <p className="mt-5 text-[11px] leading-snug text-muted-foreground">{t.location.note}</p>
       </div>
     </div>
   );
@@ -125,14 +127,15 @@ export function LocationSheet() {
 /** Chip com a cidade atual, no topo do app. */
 export function LocationChip({ className }: { className?: string }) {
   const { location, ask, ready } = useLocation();
+  const t = useT();
   return (
     <button
       onClick={ask}
       className={cn("flex h-9 max-w-[11rem] items-center gap-1.5 rounded-full border bg-surface px-3 text-sm transition hover:border-primary", className)}
-      aria-label={location ? `Localização: ${location.label}. Trocar` : "Definir localização"}
+      aria-label={location ? t.location.chip(location.label) : t.location.set}
     >
       <MapPin className="size-4 shrink-0 text-primary" />
-      <span className="truncate">{ready && location ? location.label : "Onde você está?"}</span>
+      <span className="truncate">{ready && location ? location.label : t.location.title}</span>
     </button>
   );
 }

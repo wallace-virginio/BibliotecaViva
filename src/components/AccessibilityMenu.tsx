@@ -1,6 +1,8 @@
 import { Accessibility, Check, RotateCcw, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { LanguageChoices } from "./LanguageMenu";
 
 export type A11yPrefs = { text: 0 | 1 | 2; contrast: boolean; links: boolean; motion: boolean; spacing: boolean };
 const DEFAULTS: A11yPrefs = { text: 0, contrast: false, links: false, motion: false, spacing: false };
@@ -22,6 +24,7 @@ function apply(p: A11yPrefs) {
 export function AccessibilityMenu({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const [prefs, setPrefs] = useState<A11yPrefs>(DEFAULTS);
+  const t = useT();
   const panel = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
 
@@ -67,10 +70,10 @@ export function AccessibilityMenu({ className }: { className?: string }) {
   };
 
   const toggles: { key: Exclude<keyof A11yPrefs, "text">; label: string; desc: string }[] = [
-    { key: "contrast", label: "Alto contraste", desc: "Cores mais fortes e bordas visíveis" },
-    { key: "links", label: "Sublinhar links", desc: "Facilita encontrar o que é clicável" },
-    { key: "spacing", label: "Espaçamento ampliado", desc: "Mais espaço entre letras e linhas (ajuda na dislexia)" },
-    { key: "motion", label: "Reduzir animações", desc: "Desliga movimentos e transições" },
+    { key: "contrast", label: t.a11y.contrast, desc: t.a11y.contrastDesc },
+    { key: "links", label: t.a11y.links, desc: t.a11y.linksDesc },
+    { key: "spacing", label: t.a11y.spacing, desc: t.a11y.spacingDesc },
+    { key: "motion", label: t.a11y.motion, desc: t.a11y.motionDesc },
   ];
 
   return (
@@ -80,7 +83,7 @@ export function AccessibilityMenu({ className }: { className?: string }) {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls="menu-acessibilidade"
-        aria-label="Acessibilidade"
+        aria-label={t.a11y.title}
         className="grid size-11 lg:size-10 place-items-center rounded-full text-muted-foreground transition hover:bg-surface-2 hover:text-foreground"
       >
         <Accessibility className="size-[19px]" />
@@ -90,18 +93,18 @@ export function AccessibilityMenu({ className }: { className?: string }) {
           ref={panel}
           id="menu-acessibilidade"
           role="dialog"
-          aria-label="Opções de acessibilidade"
+          aria-label={t.a11y.dialog}
           className="fixed inset-x-3 top-[calc(env(safe-area-inset-top)+4rem)] z-[1100] animate-fade-in rounded-3xl border bg-surface p-5 shadow-elevated sm:absolute sm:inset-x-auto sm:top-12 sm:right-0 sm:w-80"
         >
           <div className="flex items-center justify-between">
-            <p className="font-serif text-lg font-semibold">Acessibilidade</p>
-            <button onClick={() => setOpen(false)} className="grid size-8 place-items-center rounded-full hover:bg-surface-2" aria-label="Fechar">
+            <p className="font-serif text-lg font-semibold">{t.a11y.title}</p>
+            <button onClick={() => setOpen(false)} className="grid size-8 place-items-center rounded-full hover:bg-surface-2" aria-label={t.common.close}>
               <X className="size-4" />
             </button>
           </div>
 
-          <p className="mt-4 mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Tamanho do texto</p>
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Tamanho do texto">
+          <p className="mt-4 mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">{t.a11y.textSize}</p>
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t.a11y.textSize}>
             {(["A", "A+", "A++"] as const).map((l, i) => (
               <button
                 key={l}
@@ -137,10 +140,14 @@ export function AccessibilityMenu({ className }: { className?: string }) {
             ))}
           </ul>
 
-          <div className="mt-4 flex items-center justify-between border-t pt-4 text-xs text-muted-foreground">
-            <span>Idioma: Português (em breve: English e Español)</span>
+          <p className="mt-4 mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            {t.lang.title}
+          </p>
+          <LanguageChoices />
+
+          <div className="mt-4 flex items-center justify-end border-t pt-4 text-xs text-muted-foreground">
             <button onClick={() => update(DEFAULTS)} className="flex items-center gap-1 font-medium text-primary">
-              <RotateCcw className="size-3.5" /> Restaurar
+              <RotateCcw className="size-3.5" /> {t.a11y.reset}
             </button>
           </div>
         </div>

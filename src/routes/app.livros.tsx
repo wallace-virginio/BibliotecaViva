@@ -6,7 +6,8 @@ import { ProgressRing } from "@/components/motion";
 import { BookCard, BookCover } from "@/components/common";
 import { DashHeader, FreeClassics, SavedBookRow } from "@/components/dashboard";
 import { buttonClass, Card, EmptyState, Tabs } from "@/components/ui";
-import { SHELF_LABEL, useStore, type ShelfStatus } from "@/lib/store";
+import { useStore, type ShelfStatus } from "@/lib/store";
+import { usePageTitle, useT } from "@/lib/i18n";
 
 type Aba = "estante" | "lendo" | "reservados" | "historico" | "listas";
 
@@ -28,19 +29,22 @@ function MeusLivros() {
   const [shelfFilter, setShelfFilter] = useState<ShelfStatus | "todos">("todos");
   const flip = useFlip<HTMLDivElement>([shelfFilter, shelf.length]);
   const favorites = useStore((s) => s.favorites);
+  const t = useT();
+  const e = t.estante;
+  usePageTitle(e.metaTitle);
 
   return (
     <>
-      <DashHeader title="Minha biblioteca" description={`${reading.length} em leitura · ${reserved.length} reservados`} />
+      <DashHeader title={e.title} description={e.summary(reading.length, reserved.length)} />
       <Tabs
         value={aba}
         onChange={(v) => navigate({ search: { aba: v === "estante" ? undefined : v }, replace: true })}
         options={[
-          { value: "estante", label: `Minha estante${shelf.length ? ` · ${shelf.length}` : ""}` },
-          { value: "lendo", label: "Lendo" },
-          { value: "reservados", label: `Reservados${reserved.length ? ` · ${reserved.length}` : ""}` },
-          { value: "historico", label: "Histórico" },
-          { value: "listas", label: "Listas" },
+          { value: "estante", label: e.tabShelf(shelf.length) },
+          { value: "lendo", label: e.tabReading },
+          { value: "reservados", label: e.tabReserved(reserved.length) },
+          { value: "historico", label: e.tabHistory },
+          { value: "listas", label: e.tabLists },
         ]}
       />
       <div className="mt-6">
@@ -55,7 +59,7 @@ function MeusLivros() {
                     aria-pressed={shelfFilter === f}
                     className={`h-9 rounded-full border px-3.5 text-sm ${shelfFilter === f ? "border-primary bg-primary text-primary-foreground" : "bg-surface"}`}
                   >
-                    {f === "todos" ? "Todos" : SHELF_LABEL[f]} ({f === "todos" ? shelf.length : shelf.filter((x) => x.status === f).length})
+                    {f === "todos" ? e.all : t.shelf.labels[f]} ({f === "todos" ? shelf.length : shelf.filter((x) => x.status === f).length})
                   </button>
                 ))}
               </div>
@@ -66,7 +70,7 @@ function MeusLivros() {
                     <div key={x.id} data-flip={x.id}>
                     <BookCard
                                             book={{ id: x.id, title: x.title, authors: x.author ? [x.author] : [], coverId: x.coverId, subjects: [] }}
-                      badge={<span className="rounded-full bg-surface/90 px-2 py-0.5 text-[10px] font-semibold shadow-soft">{SHELF_LABEL[x.status]}</span>}
+                      badge={<span className="rounded-full bg-surface/90 px-2 py-0.5 text-[10px] font-semibold shadow-soft">{t.shelf.labels[x.status]}</span>}
                     />
                     </div>
                   ))}
@@ -75,9 +79,9 @@ function MeusLivros() {
           ) : (
             <EmptyState
               icon={<Bookmark className="size-6" />}
-              title="Sua estante está vazia"
-              description="Toque no marcador sobre a capa de qualquer livro para guardar o que você quer ler, está lendo ou já leu."
-              action={<Link to="/ranking" className={buttonClass("primary", "sm")}>Ver o ranking</Link>}
+              title={e.emptyTitle}
+              description={e.emptyText}
+              action={<Link to="/ranking" className={buttonClass("primary", "sm")}>{e.seeRanking}</Link>}
             />
           ))}
 
@@ -91,7 +95,7 @@ function MeusLivros() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold">{b.title}</p>
                       <p className="truncate text-sm text-muted-foreground">{b.author}</p>
-                      <p className="mt-1.5 text-xs text-muted-foreground">Continuar leitura</p>
+                      <p className="mt-1.5 text-xs text-muted-foreground">{e.continue}</p>
                     </div>
                     <ProgressRing value={b.percent} size={52} />
                   </Card>
@@ -116,8 +120,8 @@ function MeusLivros() {
                       <Link to="/ler/$id" params={{ id: bookId }} className="block truncate font-semibold hover:text-primary">{r.title}</Link>
                       <p className="truncate text-sm text-muted-foreground">{r.subtitle} · {r.when}</p>
                       <div className="mt-3 flex gap-2">
-                        <Link to="/ler/$id" params={{ id: bookId }} className={buttonClass("primary", "sm")}><BookOpenText className="size-4" /> Ler</Link>
-                        <Link to="/livro/$id" params={{ id: bookId }} className={buttonClass("outline", "sm")}>Detalhes</Link>
+                        <Link to="/ler/$id" params={{ id: bookId }} className={buttonClass("primary", "sm")}><BookOpenText className="size-4" /> {e.read}</Link>
+                        <Link to="/livro/$id" params={{ id: bookId }} className={buttonClass("outline", "sm")}>{e.details}</Link>
                       </div>
                     </div>
                   </Card>
@@ -125,26 +129,26 @@ function MeusLivros() {
               })}
             </div>
           ) : (
-            <EmptyState icon={<Ticket className="size-6" />} title="Nenhum livro reservado" description="Reserve pela página do livro. Os que tiverem edição gratuita você já pode ler aqui." action={<Link to="/acervo" className={buttonClass("primary", "sm")}>Explorar acervo</Link>} />
+            <EmptyState icon={<Ticket className="size-6" />} title={e.noReservedTitle} description={e.noReservedText} action={<Link to="/acervo" className={buttonClass("primary", "sm")}>{e.explore}</Link>} />
           ))}
 
         {aba === "historico" && (
-          <SavedBookRow books={history} empty={<EmptyState icon={<BookOpen className="size-6" />} title="Nenhum livro visto ainda" action={<Link to="/acervo" className={buttonClass("primary", "sm")}>Explorar acervo</Link>} />} />
+          <SavedBookRow books={history} empty={<EmptyState icon={<BookOpen className="size-6" />} title={e.noHistory} action={<Link to="/acervo" className={buttonClass("primary", "sm")}>{e.explore}</Link>} />} />
         )}
 
         {aba === "listas" && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Card className="p-5">
-              <p className="font-semibold">❤️ Favoritos</p>
-              <p className="text-sm text-muted-foreground">{favorites.length} livros</p>
-              <Link to="/app/favoritos" className="mt-4 inline-block text-sm font-medium text-primary">Abrir lista →</Link>
+              <p className="font-semibold">{e.favorites}</p>
+              <p className="text-sm text-muted-foreground">{e.books(favorites.length)}</p>
+              <Link to="/app/favoritos" className="mt-4 inline-block text-sm font-medium text-primary">{e.openList}</Link>
             </Card>
             <Card className="p-5">
-              <p className="font-semibold">📌 Quero ler</p>
-              <p className="text-sm text-muted-foreground">0 livros · privada</p>
+              <p className="font-semibold">{e.wantToRead}</p>
+              <p className="text-sm text-muted-foreground">{e.privateList(0)}</p>
             </Card>
             <button className="flex min-h-28 items-center justify-center gap-2 rounded-3xl border border-dashed text-sm font-medium text-muted-foreground hover:border-primary hover:text-primary">
-              <Plus className="size-4" /> Nova lista
+              <Plus className="size-4" /> {e.newList}
             </button>
           </div>
         )}

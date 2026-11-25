@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { aiText, APP_ORIGINS, ASSISTANT_MODEL, parsePlan, sanitizeHistory, systemPrompt } from "@/lib/server/assistant";
+import { aiText, APP_ORIGINS, ASSISTANT_MODEL, parsePlan, replyLang, sanitizeHistory, systemPrompt } from "@/lib/server/assistant";
 
 /**
  * POST /api/assistente  { messages: [{role, content}], city?: string }  →  { plan } | { error }
@@ -49,7 +49,7 @@ export const Route = createFileRoute("/api/assistente")({
         const ip = request.headers.get("CF-Connecting-IP") ?? "local";
         if (await overLimit(ip)) return json(request, { error: "limite" }, 429);
 
-        let body: { messages?: unknown; city?: unknown };
+        let body: { messages?: unknown; city?: unknown; lang?: unknown };
         try {
           body = await request.json();
         } catch {
@@ -58,10 +58,11 @@ export const Route = createFileRoute("/api/assistente")({
         const messages = sanitizeHistory(body.messages);
         if (!messages.length || messages[messages.length - 1].role !== "user") return json(request, { error: "pedido inválido" }, 400);
         const city = typeof body.city === "string" ? body.city.slice(0, 80) : undefined;
+        const lang = replyLang(body.lang);
 
         try {
           const out = await ai.run(ASSISTANT_MODEL, {
-            messages: [{ role: "system", content: systemPrompt(city) }, ...messages],
+            messages: [{ role: "system", content: systemPrompt(city, lang) }, ...messages],
             max_tokens: 350,
             temperature: 0.4,
             // sem "pensar em voz alta": o modelo gastava a cota em raciocínio e devolvia a resposta vazia

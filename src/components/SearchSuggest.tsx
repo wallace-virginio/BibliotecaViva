@@ -6,6 +6,7 @@ import { authorMatches, coverUrl, suggestAll, type AuthorSuggestion, type Book }
 import { useDebounce } from "@/lib/hooks";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 /**
  * Fecha a lista ao sair do campo — MENOS quando a pessoa só trocou de janela/aba/monitor: aí a página inteira
@@ -129,12 +130,13 @@ function Highlight({ text, q }: { text: string; q: string }) {
 }
 
 export function SuggestList({ box, id, className }: { box: ReturnType<typeof useSuggestBox>; id: string; className?: string }) {
+  const t = useT();
   if (!box.visible) return null;
   return (
     <ul
       id={id}
       role="listbox"
-      aria-label="Sugestões"
+      aria-label={t.search.suggestLabel}
       className={cn("absolute inset-x-0 top-full z-50 mt-2 flex max-h-[60vh] flex-col overflow-y-auto rounded-xl border bg-surface p-1.5 text-left shadow-elevated", className)}
       // mousedown (e não click): escolhe antes de o campo perder o foco e a lista fechar
       onMouseDown={(e) => e.preventDefault()}
@@ -142,7 +144,7 @@ export function SuggestList({ box, id, className }: { box: ReturnType<typeof use
       {box.loading && (
         // aviso discreto no fim da lista: as sugestões que já chegaram continuam clicáveis
         <li className="order-last flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
-          <Loader2 className="size-3.5 animate-spin" /> Buscando mais no acervo…
+          <Loader2 className="size-3.5 animate-spin" /> {t.search.searchingMore}
         </li>
       )}
       {box.items.map((s, i) => (
@@ -182,7 +184,8 @@ export function SuggestList({ box, id, className }: { box: ReturnType<typeof use
                   <Highlight text={s.author.name} q={box.q} />
                 </span>
                 <span className="block truncate text-xs text-muted-foreground">
-                  Autor{s.author.topWork ? ` · ${s.author.topWork}` : ""}
+                  {t.common.author}
+                  {s.author.topWork ? ` · ${s.author.topWork}` : ""}
                 </span>
               </span>
             </>

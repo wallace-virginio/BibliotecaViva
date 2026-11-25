@@ -20,6 +20,7 @@ function useOnline() {
 import { Logo } from "@/components/Logo";
 import { LocationChip } from "@/components/LocationSheet";
 import { AccessibilityMenu } from "@/components/AccessibilityMenu";
+import { useT } from "@/lib/i18n";
 
 /** Telas que são abas: mostram a marca. As demais mostram "voltar", como num app nativo. */
 const TAB_ROOTS = ["/", "/acervo", "/app/livros", "/app/perfil", "/app"];
@@ -32,6 +33,7 @@ export function AppHeader() {
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const online = useOnline();
+  const t = useT();
   if (pathname === "/mapa") return null; // o mapa ocupa a tela toda e tem a própria busca
   const isRoot = TAB_ROOTS.includes(pathname);
 
@@ -44,9 +46,9 @@ export function AppHeader() {
           <button
             onClick={() => router.history.back()}
             className="-ml-1 flex h-11 items-center gap-0.5 rounded-full pr-3 pl-1.5 text-[15px] font-medium text-foreground active:bg-surface-2"
-            aria-label="Voltar"
+            aria-label={t.common.back}
           >
-            <ChevronLeft className="size-6" /> Voltar
+            <ChevronLeft className="size-6" /> {t.common.back}
           </button>
         )}
         <div className="flex items-center gap-1">
@@ -60,7 +62,7 @@ export function AppHeader() {
           role="status"
           className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] flex items-center justify-center gap-1.5 rounded-full border bg-warning-soft px-3 py-2 text-center text-[13px] font-medium text-warning shadow-soft"
         >
-          <WifiOff className="size-4 shrink-0" /> Sem internet — mostrando o que já foi carregado
+          <WifiOff className="size-4 shrink-0" /> {t.appHeader.offline}
         </p>
       )}
     </header>

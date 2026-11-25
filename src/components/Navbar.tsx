@@ -8,14 +8,23 @@ import { buttonClass } from "./ui";
 import { useAuth } from "@/lib/auth";
 import { LocationChip } from "./LocationSheet";
 import { AccessibilityMenu } from "./AccessibilityMenu";
+import { LanguageChoices, LanguageMenu } from "./LanguageMenu";
+import { useT } from "@/lib/i18n";
 
 const NAV = [
-  { to: "/acervo", label: "Acervo" },
-  { to: "/ranking", label: "Ranking" },
-  { to: "/eventos", label: "Eventos" },
-  { to: "/salas", label: "Salas" },
-  { to: "/comunidade", label: "Comunidade" },
-  { to: "/sobre", label: "Sobre" },
+  { to: "/acervo", key: "acervo" },
+  { to: "/ranking", key: "ranking" },
+  { to: "/eventos", key: "eventos" },
+  { to: "/salas", key: "salas" },
+  { to: "/comunidade", key: "comunidade" },
+  { to: "/sobre", key: "sobre" },
+] as const;
+
+const MORE = [
+  { to: "/descobrir", key: "descobrir" },
+  { to: "/assistente", key: "assistente" },
+  { to: "/roadmap", key: "roadmap" },
+  { to: "/privacidade", key: "privacidade" },
 ] as const;
 
 export function Navbar() {
@@ -23,6 +32,7 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const auth = useAuth();
+  const t = useT();
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
@@ -43,30 +53,31 @@ export function Navbar() {
             <Link
               key={n.to}
               to={n.to}
-              className="link-grow rounded-full px-3.5 py-2 text-sm text-muted-foreground transition hover:text-foreground"
+              className="link-grow rounded-full px-3.5 py-2 text-sm whitespace-nowrap text-muted-foreground transition hover:text-foreground"
               activeProps={{ className: "text-foreground font-medium" }}
             >
-              {n.label}
+              {t.nav[n.key]}
             </Link>
           ))}
         </nav>
         <div className="flex items-center gap-1">
           <LocationChip className="max-w-[7.5rem] sm:max-w-[11rem]" />
+          <LanguageMenu className="hidden sm:block" />
           <AccessibilityMenu />
           <ThemeToggle className="hidden sm:grid" />
           {auth.user ? (
-            <Link to="/app" className="grid size-9 place-items-center rounded-full bg-gradient-primary text-sm font-semibold text-primary-foreground" aria-label="Meu espaço">
+            <Link to="/app" className="grid size-9 place-items-center rounded-full bg-gradient-primary text-sm font-semibold text-primary-foreground" aria-label={t.nav.meuEspaco}>
               {(auth.displayName || "?")[0]?.toUpperCase()}
             </Link>
           ) : (
             <Link to="/entrar" className={buttonClass("secondary", "sm", "hidden sm:inline-flex")}>
-              Entrar
+              {t.nav.entrar}
             </Link>
           )}
           <button
             className="grid size-10 place-items-center rounded-full hover:bg-surface-2 lg:hidden"
             onClick={() => setOpen((o) => !o)}
-            aria-label="Mais opções"
+            aria-label={t.nav.maisOpcoes}
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
@@ -75,19 +86,20 @@ export function Navbar() {
 
       {open && (
         <div className="mx-4 mt-2 animate-fade-up rounded-3xl border glass p-3 shadow-elevated lg:hidden">
-          {[...NAV, { to: "/descobrir", label: "Descobrir" }, { to: "/assistente", label: "Peça uma indicação" }, { to: "/roadmap", label: "Roadmap" }, { to: "/privacidade", label: "Privacidade e termos" }].map((n) => (
+          {[...NAV, ...MORE].map((n) => (
             <Link
               key={n.to}
               to={n.to}
               onClick={() => setOpen(false)}
               className="block rounded-2xl px-4 py-3 text-[15px] font-medium hover:bg-surface-2"
             >
-              {n.label}
+              {t.nav[n.key]}
             </Link>
           ))}
           <Link to={auth.user ? "/app" : "/entrar"} onClick={() => setOpen(false)} className={buttonClass("primary", "md", "mt-2 w-full")}>
-            {auth.user ? "Meu espaço" : "Entrar"}
+            {auth.user ? t.nav.meuEspaco : t.nav.entrar}
           </Link>
+          <LanguageChoices className="mt-3 sm:hidden" />
         </div>
       )}
     </header>

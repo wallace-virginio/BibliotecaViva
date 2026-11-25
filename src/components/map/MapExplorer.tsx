@@ -8,6 +8,7 @@ import { librariesAround } from "@/lib/api/overpass";
 import { useDebounce } from "@/lib/hooks";
 import { cn, formatDistance, haversineKm } from "@/lib/utils";
 import { Badge } from "../ui";
+import { useT } from "@/lib/i18n";
 import { LibraryPanel, OpenBadge } from "./LibraryPanel";
 import type { MapView } from "./LibraryMap.client";
 
@@ -17,6 +18,7 @@ const WORLD: MapView = { lat: 20, lon: 0, zoom: 2 };
 
 export function MapExplorer({ className, initialFocus, fullscreen = false }: { className?: string; initialFocus?: string; fullscreen?: boolean }) {
   const [showList, setShowList] = useState(false);
+  const t = useT();
   // Localização única da sessão (definida uma vez, usada no app todo).
   const session = useLocation();
   useAskLocationOnce();
@@ -131,15 +133,15 @@ export function MapExplorer({ className, initialFocus, fullscreen = false }: { c
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{lib.name}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        {formatDistance(d)} · ★ {lib.rating.toFixed(1)} · {lib.kind}
+                        {formatDistance(d)} · ★ {lib.rating.toFixed(1)} · {t.library.kinds[lib.kind]}
                       </p>
                       <div className="mt-1.5"><OpenBadge lib={lib} /></div>
                     </div>
                   </button>
                 ))}
-            {nearbyError && <p className="p-4 text-sm text-muted-foreground">Não foi possível consultar o OpenStreetMap agora. Mostrando bibliotecas conectadas.</p>}
+            {nearbyError && <p className="p-4 text-sm text-muted-foreground">{t.map.osmError}</p>}
             {!loadingNearby && !nearbyError && sortedNearby.length === 0 && (
-              <p className="p-4 text-sm text-muted-foreground">Nenhuma biblioteca mapeada nesta área ainda. Que tal ajudar a mapear no OpenStreetMap?</p>
+              <p className="p-4 text-sm text-muted-foreground">{t.map.empty}</p>
             )}
           </div>
   );
@@ -155,14 +157,14 @@ export function MapExplorer({ className, initialFocus, fullscreen = false }: { c
               <span className="flex items-center gap-1.5">
                 <MapPin className="size-3.5 text-primary" />
                 {locStatus === "locating"
-                  ? "Obtendo sua localização…"
+                  ? t.map.locating
                   : locStatus === "denied"
-                    ? "Localização não autorizada"
+                    ? t.map.denied
                     : user
-                      ? user.city ?? "Sua localização"
-                      : "São Paulo · toque em “Perto de mim”"}
+                      ? user.city ?? t.map.yourLocation
+                      : t.map.defaultHint}
               </span>
-              <span>{loadingNearby ? "Buscando…" : `${sortedNearby.length} por perto`}</span>
+              <span>{loadingNearby ? t.common.searching : t.map.nearCount(sortedNearby.length)}</span>
             </div>
           </div>
           {listBody}
@@ -192,13 +194,13 @@ export function MapExplorer({ className, initialFocus, fullscreen = false }: { c
             <div className="pointer-events-auto flex max-w-full gap-2 overflow-x-auto scrollbar-none">
               <button onClick={locateMe} className="flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border glass px-4 text-sm font-medium shadow-soft">
                 {locStatus === "locating" ? <Loader2 className="size-4 animate-spin" /> : <LocateFixed className="size-4 text-primary" />}
-                <span className="max-sm:hidden">Perto de mim</span><span className="sm:hidden">Perto</span>
+                <span className="max-sm:hidden">{t.map.nearMe}</span><span className="sm:hidden">{t.map.near}</span>
               </button>
               <button onClick={() => setView({ ...WORLD })} className="flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border glass px-4 text-sm font-medium shadow-soft">
-                <Globe2 className="size-4 text-primary" /> Mundo
+                <Globe2 className="size-4 text-primary" /> {t.map.world}
               </button>
               <button onClick={() => setShowList(true)} className="flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border glass px-4 text-sm font-medium shadow-soft lg:hidden">
-                <List className="size-4 text-primary" /> Lista · {sortedNearby.length}
+                <List className="size-4 text-primary" /> {t.map.list} · {sortedNearby.length}
               </button>
             </div>
           </div>
@@ -207,16 +209,16 @@ export function MapExplorer({ className, initialFocus, fullscreen = false }: { c
               onClick={() => loadAround(mapCenter.lat, mapCenter.lon)}
               className="absolute top-28 left-1/2 z-[500] flex -translate-x-1/2 animate-fade-up items-center gap-2 whitespace-nowrap rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background shadow-elevated lg:top-3"
             >
-              <RefreshCw className="size-4" /> Buscar nesta área
+              <RefreshCw className="size-4" /> {t.map.searchArea}
             </button>
           )}
           {loadingNearby && (
             <div className="absolute top-28 left-1/2 z-[500] flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full border glass px-4 py-2 text-sm shadow-soft lg:top-3">
-              <Loader2 className="size-4 animate-spin text-primary" /> Buscando bibliotecas…
+              <Loader2 className="size-4 animate-spin text-primary" /> {t.map.searchingLibs}
             </div>
           )}
           <div className="absolute bottom-3 left-3 z-[500] hidden gap-2 sm:flex">
-            <Badge tone="glass"><span className="size-2 rounded-full bg-deep" /> Conectada</Badge>
+            <Badge tone="glass"><span className="size-2 rounded-full bg-deep" /> {t.map.connected}</Badge>
             <Badge tone="glass"><span className="size-2 rounded-full bg-primary" /> OpenStreetMap</Badge>
           </div>
 
@@ -226,8 +228,8 @@ export function MapExplorer({ className, initialFocus, fullscreen = false }: { c
               <div className="flex max-h-[75%] animate-fade-up flex-col rounded-t-3xl bg-surface pb-[env(safe-area-inset-bottom)] shadow-elevated" onClick={(e) => e.stopPropagation()}>
                 <div className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-border-strong" />
                 <div className="flex items-center justify-between px-5 pt-3 pb-1">
-                  <p className="font-semibold">{sortedNearby.length} bibliotecas por perto</p>
-                  <button onClick={() => setShowList(false)} className="grid size-9 place-items-center rounded-full bg-surface-2" aria-label="Fechar lista"><X className="size-4" /></button>
+                  <p className="font-semibold">{t.map.libsNear(sortedNearby.length)}</p>
+                  <button onClick={() => setShowList(false)} className="grid size-9 place-items-center rounded-full bg-surface-2" aria-label={t.map.closeList}><X className="size-4" /></button>
                 </div>
                 {listBody}
               </div>
@@ -261,6 +263,7 @@ function CitySearch({
   places: Place[];
   onPick: (p: Place) => void;
 }) {
+  const t = useT();
   return (
     <div className="relative">
       <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -268,7 +271,7 @@ function CitySearch({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && places[0] && onPick(places[0])}
-        placeholder="Explorar outra cidade…"
+        placeholder={t.map.otherCity}
         className="h-10 w-full rounded-full border bg-surface pr-4 pl-10 text-sm shadow-soft outline-none focus:border-primary focus:ring-4 focus:ring-primary/15"
       />
       {places.length > 0 && (

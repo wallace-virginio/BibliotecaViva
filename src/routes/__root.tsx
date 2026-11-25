@@ -18,6 +18,8 @@ import { MobileTabBar } from "@/components/MobileTabBar";
 import { NotFound } from "@/components/NotFound";
 import { themeScript } from "@/components/ThemeToggle";
 import { a11yScript } from "@/components/AccessibilityMenu";
+import { I18nProvider, useI18n, useT } from "@/lib/i18n";
+import { localeTag } from "@/lib/locale";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -77,6 +79,7 @@ function AppFrame() {
       removeRipple();
     };
   }, [router]);
+  const t = useT();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isApp = pathname === "/app" || pathname.startsWith("/app/");
   const isFullscreen = pathname === "/mapa";
@@ -102,7 +105,7 @@ function AppFrame() {
     );
   return (
     <>
-      <a href="#conteudo" className="skip-link">Pular para o conteúdo</a>
+      <a href="#conteudo" className="skip-link">{t.nav.skip}</a>
       <Navbar />
       <main id="conteudo" tabIndex={-1} className={isFullscreen ? "" : "min-h-screen pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0"}>
         <Outlet />
@@ -119,7 +122,17 @@ function AppFrame() {
 
 function RootDocument({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <I18nProvider>
+      <Html>{children}</Html>
+    </I18nProvider>
+  );
+}
+
+/** `<html lang>` segue o idioma escolhido (leitores de tela e tradutores automáticos usam). */
+function Html({ children }: { children: ReactNode }) {
+  const { locale } = useI18n();
+  return (
+    <html lang={localeTag(locale)} suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

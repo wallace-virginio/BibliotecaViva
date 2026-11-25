@@ -1,9 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { CURATIONS, FEATURED_LIBRARIES } from "@/data/libraries";
 import { LibraryImage, Reveal } from "./common";
+import { useT } from "@/lib/i18n";
 
 /** Coleções com a foto de uma biblioteca real de cada uma (e a contagem verdadeira). */
 export function CurationGrid() {
+  const t = useT();
   // cada coleção ganha a foto de uma biblioteca diferente (foto repetida parece feita por máquina)
   const used = new Set<string>();
   const covers = CURATIONS.map((c) => {
@@ -27,11 +29,11 @@ export function CurationGrid() {
                   <div className="aspect-[4/3] bg-surface-3" />
                 )}
               </figure>
-              <h3 className="mt-3 font-serif text-xl leading-snug font-semibold group-hover:text-primary">{c.title}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{c.description}</p>
+              <h3 className="mt-3 font-serif text-xl leading-snug font-semibold group-hover:text-primary">{t.curations.items[c.key].title}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{t.curations.items[c.key].description}</p>
               <p className="caption mt-2">
-                {libs.length} {libs.length === 1 ? "biblioteca" : "bibliotecas"}
-                {cover ? ` · na foto: ${cover.name}` : ""}
+                {t.curations.count(libs.length)}
+                {cover ? t.curations.inPhoto(cover.name) : ""}
               </p>
             </Link>
           </Reveal>

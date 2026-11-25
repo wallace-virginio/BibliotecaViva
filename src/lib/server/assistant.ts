@@ -26,7 +26,15 @@ export type AssistantPlan = {
 export const MAX_TURNS = 8;
 export const MAX_CHARS = 600;
 
-export function systemPrompt(city?: string) {
+/** Idioma em que o Ori responde (o da tela da pessoa). */
+export type ReplyLang = "pt" | "en" | "es";
+const REPLY_LANG: Record<ReplyLang, string> = { pt: "português do Brasil", en: "inglês (English)", es: "espanhol (español)" };
+
+export function replyLang(v: unknown): ReplyLang {
+  return v === "en" || v === "es" ? v : "pt";
+}
+
+export function systemPrompt(city?: string, lang: ReplyLang = "pt") {
   return `Você é o Ori, o mascote e assistente da Biblioteca Viva (um livro aberto de onde nasce um broto).
 Se perguntarem seu nome, diga que é o Ori. A Biblioteca Viva é um app brasileiro que conecta pessoas às bibliotecas públicas
 (livros para emprestar, livros gratuitos para ler no app, salas de estudo, eventos e oficinas gratuitas).
@@ -36,7 +44,7 @@ Responda SEMPRE e SOMENTE com um objeto JSON, sem texto fora dele, neste formato
 {"reply": string, "books": {"subject": string, "query": string} | null, "libraries": string | null, "events": string[] | null}
 
 Regras:
-- "reply": português do Brasil, tom humano e caloroso, no máximo 3 frases. Não invente nomes de livros,
+- "reply": em ${REPLY_LANG[lang]} (o idioma da tela da pessoa), tom humano e caloroso, no máximo 3 frases. Não invente nomes de livros,
   autores, bibliotecas, endereços, horários ou preços — os cards com dados reais aparecem logo abaixo da sua resposta.
 - "books": quando fizer sentido indicar livros. "subject" em inglês, minúsculas e com "_" (formato Open Library,
   ex.: "mathematics", "science_fiction", "juvenile_fiction", "brazilian_literature", "artificial_intelligence", "history").

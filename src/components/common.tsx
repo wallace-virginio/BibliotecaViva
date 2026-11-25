@@ -10,6 +10,8 @@ import { FEATURED_LIBRARIES } from "@/data/libraries";
 import type { PlatformEvent } from "@/data/content";
 import { Badge, buttonClass, Card } from "./ui";
 import { ShelfQuickToggle } from "./ShelfButton";
+import { useT } from "@/lib/i18n";
+import { activeTag } from "@/lib/locale";
 
 /* ---------- Reveal on scroll ---------- */
 export function Reveal({ children, className, delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
@@ -70,6 +72,7 @@ export function BookCover({
 }
 
 export function BookCard({ book, className, badge }: { book: Book; className?: string; badge?: ReactNode }) {
+  const t = useT();
   return (
     <Link to="/livro/$id" params={{ id: book.id }} className={cn("group flex min-w-0 flex-col gap-2.5", className)}>
       <div className="relative">
@@ -85,7 +88,7 @@ export function BookCard({ book, className, badge }: { book: Book; className?: s
       <div className="min-w-0">
         <p className="line-clamp-2 text-[13px] leading-snug font-medium group-hover:text-primary">{book.title}</p>
         <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-          {book.authors[0] ?? "Autor desconhecido"}
+          {book.authors[0] ?? t.common.unknownAuthor}
           {book.year ? ` · ${book.year}` : ""}
         </p>
       </div>
@@ -148,28 +151,29 @@ export function LibraryImage({ lib, className, index = 0 }: { lib: Library; clas
 }
 
 export function LibraryCard({ lib, distance }: { lib: Library; distance?: string }) {
+  const t = useT();
   return (
     <Link to="/biblioteca/$slug" params={{ slug: lib.slug }} className="group block">
       <Card className="card-hover overflow-hidden">
         <div className="relative aspect-[4/3] overflow-hidden">
           <LibraryImage lib={lib} className="size-full transition duration-500 group-hover:scale-105" />
           <div className="absolute top-3 left-3 flex gap-1.5">
-            <Badge tone="glass">{lib.kind}</Badge>
+            <Badge tone="glass">{t.library.kinds[lib.kind]}</Badge>
           </div>
         </div>
         <div className="space-y-1.5 p-5">
           <div className="flex items-start justify-between gap-3">
             <h3 className="line-clamp-1 font-semibold group-hover:text-primary">{lib.name}</h3>
-            <span className="flex shrink-0 items-center gap-1 text-sm font-medium">★ {lib.rating.toFixed(1).replace(".", ",")}</span>
+            <span className="flex shrink-0 items-center gap-1 text-sm font-medium">★ {lib.rating.toLocaleString(activeTag(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
           </div>
           <p className="flex items-center gap-1 text-sm text-muted-foreground">
-            <MapPin className="size-3.5" /> {[lib.city, lib.country].filter(Boolean).join(", ") || "Perto de você"}
+            <MapPin className="size-3.5" /> {[lib.city, lib.country].filter(Boolean).join(", ") || t.common.nearYou}
             {distance && <span> · {distance}</span>}
           </p>
           <div className="flex items-center gap-3 pt-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1"><BookOpen className="size-3.5" /> {compactNumber(lib.books)}</span>
             {lib.amenities.wifi && <span className="flex items-center gap-1"><Wifi className="size-3.5" /> Wi-Fi</span>}
-            <span className="flex items-center gap-1"><Users className="size-3.5" /> {lib.rooms.available} salas livres</span>
+            <span className="flex items-center gap-1"><Users className="size-3.5" /> {t.library.freeRooms(lib.rooms.available)}</span>
           </div>
         </div>
       </Card>

@@ -5,6 +5,7 @@ import { FREE_CLASSICS } from "@/data/content";
 import { booksBySubject, coverUrl, type Book } from "@/lib/api/openlibrary";
 import { useAsync } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const FALLBACK: Book[] = FREE_CLASSICS.map((b) => ({ id: b.id, title: b.title, authors: [b.author], coverId: b.coverId, subjects: [] }));
 
@@ -15,6 +16,7 @@ const FALLBACK: Book[] = FREE_CLASSICS.map((b) => ({ id: b.id, title: b.title, a
  */
 export function CoverWall({ className, rows = 3 }: { className?: string; rows?: number }) {
   const [paused, setPaused] = useState(false);
+  const t = useT();
   const { data } = useAsync(async (signal) => {
     const [a, b] = await Promise.all([
       booksBySubject("classic_literature", 30, signal).catch(() => []),
@@ -27,7 +29,7 @@ export function CoverWall({ className, rows = 3 }: { className?: string; rows?: 
   const perRow = Math.ceil(books.length / rows);
 
   return (
-    <div className={cn("relative overflow-hidden", className)} aria-label="Capas de livros clássicos do acervo" role="region">
+    <div className={cn("relative overflow-hidden", className)} aria-label={t.coverWall.label} role="region">
       <div className="flex h-full flex-col justify-center gap-4 [mask-image:linear-gradient(90deg,transparent,black_12%,black_88%,transparent)]">
         {Array.from({ length: rows }).map((_, r) => {
           const row = books.slice(r * perRow, (r + 1) * perRow);
@@ -57,7 +59,7 @@ export function CoverWall({ className, rows = 3 }: { className?: string; rows?: 
       <button
         onClick={() => setPaused((p) => !p)}
         className="absolute right-3 bottom-3 grid size-9 place-items-center rounded-full border glass shadow-soft"
-        aria-label={paused ? "Retomar animação das capas" : "Pausar animação das capas"}
+        aria-label={paused ? t.coverWall.play : t.coverWall.pause}
       >
         {paused ? <Play className="size-4" /> : <Pause className="size-4" />}
       </button>

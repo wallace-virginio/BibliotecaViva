@@ -14,6 +14,7 @@ import { CATEGORIES, COMIC_CATEGORIES, hasLatinTitle, isAvailable, MATERIAL_TYPE
 import { useAsync } from "@/lib/hooks";
 import { useLocation, useNearbyLibraries } from "@/lib/location";
 import { cn, formatNumber } from "@/lib/utils";
+import { usePageTitle, useT } from "@/lib/i18n";
 
 type Search = { q?: string; autor?: string; categoria?: string; tipo?: string; disponivel?: boolean; ebook?: boolean; pagina?: number };
 
@@ -55,6 +56,8 @@ function Acervo() {
   });
   const { location, ask } = useLocation();
   const nearby = useNearbyLibraries();
+  const t = useT();
+  usePageTitle(t.acervo.metaTitle);
 
   const tipo = MATERIAL_TYPES.find((t) => t.value === (search.tipo ?? "livros")) ?? MATERIAL_TYPES[0];
   const subject = search.categoria || tipo.subject || undefined;
@@ -108,8 +111,8 @@ function Acervo() {
         <Container className="py-5 md:py-7">
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div>
-              <h1 className="text-2xl md:text-3xl">Acervo</h1>
-              <p className="text-sm text-muted-foreground">Mais de 40 milhões de títulos — para ler de graça ou saber onde comprar.</p>
+              <h1 className="text-2xl md:text-3xl">{t.acervo.title}</h1>
+              <p className="text-sm text-muted-foreground">{t.acervo.subtitle}</p>
             </div>
           </div>
           <div className="relative">
@@ -122,20 +125,20 @@ function Acervo() {
             className="mt-4 flex flex-col overflow-hidden rounded-2xl border bg-surface shadow-soft focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 md:flex-row md:items-center md:rounded-full"
             role="search"
           >
-            <div className="flex shrink-0 gap-1 overflow-x-auto border-b p-1.5 scrollbar-none md:border-r md:border-b-0" role="radiogroup" aria-label="Tipo de material">
-              {MATERIAL_TYPES.map((t) => (
+            <div className="flex shrink-0 gap-1 overflow-x-auto border-b p-1.5 scrollbar-none md:border-r md:border-b-0" role="radiogroup" aria-label={t.acervo.materialType}>
+              {MATERIAL_TYPES.map((m) => (
                 <button
-                  key={t.value}
+                  key={m.value}
                   type="button"
                   role="radio"
-                  aria-checked={tipo.value === t.value}
-                  onClick={() => set({ tipo: t.value === "livros" ? undefined : t.value, categoria: undefined })}
+                  aria-checked={tipo.value === m.value}
+                  onClick={() => set({ tipo: m.value === "livros" ? undefined : m.value, categoria: undefined })}
                   className={cn(
                     "shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition",
-                    tipo.value === t.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-2 hover:text-foreground",
+                    tipo.value === m.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-2 hover:text-foreground",
                   )}
                 >
-                  {t.label}
+                  {t.materials[m.value]}
                 </button>
               ))}
             </div>
@@ -150,9 +153,9 @@ function Acervo() {
                 onFocus={() => setFocused(true)}
                 onBlur={() => closeUnlessWindowSwitch(() => setFocused(false))}
                 onKeyDown={(e) => (e.key === "Escape" ? setFocused(false) : suggest.onKeyDown(e))}
-                placeholder={`Buscar ${tipo.label.toLowerCase()} por título, autor ou assunto…`}
+                placeholder={t.acervo.placeholder(t.materials[tipo.value])}
                 className="h-12 min-w-0 flex-1 bg-transparent px-3 outline-none"
-                aria-label="Buscar no acervo"
+                aria-label={t.acervo.searchLabel}
                 role="combobox"
                 aria-expanded={focused && suggest.visible}
                 aria-controls="acervo-sugestoes"
@@ -160,12 +163,12 @@ function Acervo() {
                 autoComplete="off"
               />
               {input && (
-                <button type="button" onClick={() => { setInput(""); set({ q: undefined }); }} className="grid size-9 place-items-center text-muted-foreground" aria-label="Limpar busca">
+                <button type="button" onClick={() => { setInput(""); set({ q: undefined }); }} className="grid size-9 place-items-center text-muted-foreground" aria-label={t.acervo.clear}>
                   <X className="size-4" />
                 </button>
               )}
               <Button type="submit" className="mr-1.5 shrink-0" size="sm">
-                Buscar
+                {t.common.search}
               </Button>
             </div>
           </form>
@@ -178,18 +181,18 @@ function Acervo() {
             {/* disponibilidade física só existe com bibliotecas conectadas (lib/features.ts) */}
             {FEATURES.reservas && (
               <FilterChip active={!!search.disponivel} onClick={toggleNearMe} icon={<MapPin className="size-3.5" />}>
-                Disponível para retirada{location ? ` perto de ${location.label}` : " perto de mim"}
+                {t.acervo.pickupNear(location?.label)}
               </FilterChip>
             )}
             <FilterChip active={!!search.ebook} onClick={() => set({ ebook: search.ebook ? undefined : true })} icon={<BookOpenText className="size-3.5" />}>
-              Grátis para ler no app
+              {t.acervo.freeFilter}
             </FilterChip>
             <AuthorFilter value={search.autor} onChange={(autor) => set({ autor })} />
             <span className="mx-1 hidden h-5 w-px bg-border sm:block" />
             <div className="-mx-4 flex w-full gap-2 overflow-x-auto px-4 scrollbar-none sm:mx-0 sm:w-auto sm:flex-wrap sm:px-0">
               {CATEGORIES.slice(1).map((c) => (
                 <FilterChip key={c.value} active={search.categoria === c.value} onClick={() => set({ categoria: search.categoria === c.value ? undefined : c.value })}>
-                  {c.label}
+                  {t.categories[c.value as keyof typeof t.categories]}
                 </FilterChip>
               ))}
             </div>
@@ -207,26 +210,26 @@ function Acervo() {
                 <span>
                   {results.data ? (
                     <>
-                      <strong className="text-foreground">{formatNumber(results.data.total)}</strong> resultados
-                      {disponivel && ` · ${books.length} disponíveis perto${location ? ` de ${location.label}` : ""} entre os carregados`}
+                      <strong className="text-foreground">{formatNumber(results.data.total)}</strong> {t.acervo.results}
+                      {disponivel && t.acervo.availableNear(books.length, location?.label)}
                     </>
                   ) : (
-                    "Buscando…"
+                    t.common.searching
                   )}
                 </span>
                 {!browsing && (
-                  <button onClick={() => navigate({ search: {} })} className="text-primary hover:underline">Limpar filtros</button>
+                  <button onClick={() => navigate({ search: {} })} className="text-primary hover:underline">{t.acervo.clearFilters}</button>
                 )}
               </div>
               {results.loading ? (
                 <BookGridSkeleton count={15} className="grid-cols-3 gap-3.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-5" />
               ) : results.error ? (
-                <EmptyState icon={<BookX className="size-6" />} title="Não foi possível consultar o acervo" description="A Open Library pode estar instável. Tente novamente em instantes." />
+                <EmptyState icon={<BookX className="size-6" />} title={t.acervo.errorTitle} description={t.acervo.errorText} />
               ) : books.length === 0 ? (
                 <EmptyState
                   icon={<BookX className="size-6" />}
-                  title={disponivel ? "Nada disponível perto de você nesta página" : "Nada encontrado"}
-                  description={disponivel ? "Tente a próxima página ou desligue o filtro de retirada." : "Tente outros termos ou remova alguns filtros."}
+                  title={disponivel ? t.acervo.emptyNearTitle : t.acervo.emptyTitle}
+                  description={disponivel ? t.acervo.emptyNearText : t.acervo.emptyText}
                 />
               ) : (
                 <div className="grid grid-cols-3 gap-x-3.5 gap-y-6 sm:grid-cols-4 md:grid-cols-5">
@@ -236,11 +239,11 @@ function Acervo() {
                     const ok = FEATURES.reservas && isAvailable(b.id, near);
                     const badge = free ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[10px] font-semibold text-success shadow-soft">
-                        <BookOpenText className="size-3" aria-hidden /> Ler grátis
+                        <BookOpenText className="size-3" aria-hidden /> {t.acervo.freeBadge}
                       </span>
                     ) : FEATURES.reservas ? (
                       <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-soft", ok ? "bg-success-soft text-success" : "bg-surface/90 text-muted-foreground")}>
-                        {ok ? (location ? "Perto de você" : "Disponível") : "Emprestado"}
+                        {ok ? (location ? t.acervo.nearBadge : t.acervo.available) : t.acervo.lent}
                       </span>
                     ) : undefined;
                     return <BookCard key={b.id} book={b} badge={badge} />;
@@ -253,9 +256,9 @@ function Acervo() {
                   {extra.loading ? (
                     <BookGridSkeleton count={5} className="w-full grid-cols-3 gap-3.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-5" />
                   ) : hasMore ? (
-                    <Button variant="outline" onClick={loadMore}>Carregar mais</Button>
+                    <Button variant="outline" onClick={loadMore}>{t.acervo.loadMore}</Button>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Você chegou ao fim · {formatNumber(loaded)} títulos</p>
+                    <p className="text-sm text-muted-foreground">{t.acervo.end(formatNumber(loaded))}</p>
                   )}
                 </div>
               )}
@@ -281,6 +284,7 @@ function AuthorFilter({ value, onChange }: { value?: string; onChange: (v: strin
   const [open, setOpen] = useState(false);
   const [listOpen, setListOpen] = useState(false);
   const [text, setText] = useState(value ?? "");
+  const t = useT();
   useEffect(() => setText(value ?? ""), [value]);
   // sugestões de autores enquanto digita (nome + nº de obras)
   const suggest = useSuggestBox(open ? text : "", ["authors"], (s) => {
@@ -292,20 +296,20 @@ function AuthorFilter({ value, onChange }: { value?: string; onChange: (v: strin
   if (value && !open)
     return (
       <FilterChip active onClick={() => onChange(undefined)} icon={<PenLine className="size-3.5" />}>
-        Autor: {value} <X className="size-3.5" aria-label="remover filtro de autor" />
+        {t.acervo.authorIs(value)} <X className="size-3.5" aria-label={t.acervo.removeAuthor} />
       </FilterChip>
     );
   if (!open)
     return (
       <FilterChip active={false} onClick={() => setOpen(true)} icon={<PenLine className="size-3.5" />}>
-        Autor
+        {t.acervo.author}
       </FilterChip>
     );
   return (
     <div className="relative">
     <form
       role="search"
-      aria-label="Filtrar por autor"
+      aria-label={t.acervo.filterByAuthor}
       onSubmit={(e) => {
         e.preventDefault();
         setOpen(false);
@@ -326,8 +330,8 @@ function AuthorFilter({ value, onChange }: { value?: string; onChange: (v: strin
             if (!text.trim()) setOpen(false);
           })
         }
-        placeholder="Nome do autor"
-        aria-label="Nome do autor"
+        placeholder={t.acervo.authorName}
+        aria-label={t.acervo.authorName}
         role="combobox"
         aria-expanded={suggest.visible}
         aria-controls="autor-sugestoes"
@@ -336,7 +340,7 @@ function AuthorFilter({ value, onChange }: { value?: string; onChange: (v: strin
         className="w-36 min-w-0 bg-transparent text-sm outline-none sm:w-44"
       />
       <button type="submit" className="h-7 rounded-full bg-primary px-3 text-xs font-semibold text-primary-foreground">
-        Filtrar
+        {t.acervo.filter}
       </button>
     </form>
     {listOpen && <SuggestList box={suggest} id="autor-sugestoes" className="right-auto w-[min(20rem,calc(100vw-2rem))]" />}
@@ -368,14 +372,15 @@ function Shelves({ onSubject }: { onSubject: (slug: string) => void }) {
   const t2 = POPULAR_SUBJECTS[0]; // fantasia
   const s1 = useAsync((s) => booksBySubject(t1.slug, 12, s), []);
   const s2 = useAsync((s) => booksBySubject(t2.slug, 12, s), []);
+  const t = useT();
   return (
     <div className="space-y-10">
-      <ShelfRow title="Em alta esta semana" icon={<Flame className="size-5 text-deep" />} books={hot.data} loading={hot.loading} link={{ to: "/ranking", label: "Ranking" }} badge={(_, i) => <RankNumber n={i + 1} />} />
-      <ShelfRow title="Clássicos grátis para ler agora" icon={<BookOpenText className="size-5 text-primary" />} books={FREE_BOOKS} link={{ to: "/acervo", label: "Ver mais", search: { ebook: "true" } }} />
-      <ShelfRow title={t1.label} books={s1.data} loading={s1.loading} />
-      <ShelfRow title={t2.label} books={s2.data} loading={s2.loading} />
+      <ShelfRow title={t.ranking.trending} icon={<Flame className="size-5 text-deep" />} books={hot.data} loading={hot.loading} link={{ to: "/ranking", label: t.nav.ranking }} badge={(_, i) => <RankNumber n={i + 1} />} />
+      <ShelfRow title={t.acervo.freeShelf} icon={<BookOpenText className="size-5 text-primary" />} books={FREE_BOOKS} link={{ to: "/acervo", label: t.acervo.seeMore, search: { ebook: "true" } }} />
+      <ShelfRow title={t.subjects[t1.slug]} books={s1.data} loading={s1.loading} />
+      <ShelfRow title={t.subjects[t2.slug]} books={s2.data} loading={s2.loading} />
       <button onClick={() => onSubject("history")} className="w-full rounded-2xl border border-dashed py-4 text-sm font-medium text-muted-foreground hover:border-primary hover:text-primary">
-        Explorar mais temas
+        {t.acervo.moreTopics}
       </button>
     </div>
   );

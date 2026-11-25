@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BookOpen, CalendarDays, ChevronRight, Clock, Flame, Heart, Info, LogOut, MapPin, Monitor, Settings, ShieldCheck, Ticket, Trophy, Users } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageChoices } from "@/components/LanguageMenu";
+import { useT } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { IS_APP } from "@/lib/platform";
 import { BadgeGrid } from "@/components/dashboard";
@@ -19,6 +21,7 @@ export const Route = createFileRoute("/app/perfil")({
 function AppMenu() {
   const auth = useAuth();
   const counts = useStore((s) => ({ fav: s.favorites.length, res: s.reservations.length }));
+  const t = useT();
   const groups = [
     [
       { to: "/app/reservas", label: "Reservas", icon: Ticket, count: counts.res },
@@ -52,6 +55,10 @@ function AppMenu() {
       <div className="flex items-center justify-between rounded-xl border bg-surface px-4 py-2">
         <span className="text-[15px]">Tema escuro</span>
         <ThemeToggle />
+      </div>
+      <div className="rounded-xl border bg-surface p-4">
+        <p className="mb-3 text-[15px]">{t.lang.title}</p>
+        <LanguageChoices />
       </div>
       {auth.user && (
         <button onClick={() => auth.signOut()} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border bg-surface text-[15px] font-medium text-danger active:bg-surface-2">

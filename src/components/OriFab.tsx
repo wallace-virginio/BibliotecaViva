@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const KEY = "bv-ori-min";
 
@@ -14,6 +15,7 @@ const KEY = "bv-ori-min";
 export function OriFab() {
   const [min, setMin] = useState(true); // começa recolhido no servidor; decide no navegador
   const [ready, setReady] = useState(false);
+  const t = useT();
 
   useEffect(() => {
     let stored = false;
@@ -61,17 +63,17 @@ export function OriFab() {
       {!min && (
         <div className="relative mb-2 max-w-[14.5rem] rounded-2xl rounded-br-md border bg-surface px-4 py-3 shadow-elevated">
           <Link to="/assistente" className="block pr-4 text-sm leading-snug">
-            <strong className="font-serif text-[15px]">Olá, eu sou o Ori!</strong>
-            <span className="mt-0.5 block text-muted-foreground">Vamos descobrir algo novo?</span>
+            <strong className="font-serif text-[15px]">{t.ori.fabHello}</strong>
+            <span className="mt-0.5 block text-muted-foreground">{t.ori.fabSub}</span>
           </Link>
-          <button onClick={dismiss} className="absolute top-1 right-1 grid size-8 place-items-center rounded-full text-muted-foreground hover:bg-surface-2" aria-label="Recolher o balão do Ori">
+          <button onClick={dismiss} className="absolute top-1 right-1 grid size-8 place-items-center rounded-full text-muted-foreground hover:bg-surface-2" aria-label={t.ori.fabCollapse}>
             <X className="size-3.5" />
           </button>
         </div>
       )}
       <Link
         to="/assistente"
-        aria-label="Falar com o Ori, o assistente: peça uma indicação de leitura, biblioteca ou evento"
+        aria-label={t.ori.fabLabel}
         className="ori-float group block size-16 shrink-0 overflow-hidden rounded-full border-2 border-surface bg-[#6B3D20] shadow-elevated ring-1 ring-black/5 transition active:scale-95"
       >
         <img src="/ori/ori-128.webp" srcSet="/ori/ori-128.webp 1x, /ori/ori-256.webp 2x" alt="" width={64} height={64} className="size-full scale-[1.18] object-cover" />

@@ -65,3 +65,23 @@ export function storeLinks(q: BuyQuery, opts: { amazonTag?: string } = { amazonT
     { key: "mercado-livre", name: "Mercado Livre", note: "Novos e usados de vários vendedores", url: `https://lista.mercadolivre.com.br/${slugQuery(text)}` },
   ];
 }
+
+/**
+ * Lojas para quem está fora do Brasil (tela em inglês ou espanhol): buscam pelo título original da obra.
+ * Em espanhol, a Casa del Libro vem primeiro. A tela traduz o `note` pela chave (i18n → buy.stores).
+ */
+export function intlStoreLinks(q: BuyQuery, lang: "en" | "es" = "en"): StoreLink[] {
+  const text = buyText(q);
+  const enc = encodeURIComponent(text);
+  const amazon = new URL("https://www.amazon.com/s");
+  amazon.searchParams.set("k", text);
+  amazon.searchParams.set("i", "stripbooks");
+  const links: StoreLink[] = [
+    { key: "amazon-com", name: "Amazon", note: "Novos e usados · entrega em vários países", url: amazon.toString() },
+    { key: "abebooks", name: "AbeBooks", note: "Livrarias independentes e sebos · usados e raros", url: `https://www.abebooks.com/servlet/SearchResults?kn=${enc}` },
+    { key: "bookshop", name: "Bookshop.org", note: "Apoia livrarias independentes (EUA e Reino Unido)", url: `https://bookshop.org/search?keywords=${enc}` },
+    { key: "better-world-books", name: "Better World Books", note: "Usados · frete grátis para muitos países", url: `https://www.betterworldbooks.com/search/results?q=${enc}` },
+  ];
+  const casa: StoreLink = { key: "casa-del-libro", name: "Casa del Libro", note: "Maior rede de livrarias da Espanha", url: `https://www.casadellibro.com/?query=${enc}` };
+  return lang === "es" ? [casa, ...links] : [...links, casa];
+}

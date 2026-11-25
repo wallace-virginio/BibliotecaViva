@@ -6,6 +6,8 @@ import { PUBLIC_SITE_URL } from "./platform";
 import { getSupabase, NATIVE_REDIRECT, supabaseConfigured } from "./supabase";
 import { MIN_PASSWORD, PRIVACY_VERSION, TERMS_VERSION } from "./legal";
 import { getState } from "./store";
+import { messagesFor } from "./i18n";
+import { activeLocale } from "./locale";
 import { startSync, stopSync } from "./sync";
 
 export type AccountType = "leitor" | "biblioteca";
@@ -41,19 +43,20 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 /** Mensagens do Supabase traduzidas para o usuário. */
 export function authErrorMessage(e: unknown): string {
   const msg = (e as { message?: string })?.message ?? String(e);
-  if (/invalid login credentials/i.test(msg)) return "E-mail ou senha incorretos.";
-  if (/email not confirmed/i.test(msg)) return "Confirme seu e-mail antes de entrar — enviamos um link para a sua caixa de entrada.";
-  if (/already registered|already been registered/i.test(msg)) return "Não foi possível criar a conta com este e-mail. Se você já tem cadastro, entre ou recupere a senha.";
-  if (/password should be at least|weak password|password is too short/i.test(msg)) return `A senha precisa ter pelo menos ${MIN_PASSWORD} caracteres.`;
-  if (/pwned|leaked|compromised/i.test(msg)) return "Esta senha apareceu em vazamentos de dados. Escolha outra.";
-  if (/for security purposes|rate limit/i.test(msg)) return "Muitas tentativas seguidas. Aguarde alguns segundos e tente de novo.";
-  if (/provider is not enabled|unsupported provider/i.test(msg)) return "Este método de login ainda não foi ativado no painel do Supabase.";
-  if (/not authorized/i.test(msg) && /email/i.test(msg))
-    return "Não foi possível enviar o e-mail de confirmação para este endereço. (Admin: configure um SMTP próprio no Supabase.)";
-  if (/unable to validate email|invalid email|email address .* is invalid|invalid format/i.test(msg)) return "Informe um e-mail válido.";
-  if (/error sending (confirmation|recovery|magic link)? ?email/i.test(msg)) return "Não conseguimos enviar o e-mail agora. Tente novamente em alguns minutos.";
-  if (/same.*password|different from the old/i.test(msg)) return "A nova senha precisa ser diferente da anterior.";
-  if (/failed to fetch|network/i.test(msg)) return "Sem conexão com o servidor. Verifique sua internet.";
+  // no idioma da tela (lib/i18n): a mesma mensagem em pt, en ou es
+  const m = messagesFor(activeLocale()).auth.errors;
+  if (/invalid login credentials/i.test(msg)) return m.invalid;
+  if (/email not confirmed/i.test(msg)) return m.notConfirmed;
+  if (/already registered|already been registered/i.test(msg)) return m.exists;
+  if (/password should be at least|weak password|password is too short/i.test(msg)) return m.short(MIN_PASSWORD);
+  if (/pwned|leaked|compromised/i.test(msg)) return m.pwned;
+  if (/for security purposes|rate limit/i.test(msg)) return m.rate;
+  if (/provider is not enabled|unsupported provider/i.test(msg)) return m.provider;
+  if (/not authorized/i.test(msg) && /email/i.test(msg)) return m.smtp;
+  if (/unable to validate email|invalid email|email address .* is invalid|invalid format/i.test(msg)) return m.email;
+  if (/error sending (confirmation|recovery|magic link)? ?email/i.test(msg)) return m.send;
+  if (/same.*password|different from the old/i.test(msg)) return m.same;
+  if (/failed to fetch|network/i.test(msg)) return m.network;
   return msg;
 }
 

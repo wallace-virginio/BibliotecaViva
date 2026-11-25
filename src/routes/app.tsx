@@ -5,10 +5,12 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { ConsentGate } from "@/components/ConsentGate";
 import { LocationChip } from "@/components/LocationSheet";
 import { AccessibilityMenu } from "@/components/AccessibilityMenu";
+import { LanguageMenu } from "@/components/LanguageMenu";
 import { useAuth } from "@/lib/auth";
 import { useUserStats } from "@/lib/userStats";
 import { useStore } from "@/lib/store";
 import { IS_APP } from "@/lib/platform";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -21,15 +23,15 @@ export const Route = createFileRoute("/app")({
 });
 
 const NAV = [
-  { to: "/app", label: "Início", icon: House, emoji: "🏠", exact: true },
-  { to: "/app/livros", label: "Meus Livros", icon: BookOpen, emoji: "📚" },
-  { to: "/app/favoritos", label: "Favoritos", icon: Heart, emoji: "❤️" },
-  { to: "/app/reservas", label: "Reservas", icon: Ticket, emoji: "🎫" },
-  { to: "/app/eventos", label: "Eventos", icon: CalendarDays, emoji: "📅" },
-  { to: "/app/salas", label: "Salas", icon: Monitor, emoji: "💻" },
-  { to: "/app/comunidade", label: "Comunidade", icon: Users, emoji: "👥" },
-  { to: "/app/configuracoes", label: "Configurações", icon: Settings, emoji: "⚙️" },
-  { to: "/app/perfil", label: "Perfil", icon: UserRound, emoji: "👤" },
+  { to: "/app", key: "inicio", icon: House, emoji: "🏠", exact: true },
+  { to: "/app/livros", key: "livros", icon: BookOpen, emoji: "📚" },
+  { to: "/app/favoritos", key: "favoritos", icon: Heart, emoji: "❤️" },
+  { to: "/app/reservas", key: "reservas", icon: Ticket, emoji: "🎫" },
+  { to: "/app/eventos", key: "eventos", icon: CalendarDays, emoji: "📅" },
+  { to: "/app/salas", key: "salas", icon: Monitor, emoji: "💻" },
+  { to: "/app/comunidade", key: "comunidade", icon: Users, emoji: "👥" },
+  { to: "/app/configuracoes", key: "configuracoes", icon: Settings, emoji: "⚙️" },
+  { to: "/app/perfil", key: "perfil", icon: UserRound, emoji: "👤" },
 ] as const;
 
 function AppLayout() {
@@ -54,6 +56,7 @@ function AppShell() {
   const initial = (me.name || "?")[0]?.toUpperCase();
   const counts = useStore((s) => ({ fav: s.favorites.length, res: s.reservations.length }));
   const devMode = useStore((s) => s.developerMode);
+  const t = useT();
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-[260px_1fr]">
       {/* Sidebar (desktop) */}
@@ -69,7 +72,7 @@ function AppShell() {
               activeProps={{ className: "!bg-surface !text-foreground font-medium shadow-soft" }}
             >
               <span className="w-5 text-center">{n.emoji}</span>
-              <span className="flex-1">{n.label}</span>
+              <span className="flex-1">{t.appNav[n.key]}</span>
               {n.to === "/app/favoritos" && counts.fav > 0 && <span className="text-xs text-muted-foreground">{counts.fav}</span>}
               {n.to === "/app/reservas" && counts.res > 0 && <span className="rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">{counts.res}</span>}
             </Link>
@@ -77,11 +80,11 @@ function AppShell() {
           <div className="my-4 border-t" />
           {devMode && (
             <Link to="/app/desenvolvedor" className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:bg-surface hover:text-foreground" activeProps={{ className: "!bg-surface !text-foreground font-medium shadow-soft" }}>
-              <Code2 className="size-4" /> Desenvolvedor
+              <Code2 className="size-4" /> {t.appNav.desenvolvedor}
             </Link>
           )}
           <Link to="/app/admin" className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:bg-surface hover:text-foreground" activeProps={{ className: "!bg-surface !text-foreground font-medium shadow-soft" }}>
-            <Building2 className="size-4" /> Painel da biblioteca
+            <Building2 className="size-4" /> {t.appNav.painel}
           </Link>
         </nav>
         {/* cartão da pessoa: nome inteiro e e-mail em cima; tema e sair numa linha própria embaixo */}
@@ -91,22 +94,22 @@ function AppShell() {
             <div className="min-w-0 flex-1">
               <p className="line-clamp-2 text-sm leading-snug font-medium break-words">{me.fullName}</p>
               <p className="truncate text-xs text-muted-foreground" title={auth.user?.email ?? undefined}>
-                {auth.user?.email ?? "Modo demonstração"}
+                {auth.user?.email ?? t.common.demoMode}
               </p>
-              {!!me.stats.streak && <p className="mt-0.5 text-xs text-muted-foreground">🔥 {me.stats.streak} dias seguidos</p>}
+              {!!me.stats.streak && <p className="mt-0.5 text-xs text-muted-foreground">{t.appNav.streak(me.stats.streak)}</p>}
             </div>
           </div>
           <div className="mt-3 flex items-center justify-between border-t pt-2">
             <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
               <ThemeToggle className="size-9" />
-              <span>Tema</span>
+              <span>{t.appNav.tema}</span>
             </div>
             {auth.user && (
               <button
                 onClick={() => auth.signOut()}
                 className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm text-muted-foreground transition hover:bg-surface-2 hover:text-danger"
               >
-                <LogOut className="size-4" /> Sair
+                <LogOut className="size-4" /> {t.appNav.sair}
               </button>
             )}
           </div>
@@ -122,13 +125,14 @@ function AppShell() {
             <Logo />
             <div className="flex items-center gap-1">
               <LocationChip className="max-w-[8.5rem]" />
+              <LanguageMenu className="hidden sm:block" />
               <AccessibilityMenu />
               <ThemeToggle />
               <Link to="/app/perfil" className="grid size-9 place-items-center rounded-full bg-gradient-primary text-sm font-semibold text-primary-foreground">{initial}</Link>
             </div>
           </div>
           <nav className="flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-none">
-            {[...NAV, { to: "/app/admin", label: "Biblioteca", emoji: "🏛" } as const, ...(devMode ? [{ to: "/app/desenvolvedor", label: "Desenvolvedor", emoji: "🧑‍💻" } as const] : [])].map((n) => (
+            {[...NAV, { to: "/app/admin", key: "biblioteca", emoji: "🏛" } as const, ...(devMode ? [{ to: "/app/desenvolvedor", key: "desenvolvedor", emoji: "🧑‍💻" } as const] : [])].map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
@@ -136,7 +140,7 @@ function AppShell() {
                 className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border bg-surface px-3.5 text-sm"
                 activeProps={{ className: "!border-transparent !bg-foreground !text-background font-medium" }}
               >
-                <span>{n.emoji}</span> {n.label}
+                <span>{n.emoji}</span> {t.appNav[n.key]}
               </Link>
             ))}
           </nav>

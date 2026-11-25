@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
 
 /**
  * Animação de abertura (app e site).
@@ -41,6 +42,7 @@ export function AppIntro({ variant = "app" }: { variant?: "app" | "site" }) {
   // a animação só começa quando o app está pronto (até lá fica o livro fechado parado, igual à abertura
   // nativa): assim ela não "corre" escondida atrás da abertura do Android nem recomeça no meio
   const [run, setRun] = useState(false);
+  const t = useT();
 
   useEffect(() => {
     if (document.documentElement.classList.contains("bv-intro-skip")) {
@@ -131,7 +133,7 @@ export function AppIntro({ variant = "app" }: { variant?: "app" | "site" }) {
       <p className="bvi-name">
         Biblioteca <em>Viva</em>
       </p>
-      <p className="bvi-tag">Conectando pessoas ao conhecimento.</p>
+      <p className="bvi-tag">{t.intro.tagline}</p>
     </div>
   );
 }

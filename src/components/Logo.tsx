@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 /** Marca: livro aberto com um broto saindo das páginas — a biblioteca que cresce ("viva"). */
 export function LogoMark({ className }: { className?: string }) {
@@ -19,14 +20,15 @@ export function LogoMark({ className }: { className?: string }) {
 }
 
 export function Logo({ className, tagline = true }: { className?: string; tagline?: boolean }) {
+  const t = useT();
   return (
-    <Link to="/" className={cn("flex items-center gap-2.5", className)} aria-label="Biblioteca Viva — início">
+    <Link to="/" className={cn("flex items-center gap-2.5", className)} aria-label={`Biblioteca Viva — ${t.tabs.inicio}`}>
       <LogoMark />
       <span className="flex flex-col leading-none">
         <span className="font-serif text-[19px] font-semibold tracking-tight text-foreground">
           Biblioteca <span className="text-primary italic">Viva</span>
         </span>
-        {tagline && <span className="mt-1 hidden text-[10.5px] font-medium tracking-wide text-muted-foreground sm:block">Conectando pessoas ao conhecimento.</span>}
+        {tagline && <span className="mt-1 hidden text-[10.5px] font-medium tracking-wide text-muted-foreground sm:block">{t.intro.tagline}</span>}
       </span>
     </Link>
   );
