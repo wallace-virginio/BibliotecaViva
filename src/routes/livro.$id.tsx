@@ -18,7 +18,7 @@ import { formatDistance } from "@/lib/utils";
 import { useAsync } from "@/lib/hooks";
 import { actions, useStore } from "@/lib/store";
 import { cn, slugify } from "@/lib/utils";
-import { useT } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/livro/$id")({
   head: () => ({
@@ -38,13 +38,15 @@ function BookPage() {
   const [toast, setToast] = useState<string>();
   const [reserveInfo, setReserveInfo] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
-  const t = useT();
+  const { t, locale } = useI18n();
   useAskLocationOnce();
   const nearby = useNearbyLibraries();
   const { ask } = useLocation();
   const holdings = holdingsFor(id, nearby.data);
   const subject = book?.subjects.find((s) => s.length < 30);
-  const readable = useAsync((s) => (book ? findReadableSource(book, s) : Promise.resolve(null)), [book?.id]);
+  // edição gratuita no idioma da tela, quando existe (senão a que houver, e o botão diz o idioma)
+  const readable = useAsync((s) => (book ? findReadableSource(book, s, locale) : Promise.resolve(null)), [book?.id, locale]);
+  const readLang = readable.data?.kind === "wikisource" && readable.data.lang !== locale ? readable.data.lang : undefined;
   const progress = useStore((s) => s.reading[book?.id ?? id]);
   const related = useAsync((s) => (subject ? booksBySubject(slugify(subject).replace(/-/g, "_"), 12, s) : Promise.resolve([])), [subject]);
 
@@ -132,6 +134,7 @@ function BookPage() {
               {readable.data && (
                 <Link to="/ler/$id" params={{ id: book.id }} className={buttonClass("primary", "md")}>
                   <BookOpenText className="size-4" /> {progress ? t.book.continueReading(progress.percent) : t.book.readFree}
+                  {readLang && <span className="font-normal opacity-80">({t.reader.inLang(t.reader.langs[readLang])})</span>}
                 </Link>
               )}
               {readable.loading && <span className="inline-flex h-11 items-center gap-2 px-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> {t.book.lookingDigital}</span>}

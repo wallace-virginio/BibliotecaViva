@@ -1,14 +1,23 @@
 /**
  * Fontes de leitura gratuita (domínio público), todas com CORS liberado:
- *  - Wikisource (pt/en): texto limpo, capítulo a capítulo → leitor nativo do app.
+ *  - Wikisource (pt/en/es): texto limpo, capítulo a capítulo → leitor nativo do app. As traduções de domínio público
+ *    da mesma obra são ligadas entre os idiomas (ex.: "Alice's Adventures in Wonderland" ↔ "Alice no País das Maravilhas"),
+ *    então o leitor abre no idioma da pessoa quando existe e deixa trocar.
  *  - Internet Archive: livro digitalizado página a página (BookReader embutido).
  * O Project Gutenberg não libera CORS, por isso não é usado direto do navegador.
  */
 import { olFetch } from "./http";
 
+export type BookLang = "pt" | "en" | "es";
+
+/** Mesma obra em outro idioma do Wikisource. */
+export type Edition = { lang: BookLang; page: string };
+
 export type ReadableSource =
-  | { kind: "wikisource"; lang: "pt" | "en"; page: string; title: string }
+  | { kind: "wikisource"; lang: BookLang; page: string; title: string; editions?: Edition[] }
   | { kind: "archive"; identifier: string; title: string };
+
+const BOOK_LANGS: BookLang[] = ["pt", "en", "es"];
 
 export type Chapter = { title: string; page: string };
 
@@ -23,20 +32,60 @@ const norm = (s: string) =>
 
 const sourceCache = new Map<string, ReadableSource | null>();
 
+/**
+ * Edição gratuita do livro. Com `prefer`, procura primeiro no Wikisource desse idioma e, se a obra estiver em
+ * outro, abre a tradução ligada a ela no idioma preferido (quando existe). `editions` lista os idiomas disponíveis.
+ */
 export async function findReadableSource(
   book: { id: string; title: string; authors: string[] },
   signal?: AbortSignal,
+  prefer: BookLang = "pt",
 ): Promise<ReadableSource | null> {
-  if (sourceCache.has(book.id)) return sourceCache.get(book.id)!;
-  const result = (await fromWikisource(book, signal)) ?? (await fromArchive(book, signal));
-  sourceCache.set(book.id, result);
+  const key = `${book.id}:${prefer}`;
+  if (sourceCache.has(key)) return sourceCache.get(key)!;
+  const order = [prefer, ...BOOK_LANGS.filter((l) => l !== prefer)];
+  let result: ReadableSource | null = await fromWikisource(book, order, signal);
+  if (result?.kind === "wikisource") {
+    const editions = await translationsOf(result.lang, result.page, signal);
+    const mine = editions.find((e) => e.lang === prefer);
+    result = mine && mine.lang !== result.lang ? { ...result, lang: mine.lang, page: mine.page, title: mine.page, editions } : { ...result, editions };
+  }
+  result ??= await fromArchive(book, signal);
+  sourceCache.set(key, result);
   return result;
 }
 
-async function fromWikisource(book: { title: string; authors: string[] }, signal?: AbortSignal): Promise<ReadableSource | null> {
+/** Traduções da página no Wikisource (links entre idiomas), incluindo a própria página. */
+async function translationsOf(lang: BookLang, page: string, signal?: AbortSignal): Promise<Edition[]> {
+  try {
+    const params = new URLSearchParams({ action: "query", titles: page, prop: "langlinks", lllimit: "500", redirects: "1", format: "json", origin: "*" });
+    const json = await fetch(`https://${lang}.wikisource.org/w/api.php?${params}`, { signal }).then((r) => r.json());
+    const p = Object.values(json?.query?.pages ?? {})[0] as { title?: string; langlinks?: { lang: string; "*": string }[] } | undefined;
+    return pickEditions({ lang, page: p?.title ?? page }, p?.langlinks ?? []);
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    return [{ lang, page }];
+  }
+}
+
+/**
+ * Só pt/en/es e só páginas de obra: fora "Em Tradução:..." e outros espaços com dois-pontos, que no Wikisource
+ * são traduções ainda incompletas. Ordem fixa: português, inglês, espanhol.
+ */
+export function pickEditions(self: Edition, links: { lang: string; "*": string }[]): Edition[] {
+  const out: Edition[] = [self];
+  for (const l of links) {
+    const lang = l.lang as BookLang;
+    if (!BOOK_LANGS.includes(lang) || out.some((e) => e.lang === lang) || l["*"].includes(":")) continue;
+    out.push({ lang, page: l["*"] });
+  }
+  return out.sort((a, b) => BOOK_LANGS.indexOf(a.lang) - BOOK_LANGS.indexOf(b.lang));
+}
+
+async function fromWikisource(book: { title: string; authors: string[] }, langs: BookLang[], signal?: AbortSignal): Promise<ReadableSource | null> {
   const title = norm(book.title);
   const author = norm(book.authors[0] ?? "").split(" ").pop() ?? "";
-  for (const lang of ["pt", "en"] as const) {
+  for (const lang of langs) {
     try {
       // 1) Página com o título exato da obra (seguindo redirecionamentos).
       const direct = new URLSearchParams({ action: "query", titles: book.title, redirects: "1", format: "json", origin: "*" });
@@ -128,11 +177,23 @@ export async function loadWorkIndex(
     seen.add(t.page);
     chapters.push({ page: t.page, title: t.label || t.page.split("/").pop()! });
   }
-  // Página de "versões" (ex.: "Pride and Prejudice" → "Pride and Prejudice (1813)"): segue a primeira edição.
+  // Página de "versões" (ex.: "Pride and Prejudice" → "Pride and Prejudice (1813)"): segue a primeira versão
+  // que tem texto de verdade — algumas são traduções colaborativas que só têm o sumário
+  // (em "Alice no País das Maravilhas", a que funciona é a tradução de Monteiro Lobato).
   const text = doc.body.textContent ?? "";
   if (!chapters.length && depth < 1 && text.length < 4000) {
-    const edition = targets.find((t) => t.page.startsWith(`${title} (`) && !t.page.includes("/"));
-    if (edition) return loadWorkIndex({ ...src, page: edition.page }, signal, depth + 1);
+    const versions = [...new Set(targets.filter((t) => t.page.startsWith(`${title} (`) && !t.page.includes("/")).map((t) => t.page))].slice(0, 3);
+    let first: Awaited<ReturnType<typeof loadWorkIndex>> | undefined;
+    for (const page of versions) {
+      const r = await loadWorkIndex({ ...src, page }, signal, depth + 1).catch((e) => {
+        if (signal?.aborted) throw e;
+        return undefined;
+      });
+      if (!r) continue;
+      if (r.chapters.length || (r.html?.length ?? 0) > 4000) return r;
+      first ??= r;
+    }
+    if (first) return first;
   }
   return { title, chapters, html: chapters.length ? undefined : sanitize(html) };
 }

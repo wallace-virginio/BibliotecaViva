@@ -327,6 +327,9 @@
 .reader-claro { --reader-bg: oklch(0.995 0.002 90); --reader-fg: oklch(0.22 0.01 260); --reader-muted: oklch(0.55 0.01 260); --reader-border: oklch(0.92 0.005 260); }
 .reader-sepia { --reader-bg: oklch(0.955 0.03 85); --reader-fg: oklch(0.3 0.04 60); --reader-muted: oklch(0.55 0.04 65); --reader-border: oklch(0.88 0.035 80); }
 .reader-escuro { --reader-bg: oklch(0.17 0.008 260); --reader-fg: oklch(0.86 0.01 90); --reader-muted: oklch(0.6 0.01 260); --reader-border: oklch(0.28 0.01 260); }
+/* "Automático": segue o tema do site (claro ou escuro) sem esperar o JavaScript — não pisca branco */
+.reader-auto { --reader-bg: oklch(0.995 0.002 90); --reader-fg: oklch(0.22 0.01 260); --reader-muted: oklch(0.55 0.01 260); --reader-border: oklch(0.92 0.005 260); }
+html.dark .reader-auto { --reader-bg: oklch(0.17 0.008 260); --reader-fg: oklch(0.86 0.01 90); --reader-muted: oklch(0.6 0.01 260); --reader-border: oklch(0.28 0.01 260); }
 .reader-root { background: var(--reader-bg); color: var(--reader-fg); min-height: 100dvh; transition: background-color .3s, color .3s; }
 .reader-bar { background: color-mix(in oklch, var(--reader-bg) 88%, transparent); border-color: var(--reader-border); color: var(--reader-fg); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 .reader-muted { color: var(--reader-muted); }

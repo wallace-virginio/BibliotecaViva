@@ -74,3 +74,22 @@ describe("idiomas: Ori e lojas", () => {
     for (const l of enLinks) expect(pt.buy.stores).toHaveProperty(l.key);
   });
 });
+
+describe("idiomas: edição do livro", () => {
+  it("junta as traduções do Wikisource em pt/en/es e ignora traduções incompletas", async () => {
+    const { pickEditions } = await import("./api/reader");
+    const eds = pickEditions({ lang: "en", page: "Pride and Prejudice" }, [
+      { lang: "pt", "*": "Em Tradução:Orgulho e Preconceito" },
+      { lang: "fr", "*": "Orgueil et Préjugés" },
+      { lang: "es", "*": "Orgullo y prejuicio" },
+    ]);
+    expect(eds).toEqual([
+      { lang: "en", page: "Pride and Prejudice" },
+      { lang: "es", page: "Orgullo y prejuicio" },
+    ]);
+    expect(pickEditions({ lang: "en", page: "Alice's Adventures in Wonderland" }, [{ lang: "pt", "*": "Alice no País das Maravilhas" }])[0]).toEqual({
+      lang: "pt",
+      page: "Alice no País das Maravilhas",
+    });
+  });
+});

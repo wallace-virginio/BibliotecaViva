@@ -268,7 +268,8 @@ function Acervo() {
 
         {/* Lateral: ranking e temas (no celular vem depois dos resultados) */}
         <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
-          <TrendingSidebar />
+          {/* sem busca, "Em alta esta semana" já é a primeira estante da página: não repete aqui */}
+          {!browsing && <TrendingSidebar />}
           <PopularSubjects onPick={(slug) => set({ categoria: slug })} active={search.categoria} />
         </aside>
       </Container>

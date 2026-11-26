@@ -27,6 +27,8 @@ export type ReadingProgress = {
   chapter?: number;
   /** posição de rolagem dentro do capítulo (0–1) */
   offset?: number;
+  /** idioma da edição que a pessoa está lendo (o capítulo salvo vale para ela) */
+  lang?: "pt" | "en" | "es";
   updatedAt: number;
 };
 /** "Minha estante" — como a watchlist do Letterboxd. */
@@ -34,7 +36,13 @@ export type ShelfStatus = "quero-ler" | "lendo" | "lido";
 export type ShelfItem = { id: string; title: string; author?: string; coverId?: number; status: ShelfStatus; addedAt: number };
 export const SHELF_LABEL: Record<ShelfStatus, string> = { "quero-ler": "Quero ler", lendo: "Lendo", lido: "Lido" };
 
-export type ReaderPrefs = { fontSize: number; theme: "claro" | "sepia" | "escuro"; font: "serif" | "sans" };
+export type ReaderPrefs = {
+  fontSize: number;
+  theme: "claro" | "sepia" | "escuro";
+  font: "serif" | "sans";
+  /** false = a pessoa escolheu um tema no leitor; ausente/true = segue o tema do site (claro ou escuro) */
+  themeAuto?: boolean;
+};
 
 /** Configurações da pessoa (Configurações → Notificações). Salvas no aparelho e na conta. */
 export type NotificationKey = "eventos" | "reservas" | "clubes";
